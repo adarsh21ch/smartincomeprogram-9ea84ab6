@@ -1,6 +1,6 @@
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { WhyNevorai } from "@/components/landing/WhyNevorai";
+import { WhySmartIncome } from "@/components/landing/WhySmartIncome";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { PricingSection } from "@/components/landing/PricingSection";
