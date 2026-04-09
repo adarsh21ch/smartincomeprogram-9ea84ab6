@@ -1757,6 +1757,183 @@ export type Database = {
           },
         ]
       }
+      sip_faq_items: {
+        Row: {
+          answer: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          question: string
+        }
+        Insert: {
+          answer: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          question: string
+        }
+        Update: {
+          answer?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          question?: string
+        }
+        Relationships: []
+      }
+      sip_journey_steps: {
+        Row: {
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          step_number: number
+          title: string
+        }
+        Insert: {
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          step_number: number
+          title: string
+        }
+        Update: {
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          step_number?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      sip_landing_page_config: {
+        Row: {
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          key: string
+          section: string
+          updated_at: string | null
+          value_boolean: boolean | null
+          value_image_url: string | null
+          value_json: Json | null
+          value_number: number | null
+          value_text: string | null
+        }
+        Insert: {
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          key: string
+          section: string
+          updated_at?: string | null
+          value_boolean?: boolean | null
+          value_image_url?: string | null
+          value_json?: Json | null
+          value_number?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          key?: string
+          section?: string
+          updated_at?: string | null
+          value_boolean?: boolean | null
+          value_image_url?: string | null
+          value_json?: Json | null
+          value_number?: number | null
+          value_text?: string | null
+        }
+        Relationships: []
+      }
+      sip_speakers: {
+        Row: {
+          achievements: string[] | null
+          bio: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          instagram_url: string | null
+          is_active: boolean | null
+          name: string
+          photo_url: string | null
+          title: string
+          youtube_url: string | null
+        }
+        Insert: {
+          achievements?: string[] | null
+          bio?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          instagram_url?: string | null
+          is_active?: boolean | null
+          name: string
+          photo_url?: string | null
+          title: string
+          youtube_url?: string | null
+        }
+        Update: {
+          achievements?: string[] | null
+          bio?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          instagram_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          photo_url?: string | null
+          title?: string
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      sip_testimonials: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          location: string | null
+          name: string
+          photo_url: string | null
+          quote: string
+          rating: number | null
+          role: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          name: string
+          photo_url?: string | null
+          quote: string
+          rating?: number | null
+          role?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          name?: string
+          photo_url?: string | null
+          quote?: string
+          rating?: number | null
+          role?: string | null
+        }
+        Relationships: []
+      }
       subscription_logs: {
         Row: {
           amount: number | null
