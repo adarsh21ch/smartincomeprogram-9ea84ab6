@@ -324,7 +324,7 @@ const CustomVideoPlayer = ({
       {/* Watermark — bottom-right, subtle */}
       {started && (
         <div className="absolute bottom-14 right-4 text-[10px] text-white/[0.12] font-medium pointer-events-none select-none z-10 tracking-wide">
-          flow.nevorai.com
+          smartincomeprogram.com
         </div>
       )}
 
@@ -470,14 +470,14 @@ const PublicFunnel = () => {
   const [codeGateUnlocked, setCodeGateUnlocked] = useState(false);
   const [privateLeadSubmitted, setPrivateLeadSubmitted] = useState(false);
   const [pubTheme, setPubTheme] = useState<"dark" | "light">(() => {
-    const saved = localStorage.getItem("nevorai-public-theme");
+    const saved = localStorage.getItem("sip-public-theme");
     return saved === "light" ? "light" : "dark";
   });
   const isDark = pubTheme === "dark";
   const togglePubTheme = () => {
     setPubTheme((t) => {
       const next = t === "dark" ? "light" : "dark";
-      localStorage.setItem("nevorai-public-theme", next);
+      localStorage.setItem("sip-public-theme", next);
       return next;
     });
   };
@@ -558,7 +558,7 @@ const PublicFunnel = () => {
   // OG tags
   useEffect(() => {
     if (!funnel) return;
-    document.title = `${funnel.title} | Nevorai Flow`;
+    document.title = `${funnel.title} | Smart Income Program`;
     const setMeta = (name: string, content: string, prop = false) => {
       const attr = prop ? "property" : "name";
       let el = document.querySelector(`meta[${attr}="${name}"]`);
@@ -571,7 +571,7 @@ const PublicFunnel = () => {
     setMeta("og:type", "website", true);
     setMeta("og:url", window.location.href, true);
     if (funnel.thumbnail_url) setMeta("og:image", funnel.thumbnail_url, true);
-    setMeta("og:site_name", "Nevorai Flow", true);
+    setMeta("og:site_name", "Smart Income Program", true);
     setMeta("twitter:card", "summary_large_image");
     setMeta("twitter:title", funnel.title);
     setMeta("twitter:description", funnel.description || funnel.title);
@@ -743,8 +743,8 @@ const PublicFunnel = () => {
         }}
       >
         <div className="flex items-center gap-2">
-          <img src={logoImg} alt="Nevorai Flow" className="h-6 w-6" />
-          <span className="font-heading font-bold text-[15px]" style={{ color: tc.text, letterSpacing: "-0.02em" }}>Nevorai</span>
+          <img src={logoImg} alt="Smart Income Program" className="h-6 w-6" />
+          <span className="font-heading font-bold text-[15px]" style={{ color: tc.text, letterSpacing: "-0.02em" }}>Smart Income</span>
           <span className="font-heading font-extrabold text-primary text-[15px]" style={{ letterSpacing: "-0.03em", fontStyle: "italic", transform: "skewX(-4deg)", display: "inline-block", marginLeft: "-2px" }}>Flow</span>
         </div>
         <div className="flex items-center gap-1">
@@ -982,7 +982,7 @@ const PublicFunnel = () => {
 
         {/* Footer */}
         <div className="mt-16 pt-6 pb-8 text-center" style={{ borderTop: `1px solid ${tc.footerBorder}` }}>
-          <p className="text-[11px] tracking-wide" style={{ color: tc.footerText }}>© {new Date().getFullYear()} Nevorai Flow · All rights reserved</p>
+          <p className="text-[11px] tracking-wide" style={{ color: tc.footerText }}>© {new Date().getFullYear()} Smart Income Program · All rights reserved</p>
         </div>
       </div>
       )}

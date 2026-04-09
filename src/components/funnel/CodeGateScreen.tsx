@@ -127,8 +127,8 @@ export const CodeGateScreen = ({
       <div className="w-full max-w-sm text-center">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <img src={logoImg} alt="Nevorai Flow" className="h-7 w-7" />
-          <span className="font-heading font-bold text-[16px]" style={{ color: text }}>Nevorai</span>
+          <img src={logoImg} alt="Smart Income Program" className="h-7 w-7" />
+          <span className="font-heading font-bold text-[16px]" style={{ color: text }}>Smart Income</span>
           <span className="font-heading font-extrabold text-primary text-[16px]" style={{ fontStyle: "italic", transform: "skewX(-4deg)", display: "inline-block", marginLeft: "-3px" }}>Flow</span>
         </div>
 
