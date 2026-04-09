@@ -361,7 +361,7 @@ const PublicLandingPage = () => {
       </main>
 
       <footer className="text-center py-6 text-xs text-muted-foreground border-t border-border">
-        © Nevorai Flow · Powered by Nevorai
+        © Smart Income Program · Powered by Smart Income
       </footer>
     </div>
   );

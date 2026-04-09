@@ -167,7 +167,7 @@ export const LandingPagePreview = ({
       <div className="flex items-center justify-between px-4 py-3 border-b border-current/10">
         <div className="flex items-center gap-1.5">
           <div className="w-5 h-5 rounded bg-primary/20" />
-          <span className="text-xs font-bold">Nevorai Flow</span>
+          <span className="text-xs font-bold">Smart Income Program</span>
         </div>
       </div>
 
@@ -346,7 +346,7 @@ export const LandingPagePreview = ({
 
       {/* Footer */}
       <div className="text-center py-3 text-[9px] opacity-20 border-t border-current/5">
-        © Nevorai Flow
+        © Smart Income Program
       </div>
     </div>
   );

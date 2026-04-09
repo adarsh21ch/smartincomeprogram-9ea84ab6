@@ -21,7 +21,7 @@ const sections = [
   },
   {
     title: "Contact Support",
-    content: "For any billing or refund inquiries, please reach out to us at support@nevorai.com. We're happy to help resolve any issues.",
+    content: "For any billing or refund inquiries, please reach out to us at support@smartincomeprogram.com. We're happy to help resolve any issues.",
   },
 ];
 

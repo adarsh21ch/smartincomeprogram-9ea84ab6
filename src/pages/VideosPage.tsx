@@ -91,7 +91,7 @@ const VideosPage = () => {
           <div className="glass-card p-12 text-center">
             <Video size={40} className="text-muted-foreground mx-auto mb-3" />
             <h3 className="font-heading font-semibold mb-2">{search ? "No videos found" : "No videos yet"}</h3>
-            <p className="text-sm text-muted-foreground mb-6">Add videos to your gallery using a Nevorai Flow video link.</p>
+            <p className="text-sm text-muted-foreground mb-6">Add videos to your gallery using a Smart Income Program video link.</p>
             <Button variant="hero" onClick={() => setLinkModalOpen(true)}>
               <Link2 size={16} /> Add Video by Link
             </Button>

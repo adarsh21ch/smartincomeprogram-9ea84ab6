@@ -90,7 +90,7 @@ const Onboarding = () => {
 
           {step === 3 && (
             <div className="space-y-4">
-              <Label className="text-base font-heading font-semibold">How did you hear about Nevorai Flow?</Label>
+              <Label className="text-base font-heading font-semibold">How did you hear about Smart Income Program?</Label>
               <div className="grid grid-cols-2 gap-3">
                 {sources.map((s) => (
                   <button key={s} onClick={() => setData({ ...data, source: s })}

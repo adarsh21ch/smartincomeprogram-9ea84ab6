@@ -43,7 +43,7 @@ const defaultFormState = {
   field_custom_1_enabled: false, field_custom_1_label: "", field_custom_1_required: false,
   field_custom_2_enabled: false, field_custom_2_label: "", field_custom_2_required: false,
   send_confirmation_email: true,
-  sender_display_name: "Nevorai Flow",
+  sender_display_name: "Smart Income Program",
   email_subject: "You're Registered! Get Ready for the Session",
   email_heading: "Welcome! You Are Successfully Registered",
   email_body: `Thank you for registering.
@@ -57,7 +57,7 @@ Be ready for the session at [7:00 PM].
 Make sure to join on time and go through the complete session properly so you do not miss any important information.
 
 We look forward to having you there.`,
-  email_footer_text: "Regards,\nTeam Nevorai Flow",
+  email_footer_text: "Regards,\nTeam Smart Income Program",
   post_submit_video_asset_id: null as string | null,
   post_submit_video_title: "",
   post_submit_video_description: "",
@@ -505,34 +505,34 @@ const LandingPageEditor = () => {
                 <p className="text-xs text-muted-foreground mt-0.5">Choose who the email appears from in the recipient's inbox</p>
                 <div className="mt-2 space-y-2">
                   <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                    form.sender_display_name === "Nevorai Flow" ? "border-primary bg-primary/5" : "border-border bg-muted/50 hover:border-muted-foreground/30"
+                    form.sender_display_name === "Smart Income Program" ? "border-primary bg-primary/5" : "border-border bg-muted/50 hover:border-muted-foreground/30"
                   }`}>
                     <input
                       type="radio"
                       name="sender_display_name"
-                      checked={form.sender_display_name === "Nevorai Flow"}
-                      onChange={() => updateField("sender_display_name", "Nevorai Flow")}
+                      checked={form.sender_display_name === "Smart Income Program"}
+                      onChange={() => updateField("sender_display_name", "Smart Income Program")}
                       className="accent-primary"
                     />
                     <div>
                       <p className="text-sm font-medium">Platform Name</p>
-                      <p className="text-xs text-muted-foreground">Nevorai Flow</p>
+                      <p className="text-xs text-muted-foreground">Smart Income Program</p>
                     </div>
                   </label>
                   <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                    form.sender_display_name !== "Nevorai Flow" ? "border-primary bg-primary/5" : "border-border bg-muted/50 hover:border-muted-foreground/30"
+                    form.sender_display_name !== "Smart Income Program" ? "border-primary bg-primary/5" : "border-border bg-muted/50 hover:border-muted-foreground/30"
                   }`}>
                     <input
                       type="radio"
                       name="sender_display_name"
-                      checked={form.sender_display_name !== "Nevorai Flow"}
-                      onChange={() => updateField("sender_display_name", form.sender_display_name !== "Nevorai Flow" ? form.sender_display_name : (profile?.full_name || ""))}
+                      checked={form.sender_display_name !== "Smart Income Program"}
+                      onChange={() => updateField("sender_display_name", form.sender_display_name !== "Smart Income Program" ? form.sender_display_name : (profile?.full_name || ""))}
                       className="accent-primary"
                     />
                     <div className="flex-1">
                       <p className="text-sm font-medium">Custom Name</p>
                       <p className="text-xs text-muted-foreground mb-1">Type any name you want recipients to see</p>
-                      {form.sender_display_name !== "Nevorai Flow" && (
+                      {form.sender_display_name !== "Smart Income Program" && (
                         <Input
                           value={form.sender_display_name || ""}
                           onChange={(e) => updateField("sender_display_name", e.target.value || "")}
@@ -545,7 +545,7 @@ const LandingPageEditor = () => {
                   </label>
                 </div>
                 <p className="text-[11px] text-muted-foreground/70 mt-2">
-                  Email will appear as: <span className="font-mono text-foreground/60">{form.sender_display_name || "Nevorai Flow"} &lt;noreply@flow.nevorai.com&gt;</span>
+                  Email will appear as: <span className="font-mono text-foreground/60">{form.sender_display_name || "Smart Income Program"} &lt;noreply@smartincomeprogram.com&gt;</span>
                 </p>
               </div>
             </div>
@@ -588,7 +588,7 @@ const LandingPageEditor = () => {
                   value={form.email_footer_text}
                   onChange={(e) => updateField("email_footer_text", e.target.value)}
                   rows={2}
-                  placeholder="Regards,&#10;Team Nevorai Flow"
+                  placeholder="Regards,&#10;Team Smart Income Program"
                   className="mt-1.5 bg-muted border-border"
                 />
               </div>

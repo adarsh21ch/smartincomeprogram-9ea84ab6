@@ -46,7 +46,7 @@ export const FunnelLivePreview = ({ funnel, selectedVideo, flowSteps, leadForm }
         {/* Logo */}
         <div className="flex items-center gap-1.5 justify-center">
           <img src={logoImg} alt="" className="h-4 w-4" />
-          <span className="font-heading font-bold text-[11px]">Nevorai</span>
+          <span className="font-heading font-bold text-[11px]">Smart Income</span>
           <span className="font-heading font-extrabold text-primary text-[11px]" style={{ fontStyle: "italic" }}>Flow</span>
         </div>
 

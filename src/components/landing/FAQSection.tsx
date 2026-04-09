@@ -8,20 +8,20 @@ import {
 
 const faqs = [
   {
-    q: "What is Nevorai Flow?",
-    a: "Nevorai Flow is a smart video funnel platform for digital entrepreneurs, creators, and coaches. Upload a video, share a link, and automatically capture leads, track engagement, and guide your audience.",
+    q: "What is Smart Income Program?",
+    a: "Smart Income Program is a smart video funnel platform for digital entrepreneurs, creators, and coaches. Upload a video, share a link, and automatically capture leads, track engagement, and guide your audience.",
   },
   {
     q: "Do I need any technical skills?",
-    a: "Not at all! Nevorai Flow is designed for non-technical users. Just upload your video, configure your funnel in a few clicks, and share the link. It's that simple.",
+    a: "Not at all! Smart Income Program is designed for non-technical users. Just upload your video, configure your funnel in a few clicks, and share the link. It's that simple.",
   },
   {
     q: "Is there a free plan?",
     a: "Yes! You can start with our free plan — 2 funnels, 5 videos, and basic lead capture. Upgrade anytime when you're ready for more.",
   },
   {
-    q: "Who is Nevorai Flow for?",
-    a: "Nevorai Flow is built for digital entrepreneurs, creators, coaches, educators, and anyone who uses video to grow their audience and business.",
+    q: "Who is Smart Income Program for?",
+    a: "Smart Income Program is built for digital entrepreneurs, creators, coaches, educators, and anyone who uses video to grow their audience and business.",
   },
   {
     q: "Can I track how much of a video someone watched?",

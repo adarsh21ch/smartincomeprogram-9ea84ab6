@@ -72,7 +72,7 @@ const ContactPage = () => {
           >
             <div className="flex items-center gap-2">
               <Mail size={16} className="text-primary" />
-              <span>support@nevorai.com</span>
+              <span>support@smartincomeprogram.com</span>
             </div>
             <div className="flex items-center gap-2">
               <MessageCircle size={16} className="text-primary" />

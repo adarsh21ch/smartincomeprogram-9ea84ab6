@@ -217,7 +217,7 @@ const PublicLivePage = () => {
 
         {/* Footer */}
         <div className="text-center pt-4">
-          <p className="text-[10px] text-muted-foreground">Powered by <span className="text-primary font-semibold">Nevorai Flow</span></p>
+          <p className="text-[10px] text-muted-foreground">Powered by <span className="text-primary font-semibold">Smart Income Program</span></p>
         </div>
       </div>
     </div>

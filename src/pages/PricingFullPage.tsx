@@ -166,7 +166,7 @@ const PricingFullPage = () => {
         key: data.key_id,
         amount: data.amount,
         currency: data.currency,
-        name: "Nevorai Flow",
+        name: "Smart Income Program",
         description: `${planName.charAt(0).toUpperCase() + planName.slice(1)} Plan — ${billing}`,
         order_id: data.order_id,
         handler: async (response: any) => {
@@ -420,7 +420,7 @@ const PricingFullPage = () => {
             </div>
             <p className="text-sm text-muted-foreground">
               Need help choosing a plan?{" "}
-              <button className="text-primary underline" onClick={() => openSupport("Hi, I need help choosing a Nevorai Flow plan.")}>
+              <button className="text-primary underline" onClick={() => openSupport("Hi, I need help choosing a Smart Income Program plan.")}>
                 Chat with us on WhatsApp
               </button>
             </p>

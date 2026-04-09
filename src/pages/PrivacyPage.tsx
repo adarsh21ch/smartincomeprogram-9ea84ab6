@@ -9,7 +9,7 @@ const sections = [
   },
   {
     title: "How We Use Your Information",
-    content: "We use your information to provide and improve Nevorai Flow, communicate with you, process transactions, and personalize your experience. We do not sell your personal data to third parties.",
+    content: "We use your information to provide and improve Smart Income Program, communicate with you, process transactions, and personalize your experience. We do not sell your personal data to third parties.",
   },
   {
     title: "Cookies and Analytics",
@@ -29,7 +29,7 @@ const sections = [
   },
   {
     title: "Contact Us",
-    content: "If you have questions about this Privacy Policy or your data, please contact us at support@nevorai.com.",
+    content: "If you have questions about this Privacy Policy or your data, please contact us at support@smartincomeprogram.com.",
   },
 ];
 

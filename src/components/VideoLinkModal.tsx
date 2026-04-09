@@ -33,7 +33,7 @@ export const VideoLinkModal = ({ open, onClose, onSuccess }: Props) => {
     if (!user) return;
     const videoId = extractVideoId(link.trim());
     if (!videoId) {
-      toast.error("Invalid video link. Use a Nevorai Flow video URL.");
+      toast.error("Invalid video link. Use a Smart Income Program video URL.");
       return;
     }
 
@@ -97,13 +97,13 @@ export const VideoLinkModal = ({ open, onClose, onSuccess }: Props) => {
           <DialogTitle className="font-heading">Add Video by Link</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">Paste a Nevorai Flow video link to add it to your gallery.</p>
+          <p className="text-sm text-muted-foreground">Paste a Smart Income Program video link to add it to your gallery.</p>
           <div>
             <Label>Video Link</Label>
             <Input
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              placeholder="https://...nevorai.../video/abc-123..."
+              placeholder="https://...smartincome.../video/abc-123..."
               className="mt-1 bg-muted border-border"
             />
           </div>
