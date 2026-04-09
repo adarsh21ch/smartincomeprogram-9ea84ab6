@@ -28,7 +28,7 @@ const rows = [
   },
 ];
 
-export const WhyNevorai = () => {
+export const WhySmartIncome = () => {
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="absolute inset-0 gradient-bg-subtle" />
