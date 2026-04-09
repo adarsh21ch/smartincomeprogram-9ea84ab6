@@ -5,7 +5,6 @@ import { Link } from "react-router-dom";
 const links = {
   Product: [
     { label: "Features", href: "/features" },
-    { label: "Pricing", href: "/pricing" },
     { label: "FAQ", href: "/faq" },
   ],
   Company: [
@@ -53,7 +52,6 @@ export const Footer = () => {
         </div>
         <div className="border-t border-border pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">{brand.footer.copyright}</p>
-          <p className="text-xs text-muted-foreground">{brand.footer.madeIn}</p>
         </div>
       </div>
     </footer>

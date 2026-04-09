@@ -34,7 +34,6 @@ export const WhyNevorai = () => {
       <div className="absolute inset-0 gradient-bg-subtle" />
 
       <div className="container relative z-10">
-        {/* Header */}
         <motion.div
           className="text-center mb-14"
           initial={{ opacity: 0, y: 20 }}
@@ -54,7 +53,6 @@ export const WhyNevorai = () => {
           </p>
         </motion.div>
 
-        {/* Column Headers */}
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-2 gap-3 md:gap-5 mb-4">
             <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-center">
@@ -64,12 +62,11 @@ export const WhyNevorai = () => {
             </div>
             <div className="rounded-xl bg-success/10 border border-success/20 px-4 py-3 text-center">
               <span className="font-heading font-bold text-sm md:text-base text-success">
-                ✅ Nevorai Flow
+                ✅ Smart Income Program
               </span>
             </div>
           </div>
 
-          {/* Rows */}
           <div className="flex flex-col gap-3">
             {rows.map((row, i) => (
               <motion.div
@@ -80,33 +77,19 @@ export const WhyNevorai = () => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.06 }}
               >
-                {/* YouTube side */}
                 <div className="rounded-xl border border-destructive/10 bg-destructive/[0.04] p-4 flex items-start gap-3">
-                  <X
-                    size={18}
-                    className="text-destructive shrink-0 mt-0.5"
-                  />
-                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                    {row.yt}
-                  </p>
+                  <X size={18} className="text-destructive shrink-0 mt-0.5" />
+                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{row.yt}</p>
                 </div>
-
-                {/* Nevorai side */}
                 <div className="rounded-xl border border-success/15 bg-success/[0.06] p-4 flex items-start gap-3">
-                  <Check
-                    size={18}
-                    className="text-success shrink-0 mt-0.5"
-                  />
-                  <p className="text-xs md:text-sm text-foreground leading-relaxed font-medium">
-                    {row.nf}
-                  </p>
+                  <Check size={18} className="text-success shrink-0 mt-0.5" />
+                  <p className="text-xs md:text-sm text-foreground leading-relaxed font-medium">{row.nf}</p>
                 </div>
               </motion.div>
             ))}
           </div>
         </div>
 
-        {/* Bottom CTA reinforcement */}
         <motion.div
           className="text-center mt-14"
           initial={{ opacity: 0, y: 20 }}
@@ -116,7 +99,7 @@ export const WhyNevorai = () => {
           <p className="text-lg md:text-xl font-heading font-semibold text-foreground">
             YouTube gives views.{" "}
             <span className="gradient-text">
-              Nevorai Flow gives control + data + conversion.
+              Smart Income Program gives control + data + conversion.
             </span>
           </p>
         </motion.div>

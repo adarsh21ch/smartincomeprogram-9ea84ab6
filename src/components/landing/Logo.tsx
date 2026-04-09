@@ -1,19 +1,21 @@
-import logoImg from "@/assets/logo.png";
-
 export const Logo = ({ size = "default" }: { size?: "sm" | "default" | "lg" }) => {
   const sizes = {
-    sm: { img: "w-5 h-5", nevorai: "text-[14px]", flow: "text-[14px]" },
-    default: { img: "w-6 h-6", nevorai: "text-[17px]", flow: "text-[17px]" },
-    lg: { img: "w-8 h-8", nevorai: "text-[22px]", flow: "text-[22px]" },
+    sm: { icon: "w-6 h-6 text-[11px]", name: "text-[13px]", accent: "text-[13px]" },
+    default: { icon: "w-7 h-7 text-[12px]", name: "text-[15px]", accent: "text-[15px]" },
+    lg: { icon: "w-8 h-8 text-[14px]", name: "text-[18px]", accent: "text-[18px]" },
   };
 
   return (
     <div className="flex items-center gap-2">
-      <img src={logoImg} alt="Nevorai Flow" className={`${sizes[size].img} object-contain`} />
+      {/* Green circle icon with "S" */}
+      <div
+        className={`${sizes[size].icon} rounded-full bg-primary flex items-center justify-center font-bold text-primary-foreground shrink-0`}
+      >
+        S
+      </div>
       <div className="flex items-baseline gap-[3px]">
-        {/* "Nevorai" — clean, stable, trustworthy */}
         <span
-          className={sizes[size].nevorai}
+          className={sizes[size].name}
           style={{
             fontFamily: "'Plus Jakarta Sans', 'Sora', system-ui, sans-serif",
             fontWeight: 700,
@@ -22,11 +24,10 @@ export const Logo = ({ size = "default" }: { size?: "sm" | "default" | "lg" }) =
             lineHeight: 1,
           }}
         >
-          Nevorai
+          Smart Income
         </span>
-        {/* "Flow" — dynamic, forward-leaning, fluid */}
         <span
-          className={sizes[size].flow}
+          className={sizes[size].accent}
           style={{
             fontFamily: "'Plus Jakarta Sans', 'Sora', system-ui, sans-serif",
             fontWeight: 800,
@@ -38,7 +39,7 @@ export const Logo = ({ size = "default" }: { size?: "sm" | "default" | "lg" }) =
             display: "inline-block",
           }}
         >
-          Flow
+          Program
         </span>
       </div>
     </div>

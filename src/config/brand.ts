@@ -1,20 +1,20 @@
 export const brand = {
-  name: "Nevorai Flow",
-  nameShort: "Nevorai",
-  nameAccent: "Flow",
+  name: "Smart Income Program",
+  nameShort: "Smart Income",
+  nameAccent: "Program",
   tagline: "Turn Random Videos Into Structured Funnels.",
   description:
     "Build smart video funnels that capture leads, collect payments, and guide your audience — all in one place.",
-  domain: "nevorai.flow",
-  supportEmail: "support@nevorai.com",
+  domain: "smartincomeprogram.com",
+  supportEmail: "support@smartincomeprogram.com",
   social: {
-    instagram: "https://instagram.com/nevorai",
-    youtube: "https://youtube.com/@nevorai",
+    instagram: "https://instagram.com/smartincomeprogram",
+    youtube: "https://youtube.com/@smartincomeprogram",
     whatsapp: "https://wa.me/919999999999",
   },
   footer: {
-    poweredBy: "Nevorai Flow",
-    madeIn: "Made in India 🇮🇳",
-    copyright: `© ${new Date().getFullYear()} Nevorai Flow. All rights reserved.`,
+    poweredBy: "Smart Income Program",
+    madeIn: "",
+    copyright: `© ${new Date().getFullYear()} Smart Income Program · All rights reserved`,
   },
 } as const;
