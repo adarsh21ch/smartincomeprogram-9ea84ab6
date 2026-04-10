@@ -181,9 +181,19 @@ const AdminVideosPage = () => {
                     <tr key={v.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-8 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                          <button
+                            className="w-12 h-8 bg-muted rounded flex items-center justify-center flex-shrink-0 relative group cursor-pointer hover:ring-1 hover:ring-primary/50 transition-all"
+                            onClick={() => v.public_url && setPreviewVideo({ id: v.id, title: v.title, url: v.public_url })}
+                            title={v.public_url ? "Preview video" : "No URL available"}
+                            disabled={!v.public_url}
+                          >
                             {v.thumbnail_url ? <img src={v.thumbnail_url} className="w-full h-full object-cover rounded" /> : <Video size={14} className="text-muted-foreground" />}
-                          </div>
+                            {v.public_url && (
+                              <div className="absolute inset-0 bg-black/40 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Play size={12} fill="white" className="text-white" />
+                              </div>
+                            )}
+                          </button>
                           <div className="min-w-0">
                             <p className="font-medium truncate">{v.title}</p>
                             <p className="text-xs text-muted-foreground truncate">{v.original_filename}</p>
@@ -199,6 +209,11 @@ const AdminVideosPage = () => {
                       <td className="p-4 text-xs text-muted-foreground">{v.view_count || 0}</td>
                       <td className="p-4">
                         <div className="flex gap-1">
+                          {v.public_url && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewVideo({ id: v.id, title: v.title, url: v.public_url })} title="Preview">
+                              <Play size={14} />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setRenameVideo({ id: v.id, title: v.title })} title="Rename">
                             <Pencil size={14} />
                           </Button>
