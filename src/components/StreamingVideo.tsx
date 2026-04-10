@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Loader2, AlertTriangle, RotateCcw, Play, VolumeX } from "lucide-react";
+import { resolveVideoPlaybackUrl } from "@/lib/videoPlayback";
 
 interface StreamingVideoProps {
   src: string | null | undefined;
@@ -29,6 +30,7 @@ export const StreamingVideo = ({
 }: StreamingVideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const srcRef = useRef<string | null>(null);
+  const playbackSrc = resolveVideoPlaybackUrl(src);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -42,10 +44,10 @@ export const StreamingVideo = ({
 
   // Stable src — never change src mid-playback
   useEffect(() => {
-    if (!src) return;
+    if (!playbackSrc) return;
     // Only update src if it actually changed (not just a re-render)
-    if (srcRef.current === src) return;
-    srcRef.current = src;
+    if (srcRef.current === playbackSrc) return;
+    srcRef.current = playbackSrc;
 
     const video = videoRef.current;
     if (!video) return;
@@ -55,7 +57,7 @@ export const StreamingVideo = ({
     setShowPlay(false);
     setShowUnmute(false);
 
-    video.src = src;
+    video.src = playbackSrc;
     video.load();
 
     if (autoPlay) {
@@ -70,7 +72,7 @@ export const StreamingVideo = ({
           setShowPlay(true);
         });
     }
-  }, [src, autoPlay]);
+  }, [playbackSrc, autoPlay]);
 
   // Event listeners
   useEffect(() => {
@@ -164,7 +166,7 @@ export const StreamingVideo = ({
     setShowUnmute(false);
   }, []);
 
-  if (!src) {
+  if (!playbackSrc) {
     return (
       <div className={`flex items-center justify-center bg-black ${className}`}>
         <p className="text-sm text-white/50">No video available</p>

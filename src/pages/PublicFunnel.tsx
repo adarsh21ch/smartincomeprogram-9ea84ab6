@@ -15,6 +15,7 @@ import logoImg from "@/assets/logo.png";
 import { MultiStepViewer } from "@/components/funnel/MultiStepViewer";
 import { CodeGateScreen } from "@/components/funnel/CodeGateScreen";
 import { PrivateLeadForm } from "@/components/funnel/PrivateLeadForm";
+import { resolveVideoPlaybackUrl } from "@/lib/videoPlayback";
 /* ─── Speed Popover ─── */
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
 
@@ -110,6 +111,7 @@ const CustomVideoPlayer = ({
   const seekToastTimer = useRef<ReturnType<typeof setTimeout>>();
   const hideTimer = useRef<ReturnType<typeof setTimeout>>();
   const autoplayAttempted = useRef(false);
+  const playbackSrc = resolveVideoPlaybackUrl(src) ?? src;
 
   const fmt = (s: number) => {
     const h = Math.floor(s / 3600);
@@ -154,7 +156,7 @@ const CustomVideoPlayer = ({
             });
         });
     }
-  }, [autoplay, src]);
+  }, [autoplay, playbackSrc]);
 
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
@@ -306,7 +308,7 @@ const CustomVideoPlayer = ({
     >
       <video
         ref={videoRef}
-        src={src}
+        src={playbackSrc}
         poster={poster}
         className="w-full h-full object-contain"
         playsInline

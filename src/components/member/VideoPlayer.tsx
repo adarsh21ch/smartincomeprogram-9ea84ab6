@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { resolveVideoPlaybackUrl } from "@/lib/videoPlayback";
 
 interface VideoPlayerProps {
   videoUrl: string | null;
@@ -28,6 +29,7 @@ export const VideoPlayer = ({
   onClose,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const srcRef = useRef<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(durationSeconds || 0);
@@ -45,6 +47,7 @@ export const VideoPlayer = ({
   const [showUnmutePrompt, setShowUnmutePrompt] = useState(false);
   const bufferTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const lastSavedPercent = useRef(0);
+  const playbackUrl = resolveVideoPlaybackUrl(videoUrl);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -96,6 +99,21 @@ export const VideoPlayer = ({
       // silent fail
     }
   }, [funnelId, stepId, hasCompleted, onComplete]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !playbackUrl) return;
+    if (srcRef.current === playbackUrl) return;
+
+    srcRef.current = playbackUrl;
+    setVideoError(null);
+    setIsLoading(true);
+    setIsBuffering(false);
+    setBufferingTooLong(false);
+
+    video.src = playbackUrl;
+    video.load();
+  }, [playbackUrl]);
 
   // Setup video events
   useEffect(() => {
@@ -239,10 +257,13 @@ export const VideoPlayer = ({
     if (!video) return;
     setVideoError(null);
     setIsLoading(true);
+    if (srcRef.current) {
+      video.src = srcRef.current;
+    }
     video.load();
   };
 
-  if (!videoUrl) {
+  if (!playbackUrl) {
     return (
       <div className="rounded-xl border border-border bg-muted/30 p-8 text-center animate-in slide-in-from-top-2 duration-300">
         <p className="text-muted-foreground text-sm">Video unavailable. Contact support.</p>
@@ -276,9 +297,7 @@ export const VideoPlayer = ({
             const video = videoRef.current;
             if (video) saveProgress(video.currentTime, video.duration);
           }}
-        >
-          <source src={videoUrl} type="video/mp4" />
-        </video>
+        />
 
         {/* Loading overlay */}
         {isLoading && !videoError && (
