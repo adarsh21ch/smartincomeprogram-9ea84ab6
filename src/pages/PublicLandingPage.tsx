@@ -478,7 +478,7 @@ const PublicLandingPage = () => {
                 )}
               </div>
 
-              <div className="lg:col-span-2 lg:sticky lg:top-8">
+              <div className="lg:col-span-2 self-start" style={{ position: 'sticky', top: '1rem' }}>
                 <div className="sip-card p-6 space-y-5">
                   <div>
                     <h3 className="text-lg font-bold" style={{ color: '#F5F0E8' }}>{page.form_title}</h3>
