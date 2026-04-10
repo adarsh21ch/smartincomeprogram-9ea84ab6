@@ -4,7 +4,7 @@
   "description": "Build smart income funnels — capture leads, collect payments, and guide your audience.",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#050505",
+  "background_color": "#000000",
   "theme_color": "#E8B830",
   "orientation": "portrait-primary",
   "icons": [
