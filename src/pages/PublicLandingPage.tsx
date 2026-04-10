@@ -16,6 +16,10 @@ import { Loader2, Check, Lock, ChevronRight, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { TestimonialsViewer } from "@/components/funnel/TestimonialsViewer";
 
+const INDIAN_STATES = [
+  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Andaman & Nicobar Islands","Chandigarh","Dadra & Nagar Haveli and Daman & Diu","Delhi","Jammu & Kashmir","Ladakh","Lakshadweep","Puducherry"
+];
+
 const PublicLandingPage = () => {
   const { slug } = useParams();
   const [page, setPage] = useState<any>(null);
@@ -243,14 +247,14 @@ const PublicLandingPage = () => {
   };
 
   return (
-    <div className="sip-landing min-h-screen flex flex-col">
+    <div className="sip-landing min-h-screen flex flex-col overflow-x-hidden">
       {/* Header */}
-      <header className="flex items-center justify-center px-4 md:px-8 py-4" style={{ borderBottom: '1px solid rgba(197,147,14,0.15)' }}>
+      <header className="flex items-center justify-center px-4 py-3" style={{ borderBottom: '1px solid rgba(197,147,14,0.15)' }}>
         <Logo size="sm" />
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-4 md:px-8 py-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 px-4 md:px-6 lg:px-8 py-6 md:py-8 max-w-7xl mx-auto w-full">
         {/* Preload video in background while user fills form */}
         {video?.public_url && !submitted && (
           <video src={video.public_url} preload="auto" muted className="hidden" aria-hidden="true" />
@@ -262,9 +266,9 @@ const PublicLandingPage = () => {
               <>
                 {page.post_submit_video_title && (
                   <div className="text-center space-y-2">
-                    <h2 className="text-2xl font-bold" style={{ color: '#F5F0E8' }}>{page.post_submit_video_title}</h2>
+                    <h2 className="text-xl md:text-2xl font-bold" style={{ color: '#F5F0E8' }}>{page.post_submit_video_title}</h2>
                     {page.post_submit_video_description && (
-                      <p style={{ color: '#888' }}>{page.post_submit_video_description}</p>
+                      <p className="text-sm md:text-base" style={{ color: '#888' }}>{page.post_submit_video_description}</p>
                     )}
                   </div>
                 )}
@@ -287,7 +291,7 @@ const PublicLandingPage = () => {
                         }
                         setShowUnmuteHint(false);
                       }}
-                      className="absolute top-4 left-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm animate-in fade-in"
+                      className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm animate-in fade-in"
                       style={{ background: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
                     >
                       <VolumeX size={14} /> Tap to unmute
@@ -296,17 +300,17 @@ const PublicLandingPage = () => {
                 </div>
               </>
             ) : (
-              <div className="sip-card p-12 text-center space-y-3">
+              <div className="sip-card p-8 md:p-12 text-center space-y-3">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: 'rgba(197,147,14,0.15)' }}>
                   <Check style={{ color: '#E8B830' }} size={32} />
                 </div>
-                <h2 className="text-2xl font-bold" style={{ color: '#F5F0E8' }}>You're Registered!</h2>
-                <p style={{ color: '#888' }}>Thank you for registering. We'll see you at the session!</p>
+                <h2 className="text-xl md:text-2xl font-bold" style={{ color: '#F5F0E8' }}>You're Registered!</h2>
+                <p className="text-sm md:text-base" style={{ color: '#888' }}>Thank you for registering. We'll see you at the session!</p>
               </div>
             )}
             {/* Testimonials after registration */}
             {showTestimonialsPostRegistration && (
-              <div className="mt-10">
+              <div className="mt-8">
                 <TestimonialsViewer
                   testimonials={testimonials}
                   sectionTitle={page.testimonials_section_title || "What our members say"}
@@ -315,7 +319,7 @@ const PublicLandingPage = () => {
             )}
             {page.linked_funnel_id && (
               <button
-                className="w-full px-8 py-3.5 rounded-lg text-base font-semibold transition-all hover:brightness-110 flex items-center justify-center gap-2"
+                className="w-full px-6 py-3.5 rounded-lg text-base font-semibold transition-all hover:brightness-110 flex items-center justify-center gap-2"
                 style={{ background: 'linear-gradient(135deg, #E8B830, #C99A18)', color: '#000' }}
                 onClick={() => window.location.href = `/f/${page.linked_funnel_id}`}
               >
@@ -324,49 +328,42 @@ const PublicLandingPage = () => {
             )}
           </div>
         ) : (
-          <div className="grid lg:grid-cols-5 gap-8 items-start">
-            <div className="lg:col-span-3 space-y-8">
-              {sections.map(renderSection)}
-              {sections.length === 0 && (
-                <div className="space-y-4">
-                  <h1 className="text-3xl md:text-4xl font-bold" style={{ color: '#F5F0E8' }}>{page.title}</h1>
-                  {page.description && <p className="text-lg" style={{ color: '#888' }}>{page.description}</p>}
-                </div>
-              )}
+          <>
+            {/* ── MOBILE LAYOUT (< lg) ── */}
+            <div className="lg:hidden space-y-6">
+              {/* Sections (hero, features etc.) */}
+              <div className="space-y-6">
+                {sections.map(renderSection)}
+                {sections.length === 0 && (
+                  <div className="space-y-3">
+                    <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#F5F0E8' }}>{page.title}</h1>
+                    {page.description && <p className="text-base" style={{ color: '#888' }}>{page.description}</p>}
+                  </div>
+                )}
+              </div>
 
-              {/* Speaker section from dedicated fields */}
+              {/* Speaker */}
               {(page.speaker_name || page.speaker_photo_url) && (
-                <div className="sip-card p-6 flex flex-col sm:flex-row gap-4 items-center">
+                <div className="sip-card p-4 flex flex-col sm:flex-row gap-3 items-center">
                   {page.speaker_photo_url && (
-                    <img src={page.speaker_photo_url} alt={page.speaker_name} className="w-24 h-24 rounded-full object-cover" style={{ border: '2px solid rgba(197,147,14,0.3)' }} />
+                    <img src={page.speaker_photo_url} alt={page.speaker_name} className="w-20 h-20 rounded-full object-cover shrink-0" style={{ border: '2px solid rgba(197,147,14,0.3)' }} />
                   )}
-                  <div>
-                    <h3 className="text-xl font-bold" style={{ color: '#F5F0E8' }}>{page.speaker_name}</h3>
-                    {page.speaker_role && <p className="text-sm" style={{ color: '#888' }}>{page.speaker_role}</p>}
-                    {page.speaker_bio && <p className="mt-2 text-sm" style={{ color: '#aaa' }}>{page.speaker_bio}</p>}
+                  <div className="text-center sm:text-left">
+                    <h3 className="text-lg font-bold" style={{ color: '#F5F0E8' }}>{page.speaker_name}</h3>
+                    {page.speaker_role && <p className="text-xs" style={{ color: '#888' }}>{page.speaker_role}</p>}
+                    {page.speaker_bio && <p className="mt-1 text-xs leading-relaxed" style={{ color: '#aaa' }}>{page.speaker_bio}</p>}
                   </div>
                 </div>
               )}
 
-              {/* Testimonials on registration page */}
-              {showTestimonialsOnRegistration && (
-                <div className="mt-6">
-                  <TestimonialsViewer
-                    testimonials={testimonials}
-                    sectionTitle={page.testimonials_section_title || "What our members say"}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="lg:col-span-2 lg:sticky lg:top-8">
-              <div className="sip-card p-6 space-y-5">
+              {/* Registration form — prominently placed on mobile */}
+              <div className="sip-card p-5 space-y-4">
                 <div>
                   <h3 className="text-lg font-bold" style={{ color: '#F5F0E8' }}>{page.form_title}</h3>
                   <p className="text-sm" style={{ color: '#E8B830' }}>{page.form_subtitle}</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-3">
                   <input
                     type="text"
                     name="website"
@@ -378,21 +375,19 @@ const PublicLandingPage = () => {
                   />
 
                   {formFields.map((f) => (
-                    <div key={f.key} className="space-y-1.5">
-                      <Label style={{ color: '#F5F0E8' }}>{f.label} {f.required && <span style={{ color: '#E8B830' }}>*</span>}</Label>
+                    <div key={f.key} className="space-y-1">
+                      <Label className="text-sm" style={{ color: '#F5F0E8' }}>{f.label} {f.required && <span style={{ color: '#E8B830' }}>*</span>}</Label>
                       {(f as any).fieldType === "state_dropdown" ? (
                         <Select
                           value={formData[f.key] || "__none__"}
                           onValueChange={(val) => setFormData((prev) => ({ ...prev, [f.key]: val === "__none__" ? "" : val }))}
                         >
-                          <SelectTrigger className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white">
+                          <SelectTrigger className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white h-10">
                             <SelectValue placeholder="Select State" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="__none__" disabled>Select State</SelectItem>
-                            {[
-                              "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Andaman & Nicobar Islands","Chandigarh","Dadra & Nagar Haveli and Daman & Diu","Delhi","Jammu & Kashmir","Ladakh","Lakshadweep","Puducherry"
-                            ].map((s) => (
+                            {INDIAN_STATES.map((s) => (
                               <SelectItem key={s} value={s}>{s}</SelectItem>
                             ))}
                           </SelectContent>
@@ -404,7 +399,7 @@ const PublicLandingPage = () => {
                           value={formData[f.key] || ""}
                           onChange={(e) => setFormData((prev) => ({ ...prev, [f.key]: e.target.value }))}
                           required={f.required}
-                          className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555]"
+                          className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555] h-10"
                         />
                       )}
                     </div>
@@ -413,7 +408,7 @@ const PublicLandingPage = () => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full px-8 py-3.5 rounded-lg text-base font-semibold transition-all hover:brightness-110 disabled:opacity-50 flex items-center justify-center"
+                    className="w-full px-6 py-3 rounded-lg text-base font-semibold transition-all hover:brightness-110 disabled:opacity-50 flex items-center justify-center"
                     style={{ background: 'linear-gradient(135deg, #E8B830, #C99A18)', color: '#000' }}
                   >
                     {submitting ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
@@ -425,12 +420,125 @@ const PublicLandingPage = () => {
                   <Lock size={12} /> Your information is safe with us
                 </p>
               </div>
+
+              {/* Testimonials below form on mobile */}
+              {showTestimonialsOnRegistration && (
+                <div className="mt-4">
+                  <TestimonialsViewer
+                    testimonials={testimonials}
+                    sectionTitle={page.testimonials_section_title || "What our members say"}
+                  />
+                </div>
+              )}
             </div>
-          </div>
+
+            {/* ── DESKTOP LAYOUT (lg+) ── */}
+            <div className="hidden lg:grid lg:grid-cols-5 gap-8 items-start">
+              <div className="lg:col-span-3 space-y-8">
+                {sections.map(renderSection)}
+                {sections.length === 0 && (
+                  <div className="space-y-4">
+                    <h1 className="text-3xl md:text-4xl font-bold" style={{ color: '#F5F0E8' }}>{page.title}</h1>
+                    {page.description && <p className="text-lg" style={{ color: '#888' }}>{page.description}</p>}
+                  </div>
+                )}
+
+                {/* Speaker */}
+                {(page.speaker_name || page.speaker_photo_url) && (
+                  <div className="sip-card p-6 flex flex-col sm:flex-row gap-4 items-center">
+                    {page.speaker_photo_url && (
+                      <img src={page.speaker_photo_url} alt={page.speaker_name} className="w-24 h-24 rounded-full object-cover" style={{ border: '2px solid rgba(197,147,14,0.3)' }} />
+                    )}
+                    <div>
+                      <h3 className="text-xl font-bold" style={{ color: '#F5F0E8' }}>{page.speaker_name}</h3>
+                      {page.speaker_role && <p className="text-sm" style={{ color: '#888' }}>{page.speaker_role}</p>}
+                      {page.speaker_bio && <p className="mt-2 text-sm" style={{ color: '#aaa' }}>{page.speaker_bio}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {/* Testimonials */}
+                {showTestimonialsOnRegistration && (
+                  <div className="mt-6">
+                    <TestimonialsViewer
+                      testimonials={testimonials}
+                      sectionTitle={page.testimonials_section_title || "What our members say"}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="lg:col-span-2 lg:sticky lg:top-8">
+                <div className="sip-card p-6 space-y-5">
+                  <div>
+                    <h3 className="text-lg font-bold" style={{ color: '#F5F0E8' }}>{page.form_title}</h3>
+                    <p className="text-sm" style={{ color: '#E8B830' }}>{page.form_subtitle}</p>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <input
+                      type="text"
+                      name="website"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      className="absolute opacity-0 h-0 w-0 pointer-events-none"
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+
+                    {formFields.map((f) => (
+                      <div key={f.key} className="space-y-1.5">
+                        <Label style={{ color: '#F5F0E8' }}>{f.label} {f.required && <span style={{ color: '#E8B830' }}>*</span>}</Label>
+                        {(f as any).fieldType === "state_dropdown" ? (
+                          <Select
+                            value={formData[f.key] || "__none__"}
+                            onValueChange={(val) => setFormData((prev) => ({ ...prev, [f.key]: val === "__none__" ? "" : val }))}
+                          >
+                            <SelectTrigger className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white">
+                              <SelectValue placeholder="Select State" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__" disabled>Select State</SelectItem>
+                              {INDIAN_STATES.map((s) => (
+                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            type={(f as any).type || "text"}
+                            placeholder={(f as any).prefix ? `${(f as any).prefix} ` : ""}
+                            value={formData[f.key] || ""}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                            required={f.required}
+                            className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555]"
+                          />
+                        )}
+                      </div>
+                    ))}
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full px-8 py-3.5 rounded-lg text-base font-semibold transition-all hover:brightness-110 disabled:opacity-50 flex items-center justify-center"
+                      style={{ background: 'linear-gradient(135deg, #E8B830, #C99A18)', color: '#000' }}
+                    >
+                      {submitting ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+                      {page.form_button_text} →
+                    </button>
+                  </form>
+
+                  <p className="text-xs text-center flex items-center justify-center gap-1" style={{ color: '#888' }}>
+                    <Lock size={12} /> Your information is safe with us
+                  </p>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </main>
 
-      <footer className="text-center py-6 text-xs" style={{ color: '#555', borderTop: '1px solid rgba(197,147,14,0.15)' }}>
+      <footer className="text-center py-4 text-xs" style={{ color: '#555', borderTop: '1px solid rgba(197,147,14,0.15)' }}>
         © Smart Income Program · Powered by Smart Income
       </footer>
     </div>
