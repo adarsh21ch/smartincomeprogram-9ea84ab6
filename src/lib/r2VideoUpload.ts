@@ -246,20 +246,24 @@ export const uploadVideoToR2 = async ({
   let ctx: Partial<MultipartContext> = {};
 
   try {
-    // Step 1: Analyze video metadata (duration extraction)
+    // Step 1: Optimize video for streaming (moov atom relocation + duration extraction)
     let processedFile = file;
     let durationSeconds = 0;
 
     if (file.type.startsWith("video/")) {
-      onStage?.("Analyzing video…");
+      onStage?.("Optimizing video for streaming…");
       onProgress?.(0);
 
       try {
         const result = await ensureFaststart(file, (stage) => onStage?.(stage));
         processedFile = result.file;
         durationSeconds = result.durationSeconds;
+        
+        if (!result.alreadyFaststart) {
+          console.log("Video optimized: moov atom relocated to start");
+        }
       } catch (err) {
-        console.warn("Video analysis skipped:", err);
+        console.warn("Video optimization skipped:", err);
         processedFile = file;
       }
     }

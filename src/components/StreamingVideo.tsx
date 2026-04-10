@@ -38,14 +38,15 @@ export const StreamingVideo = ({
   const [error, setError] = useState<string | null>(null);
   const [showPlay, setShowPlay] = useState(false);
   const [showUnmute, setShowUnmute] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const bufferTimer = useRef<ReturnType<typeof setTimeout>>();
   const unmuteTimer = useRef<ReturnType<typeof setTimeout>>();
+  const stalledRetryTimer = useRef<ReturnType<typeof setTimeout>>();
 
   // Stable src — never change src mid-playback
   useEffect(() => {
     if (!playbackSrc) return;
-    // Only update src if it actually changed (not just a re-render)
     if (srcRef.current === playbackSrc) return;
     srcRef.current = playbackSrc;
 
@@ -56,12 +57,12 @@ export const StreamingVideo = ({
     setIsLoading(true);
     setShowPlay(false);
     setShowUnmute(false);
+    setRetryCount(0);
 
     video.src = playbackSrc;
     video.load();
 
     if (autoPlay) {
-      // Try muted autoplay (always works in browsers)
       video.muted = true;
       video.play()
         .then(() => {
@@ -82,10 +83,26 @@ export const StreamingVideo = ({
     const onLoadedData = () => setIsLoading(false);
     const onCanPlay = () => { setIsLoading(false); setIsBuffering(false); setBufferingSlow(false); };
     const onPlaying = () => { setIsLoading(false); setIsBuffering(false); setBufferingSlow(false); setShowPlay(false); };
-    const onWaiting = () => setIsBuffering(true);
-    const onStalled = () => setIsBuffering(true);
-    const onSuspend = () => {}; // browser paused loading — don't show spinner
-    const onError = () => {
+
+    const onWaiting = () => {
+      // Only show buffering if we've actually started playing
+      if (video.currentTime > 0) {
+        setIsBuffering(true);
+      }
+    };
+
+    const onStalled = () => {
+      // Auto-recovery: if stalled for 3s, try nudging playback
+      if (stalledRetryTimer.current) clearTimeout(stalledRetryTimer.current);
+      stalledRetryTimer.current = setTimeout(() => {
+        if (video && !video.paused && video.readyState < 3) {
+          const ct = video.currentTime;
+          video.currentTime = ct; // nudge
+        }
+      }, 3000);
+    };
+
+    const onErrorHandler = () => {
       const code = video.error?.code;
       let msg = "Video unavailable. Tap to retry.";
       switch (code) {
@@ -94,9 +111,34 @@ export const StreamingVideo = ({
         case 3: msg = "Video format not supported. Contact support."; break;
         case 4: msg = "Video unavailable. The link may have expired."; break;
       }
+
+      // Auto-retry up to 2 times for network errors
+      if ((code === 2 || code === 1) && retryCount < 2) {
+        setRetryCount((c) => c + 1);
+        setTimeout(() => {
+          if (srcRef.current) {
+            video.src = srcRef.current;
+            video.load();
+            if (autoPlay) {
+              video.muted = true;
+              video.play().catch(() => {});
+            }
+          }
+        }, 1000 * (retryCount + 1));
+        return;
+      }
+
       setError(msg);
       setIsLoading(false);
       setIsBuffering(false);
+      onError?.();
+    };
+
+    // Progress event — indicates data is downloading, clear buffering state
+    const onProgress = () => {
+      if (video.buffered.length > 0 && video.readyState >= 2) {
+        setIsBuffering(false);
+      }
     };
 
     video.addEventListener("loadeddata", onLoadedData);
@@ -105,8 +147,8 @@ export const StreamingVideo = ({
     video.addEventListener("playing", onPlaying);
     video.addEventListener("waiting", onWaiting);
     video.addEventListener("stalled", onStalled);
-    video.addEventListener("suspend", onSuspend);
-    video.addEventListener("error", onError);
+    video.addEventListener("error", onErrorHandler);
+    video.addEventListener("progress", onProgress);
 
     return () => {
       video.removeEventListener("loadeddata", onLoadedData);
@@ -115,15 +157,15 @@ export const StreamingVideo = ({
       video.removeEventListener("playing", onPlaying);
       video.removeEventListener("waiting", onWaiting);
       video.removeEventListener("stalled", onStalled);
-      video.removeEventListener("suspend", onSuspend);
-      video.removeEventListener("error", onError);
+      video.removeEventListener("error", onErrorHandler);
+      video.removeEventListener("progress", onProgress);
     };
-  }, []);
+  }, [autoPlay, retryCount, onError]);
 
-  // Slow buffering detection (10s)
+  // Slow buffering detection (8s)
   useEffect(() => {
     if (isBuffering) {
-      bufferTimer.current = setTimeout(() => setBufferingSlow(true), 10000);
+      bufferTimer.current = setTimeout(() => setBufferingSlow(true), 8000);
     } else {
       setBufferingSlow(false);
       if (bufferTimer.current) clearTimeout(bufferTimer.current);
@@ -136,6 +178,7 @@ export const StreamingVideo = ({
     return () => {
       if (bufferTimer.current) clearTimeout(bufferTimer.current);
       if (unmuteTimer.current) clearTimeout(unmuteTimer.current);
+      if (stalledRetryTimer.current) clearTimeout(stalledRetryTimer.current);
     };
   }, []);
 
@@ -144,6 +187,7 @@ export const StreamingVideo = ({
     if (!video) return;
     setError(null);
     setIsLoading(true);
+    setRetryCount(0);
     const currentSrc = srcRef.current;
     if (currentSrc) {
       video.src = currentSrc;
