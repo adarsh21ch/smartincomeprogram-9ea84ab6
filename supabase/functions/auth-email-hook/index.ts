@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "funnelspark-growth"
+const SITE_NAME = "Smart Income Program"
 const SENDER_DOMAIN = "notify.smartincomeprogram.in"
 const ROOT_DOMAIN = "smartincomeprogram.in"
 const FROM_DOMAIN = "smartincomeprogram.in" // Domain shown in From address (may be root or sender subdomain)
@@ -54,10 +54,12 @@ const SAMPLE_DATA: Record<string, object> = {
     siteUrl: SAMPLE_PROJECT_URL,
     recipient: SAMPLE_EMAIL,
     confirmationUrl: SAMPLE_PROJECT_URL,
+    token: '123456',
   },
   magiclink: {
     siteName: SITE_NAME,
     confirmationUrl: SAMPLE_PROJECT_URL,
+    token: '123456',
   },
   recovery: {
     siteName: SITE_NAME,

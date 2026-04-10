@@ -67,8 +67,8 @@ const OtpInput = ({
           disabled={disabled}
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
-          className={`w-12 h-14 text-center text-xl font-bold rounded-lg border-2 bg-muted transition-all outline-none focus:ring-2 focus:ring-primary/50 ${
-            error ? "border-destructive animate-shake" : "border-border focus:border-primary"
+          className={`w-12 h-14 text-center text-xl font-bold rounded-lg border-2 bg-background text-foreground transition-all outline-none focus:ring-2 focus:ring-primary/50 ${
+            error ? "border-destructive animate-shake" : "border-muted-foreground/30 focus:border-primary"
           } ${disabled ? "opacity-50" : ""}`}
         />
       ))}
