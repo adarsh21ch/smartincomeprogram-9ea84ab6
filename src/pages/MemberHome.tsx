@@ -25,40 +25,39 @@ const MemberHome = ({ tab }: MemberHomeProps) => {
     },
   });
 
-  const funnelId = tab === "program"
-    ? settings?.active_member_funnel_id
-    : (settings as any)?.active_courses_funnel_id;
-
-  const { data: funnel, isLoading: funnelLoading } = useQuery({
-    queryKey: ["member-funnel", funnelId],
+  // Fetch member content from edge function for program/courses tabs
+  const { data: content, isLoading: contentLoading } = useQuery({
+    queryKey: ["member-content", tab, user?.id],
     queryFn: async () => {
-      if (!funnelId) return null;
-      const { data } = await supabase
-        .from("funnels")
-        .select("id, title, description")
-        .eq("id", funnelId)
-        .single();
-      return data;
+      const { data, error } = await supabase.functions.invoke("get-member-content", {
+        body: { type: tab },
+      });
+      if (error) throw error;
+      return data as {
+        funnel: { id: string; name: string; description?: string } | null;
+        steps: Array<{
+          id: string;
+          title: string;
+          description?: string;
+          order: number;
+          step_type: string;
+          video_url: string | null;
+          thumbnail_url: string | null;
+          duration_seconds: number | null;
+          is_locked: boolean;
+          progress: {
+            watch_percent: number;
+            is_completed: boolean;
+            last_position_seconds: number;
+          };
+        }>;
+        overall_completion_percent: number;
+      };
     },
-    enabled: !!funnelId,
+    enabled: tab !== "about" && !!user,
   });
 
-  const { data: steps = [] } = useQuery({
-    queryKey: ["member-funnel-steps", funnelId],
-    queryFn: async () => {
-      if (!funnelId) return [];
-      const { data } = await supabase
-        .from("funnel_steps")
-        .select("id, title, description, step_order, step_type, video_asset_id")
-        .eq("funnel_id", funnelId)
-        .eq("is_active", true)
-        .order("step_order");
-      return data || [];
-    },
-    enabled: !!funnelId,
-  });
-
-  const isLoading = settingsLoading || funnelLoading;
+  const isLoading = settingsLoading || (tab !== "about" && contentLoading);
 
   if (isLoading) {
     return (
@@ -72,8 +71,8 @@ const MemberHome = ({ tab }: MemberHomeProps) => {
 
   // About tab
   if (tab === "about") {
-    const aboutTitle = (settings as any)?.about_title || "About the Program";
-    const aboutContent = (settings as any)?.about_content || "";
+    const aboutTitle = settings?.about_title || "About the Program";
+    const aboutContent = settings?.about_content || "";
 
     return (
       <MemberLayout>
@@ -97,8 +96,12 @@ const MemberHome = ({ tab }: MemberHomeProps) => {
 
   // Program or Courses tab
   const tabLabel = tab === "program" ? "Your Program" : "Your Courses";
+  const funnel = content?.funnel;
+  const steps = content?.steps || [];
+  const completionPct = content?.overall_completion_percent || 0;
+  const completedSteps = steps.filter((s) => s.progress.is_completed).length;
 
-  if (!funnelId || !funnel) {
+  if (!funnel) {
     return (
       <MemberLayout>
         <div className="space-y-4">
@@ -116,10 +119,6 @@ const MemberHome = ({ tab }: MemberHomeProps) => {
     );
   }
 
-  const completedSteps = 0; // TODO: fetch from progress table
-  const totalSteps = steps.length;
-  const completionPct = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
-
   return (
     <MemberLayout>
       <div className="space-y-6">
@@ -134,7 +133,7 @@ const MemberHome = ({ tab }: MemberHomeProps) => {
         <div className="glass-card p-4 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">
-              {completedSteps} of {totalSteps} steps completed
+              {completedSteps} of {steps.length} steps completed
             </span>
             <span className="font-medium">{completionPct}%</span>
           </div>
@@ -149,9 +148,8 @@ const MemberHome = ({ tab }: MemberHomeProps) => {
         ) : (
           <div className="space-y-3">
             {steps.map((step, index) => {
-              const isFirst = index === 0;
-              const isLocked = !isFirst; // TODO: real unlock logic
-              const isCompleted = false; // TODO: real progress
+              const { is_locked: isLocked, progress } = step;
+              const isCompleted = progress.is_completed;
 
               return (
                 <div
@@ -160,7 +158,6 @@ const MemberHome = ({ tab }: MemberHomeProps) => {
                     isLocked ? "opacity-60" : ""
                   }`}
                 >
-                  {/* Step Number */}
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold ${
                       isCompleted
@@ -173,15 +170,18 @@ const MemberHome = ({ tab }: MemberHomeProps) => {
                     {isCompleted ? <CheckCircle2 size={20} /> : index + 1}
                   </div>
 
-                  {/* Step Info */}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-sm truncate">{step.title}</h3>
                     {step.description && (
                       <p className="text-xs text-muted-foreground truncate">{step.description}</p>
                     )}
+                    {!isLocked && !isCompleted && progress.watch_percent > 0 && (
+                      <div className="mt-1">
+                        <Progress value={progress.watch_percent} className="h-1" />
+                      </div>
+                    )}
                   </div>
 
-                  {/* Status / Action */}
                   <div className="shrink-0">
                     {isCompleted ? (
                       <span className="text-xs text-green-500 font-medium flex items-center gap-1">
@@ -193,7 +193,7 @@ const MemberHome = ({ tab }: MemberHomeProps) => {
                       </span>
                     ) : (
                       <Button size="sm" variant="hero" className="gap-1.5">
-                        <Play size={14} /> Watch
+                        <Play size={14} /> {progress.watch_percent > 0 ? "Continue" : "Watch"}
                       </Button>
                     )}
                   </div>
