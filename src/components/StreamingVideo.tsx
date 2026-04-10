@@ -225,7 +225,7 @@ export const StreamingVideo = ({
         className="w-full h-full"
         controls={controls && !error && !showPlay}
         playsInline
-        preload="auto"
+        preload="metadata"
         controlsList="nodownload"
         poster={poster || undefined}
         title={title}

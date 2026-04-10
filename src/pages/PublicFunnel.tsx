@@ -312,7 +312,7 @@ const CustomVideoPlayer = ({
         poster={poster}
         className="w-full h-full object-contain"
         playsInline
-        preload="auto"
+        preload="metadata"
         onTimeUpdate={handleTimeUpdate}
         onSeeking={handleSeeking}
         onLoadedMetadata={() => { if (videoRef.current) { setDuration(videoRef.current.duration); if (initialTime > 0) videoRef.current.currentTime = initialTime; } }}

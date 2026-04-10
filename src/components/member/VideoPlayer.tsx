@@ -291,7 +291,7 @@ export const VideoPlayer = ({
           className="w-full h-full"
           onClick={togglePlay}
           playsInline
-          preload="auto"
+          preload="metadata"
           onEnded={() => {
             setIsPlaying(false);
             const video = videoRef.current;

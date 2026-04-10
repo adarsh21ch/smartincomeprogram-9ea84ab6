@@ -7,59 +7,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const R2_ENDPOINT = Deno.env.get("R2_ENDPOINT") || "";
-const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID") || "";
-const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY") || "";
-const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME") || "";
-
-function normalizeR2Endpoint(endpoint: string, bucketName: string): string {
-  const trimmed = endpoint.trim().replace(/\/+$/, "");
-  if (!trimmed) return trimmed;
-
-  try {
-    const url = new URL(trimmed);
-    const pathParts = url.pathname.split("/").filter(Boolean);
-
-    if (pathParts[0] === bucketName) {
-      url.pathname = "/";
-    }
-
-    return url.toString().replace(/\/+$/, "");
-  } catch {
-    return trimmed;
-  }
-}
-
 function sanitizeFilename(filename: string): string {
-  const ext = filename.lastIndexOf(".") >= 0 ? filename.slice(filename.lastIndexOf(".")).toLowerCase() : "";
+  const ext = filename.lastIndexOf(".") >= 0
+    ? filename.slice(filename.lastIndexOf(".")).toLowerCase() : "";
   const name = filename.slice(0, filename.length - ext.length);
-  const safe = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  const safe = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   return (safe || "video") + ext;
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS")
+    return new Response("ok", { headers: corsHeaders });
 
-    const normalizedR2Endpoint = normalizeR2Endpoint(R2_ENDPOINT, R2_BUCKET_NAME);
-    console.log("R2 endpoint ready for signing", { bucket: R2_BUCKET_NAME, endpoint: normalizedR2Endpoint });
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return new Response(JSON.stringify({ error: "No auth" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!authHeader)
+      return new Response(JSON.stringify({ error: "No auth" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
-
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!user)
+      return new Response(JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const { filename, contentType, title } = await req.json();
-    if (!filename || !contentType) return new Response(JSON.stringify({ error: "Missing filename/contentType" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!filename || !contentType)
+      return new Response(JSON.stringify({ error: "Missing filename/contentType" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -68,48 +47,44 @@ Deno.serve(async (req) => {
 
     const safeFilename = sanitizeFilename(filename);
 
-    const { data: video, error: dbErr } = await serviceClient.from("video_assets").insert({
-      owner_id: user.id,
-      title: title || filename,
-      original_filename: filename,
-      status: "uploading",
-      upload_percent: 0,
-      is_shared: true,
-    }).select("id").single();
-
+    const { data: video, error: dbErr } = await serviceClient
+      .from("video_assets")
+      .insert({
+        owner_id: user.id,
+        title: title || filename,
+        original_filename: filename,
+        status: "uploading",
+        upload_percent: 0,
+        is_shared: true,
+      })
+      .select("id").single();
     if (dbErr) throw dbErr;
 
     const r2Key = `videos/${video.id}/${safeFilename}`;
 
-    // Use official AWS SDK presigner
     const s3 = new S3Client({
       region: "auto",
-      endpoint: normalizedR2Endpoint,
-      forcePathStyle: true,
+      endpoint: Deno.env.get("R2_ENDPOINT") || "",
       credentials: {
-        accessKeyId: R2_ACCESS_KEY_ID,
-        secretAccessKey: R2_SECRET_ACCESS_KEY,
+        accessKeyId: Deno.env.get("R2_ACCESS_KEY_ID") || "",
+        secretAccessKey: Deno.env.get("R2_SECRET_ACCESS_KEY") || "",
       },
     });
 
     const command = new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: Deno.env.get("R2_BUCKET_NAME") || "",
       Key: r2Key,
       ContentType: contentType,
-      CacheControl: "public, max-age=86400",
     });
 
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
-
     await serviceClient.from("video_assets").update({ r2_key: r2Key }).eq("id", video.id);
 
-    return new Response(JSON.stringify({
-      uploadUrl,
-      videoId: video.id,
-      r2Key,
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ uploadUrl, videoId: video.id, r2Key }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err: any) {
     console.error("get-r2-upload-url error:", err);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: err.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
