@@ -24,12 +24,12 @@ import PublicLandingPage from "./pages/PublicLandingPage";
 import VideosPage from "./pages/VideosPage";
 import PublicVideoPage from "./pages/PublicVideoPage";
 import LeadsPage from "./pages/LeadsPage";
-import PaymentsPage from "./pages/PaymentsPage";
+// PaymentsPage removed - no payment gateway
 import AnalyticsPage from "./pages/AnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
 import KYCPage from "./pages/KYCPage";
 import SettingsPage from "./pages/SettingsPage";
-import BillingPage from "./pages/BillingPage";
+// BillingPage removed - no payment gateway
 import LivePage from "./pages/LivePage";
 import LiveDetailPage from "./pages/LiveDetailPage";
 import PublicLivePage from "./pages/PublicLivePage";
@@ -93,7 +93,7 @@ const App = () => (
               <Route path="/landing-pages" element={<Navigate to="/admin/landing-pages" replace />} />
               <Route path="/videos" element={<Navigate to="/admin/videos" replace />} />
               <Route path="/leads" element={<Navigate to="/admin/leads" replace />} />
-              <Route path="/payments" element={<Navigate to="/admin/payments" replace />} />
+              <Route path="/payments" element={<Navigate to="/home" replace />} />
               <Route path="/analytics" element={<Navigate to="/admin/analytics" replace />} />
               <Route path="/live" element={<Navigate to="/admin/live" replace />} />
 
@@ -112,7 +112,7 @@ const App = () => (
               <Route path="/admin/live/:id" element={<AdminRoute><LiveDetailPage /></AdminRoute>} />
               <Route path="/admin/videos" element={<AdminRoute><AdminVideosPage /></AdminRoute>} />
               <Route path="/admin/leads" element={<AdminRoute><LeadsPage /></AdminRoute>} />
-              <Route path="/admin/payments" element={<AdminRoute><PaymentsPage /></AdminRoute>} />
+              {/* Payments route removed - no payment gateway */}
               <Route path="/admin/analytics" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
               <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
               <Route path="/admin/kyc" element={<AdminRoute><AdminKYCPage /></AdminRoute>} />

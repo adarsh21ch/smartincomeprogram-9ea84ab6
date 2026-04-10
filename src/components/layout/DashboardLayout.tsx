@@ -22,7 +22,6 @@ const navItems = [
   { icon: Radio, label: "Live", path: "/admin/live" },
   { icon: Video, label: "Videos", path: "/admin/videos" },
   { icon: Users, label: "Leads", path: "/admin/leads" },
-  { icon: IndianRupee, label: "Payments", path: "/admin/payments" },
   { icon: BarChart3, label: "Analytics", path: "/admin/analytics" },
 ];
 

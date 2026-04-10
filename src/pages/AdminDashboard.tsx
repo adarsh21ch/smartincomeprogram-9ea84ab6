@@ -1,7 +1,7 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Layers, Video, BarChart3, IndianRupee, Shield, ArrowRight } from "lucide-react";
+import { Users, Layers, Video, BarChart3, Shield, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
@@ -20,17 +20,13 @@ const AdminDashboard = () => {
     queryFn: async () => { const { data } = await supabase.from("video_assets").select("id"); return data || []; },
   });
 
-  const { data: subs = [] } = useQuery({
-    queryKey: ["admin-subs"],
-    queryFn: async () => { const { data } = await supabase.from("user_subscriptions").select("amount_paid, tier, status"); return data || []; },
-  });
 
   const { data: kycPending = [] } = useQuery({
     queryKey: ["admin-kyc-pending"],
     queryFn: async () => { const { data } = await supabase.from("user_kyc_submissions").select("id").eq("status", "pending"); return data || []; },
   });
 
-  const mrr = subs.filter((s) => s.status === "active" && s.tier !== "free").reduce((a, s) => a + (s.amount_paid || 0), 0);
+  
   const totalViews = funnels.reduce((a, f) => a + ((f as any).total_views || 0), 0);
   const totalLeads = funnels.reduce((a, f) => a + ((f as any).total_leads || 0), 0);
 
@@ -40,7 +36,6 @@ const AdminDashboard = () => {
     { icon: Video, label: "Total Videos", value: String(videos.length), color: "text-primary" },
     { icon: BarChart3, label: "Total Views", value: totalViews.toLocaleString("en-IN"), color: "text-primary" },
     { icon: Users, label: "Total Leads", value: totalLeads.toLocaleString("en-IN"), color: "text-success" },
-    { icon: IndianRupee, label: "Total Revenue", value: `₹${mrr.toLocaleString("en-IN")}`, color: "text-warning" },
     { icon: Shield, label: "KYC Pending", value: String(kycPending.length), color: "text-destructive" },
   ];
 
