@@ -78,7 +78,7 @@ export const SipHero = ({ getText }: Props) => {
               </Link>
             </div>
 
-            <div className="sip-gold-divider max-w-xs mx-auto md:mx-0 mb-8" />
+            <div className="sip-gold-divider max-w-xs mx-auto md:mx-0 mb-4" />
 
             <div className="flex flex-wrap justify-center md:justify-start gap-6 md:gap-10">
               {[trust1, trust2, trust3].map((t, i) => (
