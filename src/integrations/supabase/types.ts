@@ -1046,7 +1046,10 @@ export type Database = {
           type: string
           updated_at: string | null
           video_duration_seconds: number | null
+          video_height: number | null
+          video_orientation: string | null
           video_url: string | null
+          video_width: number | null
         }
         Insert: {
           created_at?: string | null
@@ -1063,7 +1066,10 @@ export type Database = {
           type?: string
           updated_at?: string | null
           video_duration_seconds?: number | null
+          video_height?: number | null
+          video_orientation?: string | null
           video_url?: string | null
+          video_width?: number | null
         }
         Update: {
           created_at?: string | null
@@ -1080,7 +1086,10 @@ export type Database = {
           type?: string
           updated_at?: string | null
           video_duration_seconds?: number | null
+          video_height?: number | null
+          video_orientation?: string | null
           video_url?: string | null
+          video_width?: number | null
         }
         Relationships: [
           {
