@@ -221,8 +221,35 @@ const VideoPlayer = ({ videoUrl, thumbnailUrl, durationSeconds, orientation }: {
   const [progress, setProgress] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
   const [showControls, setShowControls] = useState(false);
+  const [generatedPoster, setGeneratedPoster] = useState<string | null>(null);
   const controlsTimer = useRef<ReturnType<typeof setTimeout>>();
   const isLandscape = orientation === "landscape";
+
+  // Auto-generate poster thumbnail if none provided
+  useEffect(() => {
+    if (thumbnailUrl || !videoUrl) return;
+    const video = document.createElement("video");
+    video.crossOrigin = "anonymous";
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    video.src = videoUrl;
+    video.onloadedmetadata = () => {
+      video.currentTime = Math.min(0.5, video.duration * 0.1 || 0.1);
+    };
+    video.onseeked = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext("2d")?.drawImage(video, 0, 0);
+        setGeneratedPoster(canvas.toDataURL("image/jpeg", 0.7));
+      } catch { /* CORS — fallback to no poster */ }
+    };
+    return () => { video.src = ""; };
+  }, [videoUrl, thumbnailUrl]);
+
+  const posterSrc = thumbnailUrl || generatedPoster || undefined;
 
   // Preload metadata
   useEffect(() => {
