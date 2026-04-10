@@ -26,6 +26,23 @@ const PublicLandingPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [honeypot, setHoneypot] = useState("");
+  const [showUnmuteHint, setShowUnmuteHint] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Auto-hide unmute hint after 5 seconds
+  useEffect(() => {
+    if (submitted && showUnmuteHint) {
+      const t = setTimeout(() => setShowUnmuteHint(false), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [submitted, showUnmuteHint]);
+
+  // Autoplay fallback
+  useEffect(() => {
+    if (submitted && videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [submitted]);
 
   useEffect(() => {
     if (!slug) return;
