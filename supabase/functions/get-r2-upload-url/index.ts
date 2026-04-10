@@ -12,6 +12,24 @@ const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID") || "";
 const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY") || "";
 const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME") || "";
 
+function normalizeR2Endpoint(endpoint: string, bucketName: string): string {
+  const trimmed = endpoint.trim().replace(/\/+$/, "");
+  if (!trimmed) return trimmed;
+
+  try {
+    const url = new URL(trimmed);
+    const pathParts = url.pathname.split("/").filter(Boolean);
+
+    if (pathParts[0] === bucketName) {
+      url.pathname = "/";
+    }
+
+    return url.toString().replace(/\/+$/, "");
+  } catch {
+    return trimmed;
+  }
+}
+
 function sanitizeFilename(filename: string): string {
   const ext = filename.lastIndexOf(".") >= 0 ? filename.slice(filename.lastIndexOf(".")).toLowerCase() : "";
   const name = filename.slice(0, filename.length - ext.length);
@@ -25,7 +43,8 @@ function sanitizeFilename(filename: string): string {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-    console.log("R2_ENDPOINT:", R2_ENDPOINT, "R2_BUCKET_NAME:", R2_BUCKET_NAME);
+    const normalizedR2Endpoint = normalizeR2Endpoint(R2_ENDPOINT, R2_BUCKET_NAME);
+    console.log("R2 endpoint ready for signing", { bucket: R2_BUCKET_NAME, endpoint: normalizedR2Endpoint });
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return new Response(JSON.stringify({ error: "No auth" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -65,7 +84,7 @@ Deno.serve(async (req) => {
     // Use official AWS SDK presigner
     const s3 = new S3Client({
       region: "auto",
-      endpoint: R2_ENDPOINT,
+      endpoint: normalizedR2Endpoint,
       forcePathStyle: true,
       credentials: {
         accessKeyId: R2_ACCESS_KEY_ID,
