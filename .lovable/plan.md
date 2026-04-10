@@ -1,27 +1,53 @@
 
+What I found
 
-# Re-configure R2 Secrets for This Project
+- This does not look like a secrets/account problem anymore. The latest video reaches `status: "ready"`, has a public URL, and the session replay shows it can open and partially play/seek.
+- The strongest signal is now the browser-side media error: `EmptyRanges` with `played/buffered/syncControl`. That points to the browser’s native media controls path, and `/admin/videos` is using `StreamingVideo` with native `controls`.
+- The uploaded file is also very large (~288 MB), and uploads are currently not saving `duration_seconds`, so the app has no metadata-based fallback when a raw MP4 is slow or fragile to stream.
+- There are still a few inconsistent video surfaces (`StreamingVideo`, `PublicFunnel`, `VideoPlayer`, `VideosPage`) using different playback logic.
 
-## Problem
-The current R2 secrets (endpoint, keys, bucket, public URL) may point to a different Cloudflare account, causing uploaded videos to return 404 on playback.
+Plan
 
-## Plan
-I'll ask you to re-submit all 5 R2 secrets with the correct values for this project's Cloudflare account:
+1. Stabilize the shared preview player
+- Rework `src/components/StreamingVideo.tsx` to stop depending on browser-native `controls` for admin/public preview surfaces.
+- Use a small custom control layer instead: play/pause, mute, retry, loading/buffering states.
+- Convert it to `forwardRef` as well, so the current ref warning stops firing.
 
-1. **R2_ENDPOINT** — `https://<your-account-id>.r2.cloudflarestorage.com`
-2. **R2_ACCESS_KEY_ID** — R2 API token access key
-3. **R2_SECRET_ACCESS_KEY** — R2 API token secret key
-4. **R2_BUCKET_NAME** — The bucket name (e.g. `my-videos`)
-5. **R2_PUBLIC_URL** — The public URL for serving files (either `https://pub-xxx.r2.dev` or a custom domain like `https://cdn.yourdomain.com`)
+2. Harden playback logic across all players
+- Add safe guards before reading `buffered`, `duration`, and `currentTime` in:
+  - `src/components/StreamingVideo.tsx`
+  - `src/components/member/VideoPlayer.tsx`
+  - `src/pages/PublicFunnel.tsx`
+- Only allow seek operations after metadata is loaded.
+- Replace fragile recovery like forced `currentTime = currentTime` nudges with safer retry/reload behavior.
 
-After you provide these, I'll update all 5 secrets and then test the upload + playback flow end-to-end to confirm videos work.
+3. Unify video handling everywhere
+- Update `src/pages/VideosPage.tsx` to stop using a raw `<video>` preview and use the same resolved playback path + metadata preload strategy as the shared player.
+- Keep all surfaces on the same playback URL resolver and preload behavior.
 
-## Where to find these in Cloudflare
-1. Log in to **dash.cloudflare.com** → select the correct account
-2. Go to **R2 Object Storage** → your bucket → **Settings** → copy the **S3 API endpoint** (that's `R2_ENDPOINT`)
-3. The bucket name is shown at the top
-4. For public URL: in bucket Settings → **Public access** → copy the public URL domain
-5. For keys: **R2 Object Storage** → **Manage R2 API Tokens** → create or copy an existing token's Access Key ID and Secret Access Key
+4. Restore lightweight upload metadata
+- Update `src/lib/r2VideoUpload.ts` to extract duration with the lightweight helper and send `durationSeconds` to `confirm-r2-upload`.
+- This will let the UI detect problematic uploads more reliably and stop showing blank/ambiguous states.
 
-No code changes needed — just secret updates.
+5. Add a clear fallback for problematic MP4s
+- If first-frame/metadata loading fails or stalls too long, show a specific “video file is not web-optimized” message instead of leaving the player stuck pausing/spinning.
+- This is important because very large raw MP4s can still behave badly even when storage and URLs are correct.
 
+Technical details
+
+- Files to update:
+  - `src/components/StreamingVideo.tsx`
+  - `src/components/member/VideoPlayer.tsx`
+  - `src/pages/PublicFunnel.tsx`
+  - `src/pages/VideosPage.tsx`
+  - `src/lib/r2VideoUpload.ts`
+- No database schema or secret changes should be needed.
+- Expected result:
+  - Admin preview stops randomly pausing due to native-control instability
+  - Public/member playback becomes more consistent
+  - Large uploads fail more gracefully when the file itself is the problem
+- After implementation I would verify end-to-end on:
+  - `/admin/videos` modal
+  - public shared video page
+  - landing-page post-submit video
+  - funnel/member player
