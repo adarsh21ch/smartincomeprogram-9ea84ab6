@@ -865,7 +865,7 @@ const LandingPageEditor = () => {
                 <p className="text-[10px] font-semibold tracking-[0.05em] text-muted-foreground/50">{s.num}</p>
                 <p className="text-[13px] font-semibold leading-tight">{s.label}</p>
               </div>
-              {i === lastStepIdx && form.status === "published" && <Check size={14} className="ml-auto text-emerald-500" />}
+              {i === lastStepIdx && form.status === "published" && <Check size={14} className="ml-auto text-primary" />}
             </button>
           ))}
         </div>
