@@ -118,6 +118,7 @@ export const TestimonialVideoUpload = ({
   value,
   thumbnailUrl,
   durationSeconds,
+  orientation,
   maxSeconds,
   onUploaded,
   onClear,
@@ -129,6 +130,7 @@ export const TestimonialVideoUpload = ({
   const [fileName, setFileName] = useState("");
   const [statusLabel, setStatusLabel] = useState("Preparing upload");
   const inputRef = useRef<HTMLInputElement>(null);
+  const isLandscape = orientation === "landscape";
 
   const handleFile = async (file: File) => {
     setError("");
