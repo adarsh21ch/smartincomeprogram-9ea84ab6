@@ -457,26 +457,24 @@ const PublicLandingPage = () => {
 
                 {/* Speaker */}
                 {(page.speaker_name || page.speaker_photo_url) && (
-                  <div className="sip-card p-6 flex flex-col sm:flex-row gap-4 items-center">
+                  <div className="sip-card p-6 flex gap-5 items-start">
                     {page.speaker_photo_url && (
-                      <img src={page.speaker_photo_url} alt={page.speaker_name} className="w-24 h-24 rounded-full object-cover" style={{ border: '2px solid rgba(197,147,14,0.3)' }} />
+                      <img src={page.speaker_photo_url} alt={page.speaker_name} className="w-20 h-20 rounded-full object-cover shrink-0" style={{ border: '2px solid rgba(197,147,14,0.3)' }} />
                     )}
-                    <div>
-                      <h3 className="text-xl font-bold" style={{ color: '#F5F0E8' }}>{page.speaker_name}</h3>
-                      {page.speaker_role && <p className="text-sm" style={{ color: '#888' }}>{page.speaker_role}</p>}
-                      {page.speaker_bio && <p className="mt-2 text-sm" style={{ color: '#aaa' }}>{page.speaker_bio}</p>}
+                    <div className="min-w-0">
+                      <h3 className="text-lg font-bold" style={{ color: '#F5F0E8' }}>{page.speaker_name}</h3>
+                      {page.speaker_role && <p className="text-xs font-medium mt-0.5" style={{ color: '#888' }}>{page.speaker_role}</p>}
+                      {page.speaker_bio && <p className="mt-2 text-sm leading-relaxed" style={{ color: '#aaa' }}>{page.speaker_bio}</p>}
                     </div>
                   </div>
                 )}
 
-                {/* Testimonials */}
+                {/* Testimonials — shown on left before form */}
                 {showTestimonialsOnRegistration && (
-                  <div className="mt-6">
-                    <TestimonialsViewer
-                      testimonials={testimonials}
-                      sectionTitle={page.testimonials_section_title || "What our members say"}
-                    />
-                  </div>
+                  <TestimonialsViewer
+                    testimonials={testimonials}
+                    sectionTitle={page.testimonials_section_title || "What our members say"}
+                  />
                 )}
               </div>
 
