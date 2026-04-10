@@ -113,6 +113,7 @@ const App = () => (
               <Route path="/admin/invite-codes" element={<AdminRoute><AdminInviteCodesPage /></AdminRoute>} />
               <Route path="/admin/landing-page" element={<AdminRoute><AdminLandingPageManager /></AdminRoute>} />
               <Route path="/admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
+              <Route path="/admin/program" element={<AdminRoute><AdminProgramPage /></AdminRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
