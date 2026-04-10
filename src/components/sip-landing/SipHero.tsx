@@ -20,10 +20,10 @@ export const SipHero = ({ getText }: Props) => {
   const trust3 = getText("hero", "trust_3", "🏆 Proven System");
 
   return (
-    <section className="sip-hero-bg min-h-screen flex items-center justify-center pt-16">
-      <div className="container py-24 md:py-32">
+    <section className="sip-hero-bg min-h-[calc(100vh-4rem)] flex items-center justify-center pt-16">
+      <div className="container py-10 md:py-16 lg:py-20">
         {/* Desktop: two-column | Mobile: single column centered */}
-        <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16 lg:gap-20">
+        <div className="flex flex-col md:flex-row items-center gap-4 md:gap-12 lg:gap-16">
           {/* Left — Large Logo (desktop only visible large, mobile smaller) */}
           <motion.div
             className="flex-shrink-0 flex items-center justify-center"
