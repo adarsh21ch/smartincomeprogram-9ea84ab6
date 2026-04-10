@@ -271,7 +271,6 @@ export const VideoPlayer = ({
           onClick={togglePlay}
           playsInline
           preload="auto"
-          crossOrigin="anonymous"
           onEnded={() => {
             setIsPlaying(false);
             const video = videoRef.current;

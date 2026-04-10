@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
       Bucket: R2_BUCKET_NAME,
       Key: r2Key,
       ContentType: contentType,
+      CacheControl: "public, max-age=86400",
     });
 
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });

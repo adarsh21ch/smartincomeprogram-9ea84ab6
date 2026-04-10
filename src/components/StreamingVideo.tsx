@@ -180,7 +180,6 @@ export const StreamingVideo = ({
         controls={controls && !error && !showPlay}
         playsInline
         preload="auto"
-        crossOrigin="anonymous"
         controlsList="nodownload"
         poster={poster || undefined}
         title={title}
