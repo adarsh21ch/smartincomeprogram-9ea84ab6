@@ -15,6 +15,7 @@ import {
 import { Loader2, Check, Lock, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { TestimonialsViewer } from "@/components/funnel/TestimonialsViewer";
+import { PostSubmitVideoPlayer } from "@/components/landing/PostSubmitVideoPlayer";
 
 const PublicLandingPage = () => {
   const { slug } = useParams();
@@ -246,14 +247,11 @@ const PublicLandingPage = () => {
                     )}
                   </div>
                 )}
-                <div className="aspect-video rounded-xl overflow-hidden bg-black">
-                  <video
-                    src={video.public_url}
-                    controls
-                    className="w-full h-full"
-                    poster={video.thumbnail_url || undefined}
-                  />
-                </div>
+                <PostSubmitVideoPlayer
+                  videoUrl={video.public_url}
+                  thumbnailUrl={video.thumbnail_url}
+                />
+
               </>
             ) : (
               <div className="sip-card p-12 text-center space-y-3">
