@@ -10,6 +10,7 @@ import { SipFaq } from "@/components/sip-landing/SipFaq";
 import { SipCta } from "@/components/sip-landing/SipCta";
 import { SipDisclaimer } from "@/components/sip-landing/SipDisclaimer";
 import { SipFooter } from "@/components/sip-landing/SipFooter";
+import { InstallAppBanner } from "@/components/InstallAppBanner";
 
 const Index = () => {
   const { getText, speakers, testimonials, journeySteps, faqItems, isLoading } = useSipLandingData();
@@ -35,6 +36,7 @@ const Index = () => {
           <SipFooter getText={getText} />
         </>
       )}
+      <InstallAppBanner />
     </div>
   );
 };
