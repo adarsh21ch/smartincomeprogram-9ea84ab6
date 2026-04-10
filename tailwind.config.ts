@@ -63,9 +63,9 @@ export default {
         },
         surface: "hsl(var(--surface))",
         gold: {
-          DEFAULT: "#D4A017",
-          light: "#F0C040",
-          dark: "#A07810",
+          DEFAULT: "#FFD700",
+          light: "#FFE44D",
+          dark: "#C9A800",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

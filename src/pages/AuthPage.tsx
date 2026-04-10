@@ -190,15 +190,32 @@ const AuthPage = () => {
         return;
       }
 
-      // Send OTP for email verification
-      await supabase.auth.signInWithOtp({
-        email: form.email,
-        options: { shouldCreateUser: false },
-      });
+      // Auto-confirm is enabled, sign in directly
+      const { error: signInError } = await signIn(form.email, form.password);
+      if (signInError) {
+        toast.error("Account created! Please sign in.");
+        setStep("login");
+        return;
+      }
 
-      setResendCooldown(30);
-      setStep("otp");
-      toast.success("Verification code sent to your email!");
+      // Mark invite code as used
+      if (inviteCodeId) {
+        try {
+          const uid = (await supabase.auth.getUser()).data.user?.id;
+          await supabase.functions.invoke("verify-invite-code", {
+            body: { code: inviteCode.trim().toUpperCase(), action: "use", user_email: form.email, user_id: uid },
+          });
+        } catch {}
+      }
+
+      const uid = (await supabase.auth.getUser()).data.user?.id;
+      if (uid) {
+        const { data: roleData } = await supabase.rpc("has_role", { _user_id: uid, _role: "admin" });
+        navigate(roleData ? "/admin/dashboard" : "/home");
+      } else {
+        navigate("/home");
+      }
+      toast.success("Welcome! Your account is ready.");
     } finally {
       setSubmitting(false);
     }
