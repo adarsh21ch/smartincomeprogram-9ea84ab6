@@ -107,9 +107,34 @@ export const StreamingVideo = forwardRef<HTMLVideoElement, StreamingVideoProps>(
       }
     };
     const onLoadedData = () => setIsLoading(false);
-    const onCanPlay = () => { setIsLoading(false); setIsBuffering(false); setBufferingSlow(false); };
-    const onPlaying = () => { setIsLoading(false); setIsBuffering(false); setBufferingSlow(false); setShowPlay(false); setIsPlaying(true); };
-    const onPause = () => setIsPlaying(false);
+    const onCanPlay = () => {
+      setIsLoading(false);
+      setIsBuffering(false);
+      setBufferingSlow(false);
+      // Auto-resume if video was paused due to buffering (not user-initiated)
+      if (video.paused && !userPausedRef.current && video.currentTime > 0) {
+        video.play().catch(() => {});
+      }
+    };
+    const onPlaying = () => { setIsLoading(false); setIsBuffering(false); setBufferingSlow(false); setShowPlay(false); setIsPlaying(true); userPausedRef.current = false; };
+    const onPause = () => {
+      setIsPlaying(false);
+      // If video paused but user didn't pause it, it's a buffer underrun — mark for auto-resume
+      // Don't mark as user-paused if we're still buffering
+      if (!isBuffering) {
+        // Check if there's buffered data ahead — if so, try to resume
+        try {
+          if (video.buffered && video.buffered.length > 0) {
+            const buffEnd = video.buffered.end(video.buffered.length - 1);
+            if (buffEnd > video.currentTime + 0.5) {
+              // There's data ahead, resume
+              video.play().catch(() => {});
+              return;
+            }
+          }
+        } catch { /* ignore */ }
+      }
+    };
 
     const onTimeUpdate = () => {
       if (isFinite(video.currentTime)) {
