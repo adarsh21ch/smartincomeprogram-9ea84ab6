@@ -211,6 +211,9 @@ export const TestimonialVideoUpload = ({
         videoUrl: publicUrl!,
         thumbnailUrl: uploadedThumbnailUrl,
         durationSeconds: duration,
+        videoOrientation: orientation,
+        videoWidth: width,
+        videoHeight: height,
       });
       toast.success("Video uploaded successfully");
     } catch (err) {
