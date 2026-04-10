@@ -18,8 +18,10 @@ interface TestimonialsBuilderStepProps {
   userId: string;
   testimonialsEnabled: boolean;
   testimonialsSectionTitle: string;
+  testimonialsDisplayPosition: string;
   onToggleEnabled: (v: boolean) => void;
   onTitleChange: (v: string) => void;
+  onDisplayPositionChange: (v: string) => void;
 }
 
 // Debounced input
@@ -79,7 +81,7 @@ DebouncedTextarea.displayName = "DebouncedTextarea";
 type TestimonialContentType = "text" | "video" | "both";
 
 export const TestimonialsBuilderStep = ({
-  landingPageId, userId, testimonialsEnabled, testimonialsSectionTitle, onToggleEnabled, onTitleChange,
+  landingPageId, userId, testimonialsEnabled, testimonialsSectionTitle, testimonialsDisplayPosition, onToggleEnabled, onTitleChange, onDisplayPositionChange,
 }: TestimonialsBuilderStepProps) => {
   const queryClient = useQueryClient();
   const MAX_PER_PAGE = 4;
@@ -191,7 +193,34 @@ export const TestimonialsBuilderStep = ({
         </div>
 
         <div className={!testimonialsEnabled ? "opacity-50 pointer-events-none" : ""}>
-          <div className="p-4 bg-muted/50 rounded-xl space-y-2">
+          {/* Display Position */}
+          <div className="p-4 bg-muted/50 rounded-xl space-y-3">
+            <Label className="font-semibold">Show Testimonials On</Label>
+            <p className="text-xs text-muted-foreground">Choose where testimonials appear for visitors.</p>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: "registration", label: "Registration Page", desc: "Before form submission" },
+                { value: "post_registration", label: "After Registration", desc: "With intro video / confirmation" },
+                { value: "both", label: "Both Pages", desc: "Show on both views" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => onDisplayPositionChange(opt.value)}
+                  className={`p-3 rounded-lg border text-left transition-all ${
+                    testimonialsDisplayPosition === opt.value
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-muted/30 hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <span className="text-xs font-semibold block">{opt.label}</span>
+                  <span className="text-[10px] text-muted-foreground">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-4 bg-muted/50 rounded-xl space-y-2 mt-4">
             <Label>Section Title</Label>
             <Input
               value={testimonialsSectionTitle}
