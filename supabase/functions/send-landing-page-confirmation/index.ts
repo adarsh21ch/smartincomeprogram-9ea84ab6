@@ -3,7 +3,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
+
+const RESEND_API_URL = 'https://api.resend.com/emails'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,6 +16,11 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
+
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+    if (!RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY not configured')
+    }
 
     const { registration_id, landing_page_id } = await req.json()
 
@@ -48,19 +54,10 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { data: creator } = await supabase
-      .from('profiles')
-      .select('full_name, email')
-      .eq('id', page.owner_id)
-      .single()
-
-    // Use sender_display_name from landing page settings; fall back to platform name
     const senderDisplayName = (page as any).sender_display_name || 'Smart Income Program'
     const isPlatformSender = senderDisplayName === 'Smart Income Program'
     const trustBadgeText = isPlatformSender ? 'Verified by Smart Income Program' : 'Sent via Smart Income Program'
-    const trustBadgeIcon = isPlatformSender
-      ? '&#10003;'  // checkmark
-      : '&#9656;'   // arrow
+    const trustBadgeIcon = isPlatformSender ? '&#10003;' : '&#9656;'
 
     let emailBody = (page.email_body || '').replace(/\{\{name\}\}/g, reg.name || 'there')
       .replace(/\{\{email\}\}/g, reg.email || '')
@@ -90,40 +87,31 @@ Deno.serve(async (req) => {
 </body>
 </html>`
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured')
-    }
-
-    const senderDomain = 'notify.mail.smartincomeprogram.in'
-    const fromName = senderDisplayName
-
     const plainText = `${page.email_heading || 'You are registered!'}\n\n${emailBody}\n\n${page.email_footer_text || ''}\n\n${trustBadgeText}`
 
-    // Generate or fetch unsubscribe token for this email
-    const unsubscribeToken = crypto.randomUUID()
-    await supabase.from('email_unsubscribe_tokens').upsert(
-      { email: reg.email, token: unsubscribeToken },
-      { onConflict: 'email' }
-    )
-
-    const result = await sendLovableEmail(
-      {
-        to: reg.email,
+    // Send via Resend
+    const response = await fetch(RESEND_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: `${senderDisplayName} <noreply@smartincomeprogram.in>`,
+        to: [reg.email],
         subject,
         html,
         text: plainText,
-        from: `${fromName} <noreply@smartincomeprogram.in>`,
-        sender_domain: senderDomain,
-        purpose: 'transactional',
-        idempotency_key: `lp-confirm-${registration_id}`,
-        message_id: `lp-confirm-${registration_id}`,
-        unsubscribe_token: unsubscribeToken,
-      },
-      { apiKey: LOVABLE_API_KEY }
-    )
+      }),
+    })
 
-    console.log('Email sent result:', JSON.stringify(result))
+    if (!response.ok) {
+      const errBody = await response.text()
+      throw new Error(`Resend API error [${response.status}]: ${errBody}`)
+    }
+
+    const result = await response.json()
+    console.log('Email sent via Resend:', JSON.stringify(result))
 
     // Update registration
     await supabase.from('landing_page_registrations').update({
