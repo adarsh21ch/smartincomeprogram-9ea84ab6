@@ -29,7 +29,14 @@ export const SipNavbar = () => {
 
         <div className="hidden md:flex items-center gap-4">
           <Link to="/auth">
-            <button className="px-4 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors">
+            <button
+              className="px-5 py-2 text-sm font-semibold rounded-lg transition-all hover:brightness-110"
+              style={{
+                background: "linear-gradient(135deg, #E8B830, #C99A18)",
+                color: "#000",
+                boxShadow: "0 0 16px rgba(232,184,48,0.3)",
+              }}
+            >
               Login
             </button>
           </Link>
@@ -49,7 +56,13 @@ export const SipNavbar = () => {
           }}
         >
           <Link to="/auth" onClick={() => setOpen(false)}>
-            <button className="w-full py-2.5 text-sm text-white/80 border border-white/10 rounded-lg">
+            <button
+              className="w-full py-2.5 text-sm font-semibold rounded-lg"
+              style={{
+                background: "linear-gradient(135deg, #E8B830, #C99A18)",
+                color: "#000",
+              }}
+            >
               Login
             </button>
           </Link>
