@@ -10,6 +10,7 @@ interface TestimonialVideoUploadProps {
   value: string;
   thumbnailUrl?: string | null;
   durationSeconds?: number | null;
+  orientation?: string | null;
   maxSeconds: number;
   onUploaded: (payload: {
     videoUrl: string;
@@ -117,6 +118,7 @@ export const TestimonialVideoUpload = ({
   value,
   thumbnailUrl,
   durationSeconds,
+  orientation,
   maxSeconds,
   onUploaded,
   onClear,
@@ -128,6 +130,7 @@ export const TestimonialVideoUpload = ({
   const [fileName, setFileName] = useState("");
   const [statusLabel, setStatusLabel] = useState("Preparing upload");
   const inputRef = useRef<HTMLInputElement>(null);
+  const isLandscape = orientation === "landscape";
 
   const handleFile = async (file: File) => {
     setError("");
@@ -255,12 +258,12 @@ export const TestimonialVideoUpload = ({
 
       {value ? (
         <div className="space-y-3">
-          <div className="max-w-[220px] rounded-[1.5rem] border border-border bg-background/70 p-2">
-            <div className="relative aspect-[9/16] overflow-hidden rounded-[1rem] bg-foreground/10">
+          <div className={`${isLandscape ? "max-w-[360px]" : "max-w-[220px]"} rounded-[1.5rem] border border-border bg-background/70 p-2`}>
+            <div className={`relative ${isLandscape ? "aspect-video" : "aspect-[9/16]"} overflow-hidden rounded-[1rem] bg-foreground/10`}>
               {playing ? (
                 <video
                   src={value}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="absolute inset-0 h-full w-full object-contain"
                   controls
                   autoPlay
                   playsInline
@@ -269,9 +272,9 @@ export const TestimonialVideoUpload = ({
               ) : (
                 <>
                   {thumbnailUrl ? (
-                    <img src={thumbnailUrl} alt="Student testimonial preview" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+                    <img src={thumbnailUrl} alt="Student testimonial preview" className={`absolute inset-0 h-full w-full ${isLandscape ? "object-contain" : "object-cover"}`} loading="lazy" />
                   ) : (
-                    <video src={value} className="absolute inset-0 h-full w-full object-cover" preload="metadata" muted playsInline />
+                    <video src={value} className={`absolute inset-0 h-full w-full ${isLandscape ? "object-contain" : "object-cover"}`} preload="metadata" muted playsInline />
                   )}
 
                   <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/10 to-transparent" />
@@ -308,7 +311,7 @@ export const TestimonialVideoUpload = ({
       ) : (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="mx-auto w-[132px] shrink-0 sm:mx-0">
-            <div className={`flex aspect-[9/16] items-center justify-center rounded-[1.25rem] border ${error ? "border-destructive/50" : "border-border border-dashed"} bg-muted/35 p-4 text-center`}>
+            <div className={`flex aspect-square items-center justify-center rounded-2xl border ${error ? "border-destructive/50" : "border-border border-dashed"} bg-muted/35 p-4 text-center`}>
               <div className="space-y-2">
                 {uploading ? (
                   <Loader2 size={24} className="mx-auto animate-spin text-primary" />
@@ -316,8 +319,8 @@ export const TestimonialVideoUpload = ({
                   <Video size={24} className="mx-auto text-primary" />
                 )}
                 <div>
-                  <p className="text-xs font-medium text-foreground">Vertical preview</p>
-                  <p className="text-[10px] text-muted-foreground">Reel-style card</p>
+                  <p className="text-xs font-medium text-foreground">Video preview</p>
+                  <p className="text-[10px] text-muted-foreground">Any orientation</p>
                 </div>
               </div>
             </div>
@@ -331,7 +334,7 @@ export const TestimonialVideoUpload = ({
               <p className="text-xs text-muted-foreground">
                 MP4, MOV, WEBM • Max {maxSeconds} seconds • Max {MAX_SIZE_MB}MB
               </p>
-              <p className="text-xs text-muted-foreground">Portrait videos look best in the live preview.</p>
+              <p className="text-xs text-muted-foreground">Portrait or landscape — both supported.</p>
             </div>
 
             {uploading ? (

@@ -377,6 +377,7 @@ const TestimonialCard = memo(({
                 value={t.video_url || ""}
                 thumbnailUrl={t.thumbnail_url || null}
                 durationSeconds={t.video_duration_seconds}
+                orientation={t.video_orientation || null}
                 maxSeconds={maxVideoSeconds}
                 onUploaded={({ videoUrl, thumbnailUrl, durationSeconds, videoOrientation, videoWidth, videoHeight }) => {
                   onUpdateAndRefresh(t.id, {
