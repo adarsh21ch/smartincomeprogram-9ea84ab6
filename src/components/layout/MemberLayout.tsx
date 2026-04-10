@@ -1,6 +1,6 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Logo } from "@/components/landing/Logo";
-import { Film, BookOpen, GraduationCap, User, LogOut, Shield, Sun, Moon, Menu } from "lucide-react";
+import { Film, BookOpen, GraduationCap, User, LogOut, Shield, Sun, Moon, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -19,6 +19,8 @@ const tabs = [
 export const MemberLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get("preview") === "true";
   const { signOut, profile } = useAuth();
   const { isAdmin } = useAdmin();
   const { theme, toggleTheme } = useTheme();
@@ -38,14 +40,24 @@ export const MemberLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Preview banner */}
+      {isPreview && (
+        <div className="bg-primary text-primary-foreground text-center text-xs py-1.5 font-medium sticky top-0 z-[60]">
+          Preview Mode —{" "}
+          <button onClick={() => navigate("/admin/program")} className="underline">
+            Exit Preview
+          </button>
+        </div>
+      )}
+
       {/* Top Navbar */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-md" style={isPreview ? { top: 28 } : undefined}>
         <div className="max-w-5xl mx-auto flex items-center justify-between px-4 h-14">
           <Link to="/home">
             <Logo size="sm" />
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={toggleTheme}
               className="text-muted-foreground hover:text-foreground p-2 rounded-md hover:bg-muted transition-colors"
@@ -62,7 +74,12 @@ export const MemberLayout = ({ children }: { children: React.ReactNode }) => {
                   <span className="text-sm font-medium hidden sm:block">{firstName}</span>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium">{profile?.full_name || "Member"}</p>
+                  <p className="text-xs text-muted-foreground">{profile?.email}</p>
+                </div>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User size={14} className="mr-2" /> My Profile
                 </DropdownMenuItem>
@@ -116,7 +133,7 @@ export const MemberLayout = ({ children }: { children: React.ReactNode }) => {
       </main>
 
       {/* Mobile Bottom Tab Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border flex justify-around py-1.5 z-50 safe-area-pb">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border flex justify-around z-50" style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom))" }}>
         {tabs.map((tab) => {
           const active = tab.path === "/home"
             ? location.pathname === "/home"
@@ -126,7 +143,7 @@ export const MemberLayout = ({ children }: { children: React.ReactNode }) => {
               key={tab.path}
               to={tab.path}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] transition-colors",
+                "flex flex-col items-center gap-0.5 px-3 py-2 text-[10px] transition-colors",
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >

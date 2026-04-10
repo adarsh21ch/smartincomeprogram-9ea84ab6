@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
-import { Loader2, ExternalLink, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, ExternalLink, AlertTriangle, CheckCircle2, Plus, Trash2, Eye, Monitor, Tablet, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminProgramPage = () => {
@@ -33,6 +33,25 @@ const AdminProgramPage = () => {
   // About Tab state
   const [aboutTitle, setAboutTitle] = useState("");
   const [aboutContent, setAboutContent] = useState("");
+
+  // Member Experience state
+  const [welcomeMessage, setWelcomeMessage] = useState("Welcome back, [name]! 👋");
+  const [welcomeTagline, setWelcomeTagline] = useState("Your success journey continues today.");
+  const [programTabTitle, setProgramTabTitle] = useState("Your Program");
+  const [coursesTabTitle, setCoursesTabTitle] = useState("Your Courses");
+  const [completionMessage, setCompletionMessage] = useState("Congratulations! You have completed the program.");
+  const [certificateSignatory, setCertificateSignatory] = useState("");
+
+  // About Tab Builder state
+  const [aboutOverview, setAboutOverview] = useState("");
+  const [mentorName, setMentorName] = useState("");
+  const [mentorTitle, setMentorTitle] = useState("");
+  const [mentorBio, setMentorBio] = useState("");
+  const [benefits, setBenefits] = useState<string[]>([]);
+  const [faqItems, setFaqItems] = useState<Array<{ question: string; answer: string }>>([]);
+
+  // Preview state
+  const [previewDevice, setPreviewDevice] = useState<"mobile" | "tablet" | "desktop">("mobile");
 
   // Program flow state
   const [registerPageId, setRegisterPageId] = useState<string>("__none__");
@@ -90,6 +109,19 @@ const AdminProgramPage = () => {
     setRegisterPageId(settings.active_register_landing_page_id || "__none__");
     setMemberFunnelId(settings.active_member_funnel_id || "__none__");
     setCoursesFunnelId(settings.active_courses_funnel_id || "__none__");
+    // New fields
+    setWelcomeMessage((settings as any).welcome_message || "Welcome back, [name]! 👋");
+    setWelcomeTagline((settings as any).welcome_tagline || "Your success journey continues today.");
+    setProgramTabTitle((settings as any).program_tab_title || "Your Program");
+    setCoursesTabTitle((settings as any).courses_tab_title || "Your Courses");
+    setCompletionMessage((settings as any).completion_message || "Congratulations! You have completed the program.");
+    setCertificateSignatory((settings as any).certificate_signatory || "");
+    setAboutOverview((settings as any).about_overview_text || "");
+    setMentorName((settings as any).mentor_name || "");
+    setMentorTitle((settings as any).mentor_title || "");
+    setMentorBio((settings as any).mentor_bio || "");
+    setBenefits(Array.isArray((settings as any).benefits) ? (settings as any).benefits : []);
+    setFaqItems(Array.isArray((settings as any).faq_items) ? (settings as any).faq_items : []);
   }, [settings]);
 
   useEffect(() => {
@@ -149,6 +181,28 @@ const AdminProgramPage = () => {
       about_title: aboutTitle,
       about_content: aboutContent,
     });
+  };
+
+  const saveMemberExperience = () => {
+    updateSettings.mutate({
+      welcome_message: welcomeMessage,
+      welcome_tagline: welcomeTagline,
+      program_tab_title: programTabTitle,
+      courses_tab_title: coursesTabTitle,
+      completion_message: completionMessage,
+      certificate_signatory: certificateSignatory,
+    } as any);
+  };
+
+  const saveAboutTabBuilder = () => {
+    updateSettings.mutate({
+      about_overview_text: aboutOverview,
+      mentor_name: mentorName,
+      mentor_title: mentorTitle,
+      mentor_bio: mentorBio,
+      benefits: benefits,
+      faq_items: faqItems,
+    } as any);
   };
 
   const saveRegisterPage = () => {
@@ -446,6 +500,204 @@ const AdminProgramPage = () => {
                 inviteCodeMutation.mutate(checked);
               }}
             />
+          </div>
+        </section>
+
+        {/* Member Experience Editor */}
+        <section className="glass-card p-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-heading font-semibold">Member Experience</h2>
+            <p className="text-xs text-muted-foreground mt-1">Customise messages and labels members see.</p>
+          </div>
+          <div>
+            <Label className="text-xs">Welcome Message (use [name] for member's first name)</Label>
+            <Input value={welcomeMessage} onChange={(e) => setWelcomeMessage(e.target.value)} className="mt-1 bg-muted border-border" />
+            <p className="text-xs text-muted-foreground mt-1">Preview: {welcomeMessage.replace("[name]", "Adarsh")}</p>
+          </div>
+          <div>
+            <Label className="text-xs">Motivational Tagline</Label>
+            <Input value={welcomeTagline} onChange={(e) => setWelcomeTagline(e.target.value)} className="mt-1 bg-muted border-border" />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs">Program Tab Title</Label>
+              <Input value={programTabTitle} onChange={(e) => setProgramTabTitle(e.target.value)} className="mt-1 bg-muted border-border" />
+            </div>
+            <div>
+              <Label className="text-xs">Courses Tab Title</Label>
+              <Input value={coursesTabTitle} onChange={(e) => setCoursesTabTitle(e.target.value)} className="mt-1 bg-muted border-border" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Completion Message</Label>
+            <Textarea value={completionMessage} onChange={(e) => setCompletionMessage(e.target.value)} className="mt-1 bg-muted border-border" rows={2} />
+          </div>
+          <div>
+            <Label className="text-xs">Certificate Signatory Name</Label>
+            <Input value={certificateSignatory} onChange={(e) => setCertificateSignatory(e.target.value)} className="mt-1 bg-muted border-border" placeholder="e.g. Adarsh Jain, Founder" />
+          </div>
+          <Button variant="hero" size="sm" onClick={saveMemberExperience} disabled={updateSettings.isPending}>
+            {updateSettings.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
+            Save Member Experience
+          </Button>
+        </section>
+
+        {/* About Tab Builder */}
+        <section className="glass-card p-6 space-y-5">
+          <div>
+            <h2 className="text-lg font-heading font-semibold">About Tab Builder</h2>
+            <p className="text-xs text-muted-foreground mt-1">Structured content for the member About tab.</p>
+          </div>
+
+          {/* Overview */}
+          <div>
+            <Label className="text-xs">Program Overview</Label>
+            <Textarea value={aboutOverview} onChange={(e) => setAboutOverview(e.target.value)} className="mt-1 bg-muted border-border" rows={4} placeholder="Write about your program..." />
+          </div>
+
+          {/* Mentor */}
+          <div className="space-y-3 p-4 rounded-lg border border-border bg-muted/30">
+            <Label className="text-sm font-medium">Mentor / Leader</Label>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Mentor Name</Label>
+                <Input value={mentorName} onChange={(e) => setMentorName(e.target.value)} className="mt-1 bg-muted border-border" />
+              </div>
+              <div>
+                <Label className="text-xs">Mentor Title</Label>
+                <Input value={mentorTitle} onChange={(e) => setMentorTitle(e.target.value)} className="mt-1 bg-muted border-border" placeholder="e.g. Founder & Coach" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Mentor Bio (max 300 chars)</Label>
+              <Textarea value={mentorBio} onChange={(e) => setMentorBio(e.target.value.slice(0, 300))} className="mt-1 bg-muted border-border" rows={2} />
+              <span className="text-xs text-muted-foreground">{mentorBio.length}/300</span>
+            </div>
+          </div>
+
+          {/* Benefits */}
+          <div className="space-y-3 p-4 rounded-lg border border-border bg-muted/30">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Benefits List</Label>
+              {benefits.length < 10 && (
+                <Button size="sm" variant="outline" onClick={() => setBenefits([...benefits, ""])} className="gap-1">
+                  <Plus size={12} /> Add
+                </Button>
+              )}
+            </div>
+            {benefits.map((b, i) => (
+              <div key={i} className="flex gap-2">
+                <Input
+                  value={b}
+                  onChange={(e) => {
+                    const updated = [...benefits];
+                    updated[i] = e.target.value;
+                    setBenefits(updated);
+                  }}
+                  className="bg-muted border-border"
+                  placeholder="Benefit text..."
+                />
+                <Button size="icon" variant="ghost" onClick={() => setBenefits(benefits.filter((_, j) => j !== i))}>
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          {/* FAQ */}
+          <div className="space-y-3 p-4 rounded-lg border border-border bg-muted/30">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">FAQ Items</Label>
+              {faqItems.length < 10 && (
+                <Button size="sm" variant="outline" onClick={() => setFaqItems([...faqItems, { question: "", answer: "" }])} className="gap-1">
+                  <Plus size={12} /> Add
+                </Button>
+              )}
+            </div>
+            {faqItems.map((faq, i) => (
+              <div key={i} className="space-y-2 p-3 rounded border border-border bg-background">
+                <div className="flex gap-2">
+                  <Input
+                    value={faq.question}
+                    onChange={(e) => {
+                      const updated = [...faqItems];
+                      updated[i] = { ...faq, question: e.target.value };
+                      setFaqItems(updated);
+                    }}
+                    className="bg-muted border-border"
+                    placeholder="Question..."
+                  />
+                  <Button size="icon" variant="ghost" onClick={() => setFaqItems(faqItems.filter((_, j) => j !== i))}>
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+                <Textarea
+                  value={faq.answer}
+                  onChange={(e) => {
+                    const updated = [...faqItems];
+                    updated[i] = { ...faq, answer: e.target.value };
+                    setFaqItems(updated);
+                  }}
+                  className="bg-muted border-border"
+                  rows={2}
+                  placeholder="Answer..."
+                />
+              </div>
+            ))}
+          </div>
+
+          <Button variant="hero" size="sm" onClick={saveAboutTabBuilder} disabled={updateSettings.isPending}>
+            {updateSettings.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
+            Save About Tab
+          </Button>
+        </section>
+
+        {/* Preview */}
+        <section className="glass-card p-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-heading font-semibold flex items-center gap-2">
+              <Eye size={18} /> Member View Preview
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">This is exactly what your members see when they log in.</p>
+          </div>
+          <div className="flex gap-2">
+            {[
+              { key: "mobile" as const, icon: Smartphone, label: "Mobile", w: 375 },
+              { key: "tablet" as const, icon: Tablet, label: "Tablet", w: 768 },
+              { key: "desktop" as const, icon: Monitor, label: "Desktop", w: 0 },
+            ].map((d) => (
+              <Button
+                key={d.key}
+                size="sm"
+                variant={previewDevice === d.key ? "hero" : "outline"}
+                onClick={() => setPreviewDevice(d.key)}
+                className="gap-1"
+              >
+                <d.icon size={14} /> {d.label}
+              </Button>
+            ))}
+          </div>
+          <div className="flex justify-center">
+            <div
+              className="rounded-2xl overflow-hidden border border-border shadow-lg"
+              style={{
+                width: previewDevice === "desktop" ? "100%" : previewDevice === "tablet" ? 768 : 375,
+                maxWidth: "100%",
+              }}
+            >
+              <iframe
+                src="/home?preview=true"
+                width="100%"
+                height={previewDevice === "desktop" ? 700 : previewDevice === "tablet" ? 800 : 700}
+                style={{ border: "none" }}
+                title="Member Preview"
+              />
+            </div>
+          </div>
+          <div className="text-center">
+            <a href="/home" target="_blank" rel="noopener" className="text-xs text-primary hover:underline">
+              Open in new tab ↗
+            </a>
           </div>
         </section>
       </div>

@@ -1499,6 +1499,80 @@ export type Database = {
           },
         ]
       }
+      member_activity_log: {
+        Row: {
+          activity_date: string
+          id: string
+          member_id: string
+          videos_watched: number | null
+        }
+        Insert: {
+          activity_date?: string
+          id?: string
+          member_id: string
+          videos_watched?: number | null
+        }
+        Update: {
+          activity_date?: string
+          id?: string
+          member_id?: string
+          videos_watched?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_activity_log_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_certificates: {
+        Row: {
+          funnel_id: string
+          id: string
+          issued_at: string | null
+          member_id: string
+          member_name: string
+          program_name: string
+          signatory: string | null
+        }
+        Insert: {
+          funnel_id: string
+          id?: string
+          issued_at?: string | null
+          member_id: string
+          member_name: string
+          program_name: string
+          signatory?: string | null
+        }
+        Update: {
+          funnel_id?: string
+          id?: string
+          issued_at?: string | null
+          member_id?: string
+          member_name?: string
+          program_name?: string
+          signatory?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_certificates_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_certificates_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -1763,12 +1837,18 @@ export type Database = {
       program_settings: {
         Row: {
           about_content: string | null
+          about_overview_text: string | null
           about_paragraphs: Json | null
           about_section_title: string | null
           about_title: string | null
           active_courses_funnel_id: string | null
           active_member_funnel_id: string | null
           active_register_landing_page_id: string | null
+          benefits: Json | null
+          certificate_signatory: string | null
+          completion_message: string | null
+          courses_tab_title: string | null
+          faq_items: Json | null
           favicon_url: string | null
           feature_badges: Json | null
           feature_cards: Json | null
@@ -1779,20 +1859,33 @@ export type Database = {
           id: string
           intro_video_url: string | null
           logo_url: string | null
+          mentor_bio: string | null
+          mentor_name: string | null
+          mentor_photo_url: string | null
+          mentor_title: string | null
           primary_color: string | null
           program_name: string
+          program_tab_title: string | null
           program_tagline: string | null
           show_intro_video_button: boolean | null
           updated_at: string | null
+          welcome_message: string | null
+          welcome_tagline: string | null
         }
         Insert: {
           about_content?: string | null
+          about_overview_text?: string | null
           about_paragraphs?: Json | null
           about_section_title?: string | null
           about_title?: string | null
           active_courses_funnel_id?: string | null
           active_member_funnel_id?: string | null
           active_register_landing_page_id?: string | null
+          benefits?: Json | null
+          certificate_signatory?: string | null
+          completion_message?: string | null
+          courses_tab_title?: string | null
+          faq_items?: Json | null
           favicon_url?: string | null
           feature_badges?: Json | null
           feature_cards?: Json | null
@@ -1803,20 +1896,33 @@ export type Database = {
           id?: string
           intro_video_url?: string | null
           logo_url?: string | null
+          mentor_bio?: string | null
+          mentor_name?: string | null
+          mentor_photo_url?: string | null
+          mentor_title?: string | null
           primary_color?: string | null
           program_name?: string
+          program_tab_title?: string | null
           program_tagline?: string | null
           show_intro_video_button?: boolean | null
           updated_at?: string | null
+          welcome_message?: string | null
+          welcome_tagline?: string | null
         }
         Update: {
           about_content?: string | null
+          about_overview_text?: string | null
           about_paragraphs?: Json | null
           about_section_title?: string | null
           about_title?: string | null
           active_courses_funnel_id?: string | null
           active_member_funnel_id?: string | null
           active_register_landing_page_id?: string | null
+          benefits?: Json | null
+          certificate_signatory?: string | null
+          completion_message?: string | null
+          courses_tab_title?: string | null
+          faq_items?: Json | null
           favicon_url?: string | null
           feature_badges?: Json | null
           feature_cards?: Json | null
@@ -1827,11 +1933,18 @@ export type Database = {
           id?: string
           intro_video_url?: string | null
           logo_url?: string | null
+          mentor_bio?: string | null
+          mentor_name?: string | null
+          mentor_photo_url?: string | null
+          mentor_title?: string | null
           primary_color?: string | null
           program_name?: string
+          program_tab_title?: string | null
           program_tagline?: string | null
           show_intro_video_button?: boolean | null
           updated_at?: string | null
+          welcome_message?: string | null
+          welcome_tagline?: string | null
         }
         Relationships: [
           {
