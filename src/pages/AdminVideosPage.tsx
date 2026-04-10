@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState, useRef } from "react";
 import { Upload, Video, Trash2, Loader2, Link2, Share2, Pencil, Rocket, Play, X } from "lucide-react";
+import { StreamingVideo } from "@/components/StreamingVideo";
 import { Progress } from "@/components/ui/progress";
 import { VideoShareModal } from "@/components/VideoShareModal";
 import { VideoRenameModal } from "@/components/VideoRenameModal";
