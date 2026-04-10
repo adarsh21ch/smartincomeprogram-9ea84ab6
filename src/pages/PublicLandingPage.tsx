@@ -264,8 +264,8 @@ const PublicLandingPage = () => {
                 <p style={{ color: '#888' }}>Thank you for registering. We'll see you at the session!</p>
               </div>
             )}
-            {/* Testimonials section */}
-            {page.testimonials_enabled && testimonials.length > 0 && (
+            {/* Testimonials after registration */}
+            {showTestimonialsPostRegistration && (
               <div className="mt-10">
                 <TestimonialsViewer
                   testimonials={testimonials}
@@ -305,6 +305,16 @@ const PublicLandingPage = () => {
                     {page.speaker_role && <p className="text-sm" style={{ color: '#888' }}>{page.speaker_role}</p>}
                     {page.speaker_bio && <p className="mt-2 text-sm" style={{ color: '#aaa' }}>{page.speaker_bio}</p>}
                   </div>
+                </div>
+              )}
+
+              {/* Testimonials on registration page */}
+              {showTestimonialsOnRegistration && (
+                <div className="mt-6">
+                  <TestimonialsViewer
+                    testimonials={testimonials}
+                    sectionTitle={page.testimonials_section_title || "What our members say"}
+                  />
                 </div>
               )}
             </div>
