@@ -1182,6 +1182,7 @@ export type Database = {
           speaker_photo_url: string | null
           speaker_role: string | null
           status: string
+          testimonials_display_position: string
           testimonials_enabled: boolean | null
           testimonials_section_title: string | null
           theme_color: string | null
@@ -1243,6 +1244,7 @@ export type Database = {
           speaker_photo_url?: string | null
           speaker_role?: string | null
           status?: string
+          testimonials_display_position?: string
           testimonials_enabled?: boolean | null
           testimonials_section_title?: string | null
           theme_color?: string | null
@@ -1304,6 +1306,7 @@ export type Database = {
           speaker_photo_url?: string | null
           speaker_role?: string | null
           status?: string
+          testimonials_display_position?: string
           testimonials_enabled?: boolean | null
           testimonials_section_title?: string | null
           theme_color?: string | null
