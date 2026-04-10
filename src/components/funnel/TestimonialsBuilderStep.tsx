@@ -370,24 +370,36 @@ const TestimonialCard = memo(({
 
           {/* Video section */}
           {showVideo && (
-            <TestimonialVideoUpload
-              testimonialId={t.id}
-              landingPageId={landingPageId}
-              value={t.video_url || ""}
-              thumbnailUrl={t.thumbnail_url || null}
-              durationSeconds={t.video_duration_seconds}
-              maxSeconds={maxVideoSeconds}
-              onUploaded={({ videoUrl, thumbnailUrl, durationSeconds }) => {
-                onUpdateAndRefresh(t.id, {
-                  video_url: videoUrl,
-                  thumbnail_url: thumbnailUrl,
-                  video_duration_seconds: durationSeconds,
-                });
-              }}
-              onClear={() => {
-                onUpdateAndRefresh(t.id, { video_url: null, thumbnail_url: null, video_duration_seconds: null });
-              }}
-            />
+            <>
+              <TestimonialVideoUpload
+                testimonialId={t.id}
+                landingPageId={landingPageId}
+                value={t.video_url || ""}
+                thumbnailUrl={t.thumbnail_url || null}
+                durationSeconds={t.video_duration_seconds}
+                maxSeconds={maxVideoSeconds}
+                onUploaded={({ videoUrl, thumbnailUrl, durationSeconds, videoOrientation, videoWidth, videoHeight }) => {
+                  onUpdateAndRefresh(t.id, {
+                    video_url: videoUrl,
+                    thumbnail_url: thumbnailUrl,
+                    video_duration_seconds: durationSeconds,
+                    video_orientation: videoOrientation || 'portrait',
+                    video_width: videoWidth || null,
+                    video_height: videoHeight || null,
+                  });
+                }}
+                onClear={() => {
+                  onUpdateAndRefresh(t.id, { video_url: null, thumbnail_url: null, video_duration_seconds: null, video_orientation: 'portrait', video_width: null, video_height: null });
+                }}
+              />
+              {t.video_url && t.video_orientation && (
+                <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                  t.video_orientation === 'landscape' ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'
+                }`}>
+                  {t.video_orientation === 'landscape' ? '🖥 Landscape (16:9)' : '📱 Portrait (9:16)'}
+                </span>
+              )}
+            </>
           )}
 
           {/* Bottom: active toggle + delete */}
