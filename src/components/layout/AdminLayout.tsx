@@ -1,12 +1,20 @@
 import { Link, useLocation } from "react-router-dom";
 import { DashboardLayout } from "./DashboardLayout";
-import { LayoutDashboard, Video, Users, UserCheck, Cog, Ticket, Globe, Settings2 } from "lucide-react";
+import {
+  LayoutDashboard, Video, Users, UserCheck, Cog, Ticket, Globe, Settings2,
+  Layers, FileText, Radio, IndianRupee, BarChart3,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminTabs = [
-  { icon: LayoutDashboard, label: "Overview", path: "/admin" },
+  { icon: LayoutDashboard, label: "Overview", path: "/admin/dashboard" },
   { icon: Settings2, label: "Program", path: "/admin/program" },
+  { icon: Layers, label: "Funnels", path: "/admin/funnels" },
+  { icon: FileText, label: "Landing Pages", path: "/admin/landing-pages" },
+  { icon: Radio, label: "Live", path: "/admin/live" },
   { icon: Video, label: "Videos", path: "/admin/videos" },
+  { icon: IndianRupee, label: "Payments", path: "/admin/payments" },
+  { icon: BarChart3, label: "Analytics", path: "/admin/analytics" },
   { icon: Users, label: "Users", path: "/admin/users" },
   { icon: UserCheck, label: "KYC", path: "/admin/kyc" },
   { icon: Ticket, label: "Invite Codes", path: "/admin/invite-codes" },
@@ -22,8 +30,8 @@ export const AdminLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="space-y-6">
         <div className="flex items-center gap-1 overflow-x-auto pb-1 border-b border-border -mx-4 md:-mx-8 px-4 md:px-8">
           {adminTabs.map((tab) => {
-            const active = tab.path === "/admin"
-              ? location.pathname === "/admin"
+            const active = tab.path === "/admin/dashboard"
+              ? location.pathname === "/admin/dashboard" || location.pathname === "/admin"
               : location.pathname.startsWith(tab.path);
             return (
               <Link
