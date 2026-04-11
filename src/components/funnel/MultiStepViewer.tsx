@@ -609,11 +609,18 @@ export const MultiStepViewer = ({
       for (let i = 0; i < steps.length; i++) {
         const p = map[steps[i].id];
         if (p && (p.status === "unlocked" || p.status === "in_progress" || p.status === "completed")) furthest = i;
+        // If this step has a countdown, it's the furthest the user should see
+        if (countdowns[steps[i].id]) { furthest = i; break; }
       }
-      for (let i = 0; i <= furthest; i++) {
-        const p = map[steps[i].id];
-        if (p && p.status !== "completed") { setActiveStepIndex(i); break; }
-        if (i === furthest) setActiveStepIndex(furthest);
+      // Navigate to the furthest non-completed step, or the countdown step
+      if (countdowns[steps[furthest]?.id]) {
+        setActiveStepIndex(furthest);
+      } else {
+        for (let i = 0; i <= furthest; i++) {
+          const p = map[steps[i].id];
+          if (p && p.status !== "completed") { setActiveStepIndex(i); break; }
+          if (i === furthest) setActiveStepIndex(furthest);
+        }
       }
 
       setLoading(false);
