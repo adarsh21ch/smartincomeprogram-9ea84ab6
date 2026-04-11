@@ -1166,9 +1166,6 @@ export const MultiStepViewer = ({
                   }, 0);
                 }
 
-                // Store flag so we can hide the video player and UpNext countdown below
-                (window as any).__timerBlurActive = true;
-
                 return (
                   <div className="space-y-4">
                     <div className="relative aspect-video rounded-2xl overflow-hidden" style={{ background: sc.cardBg, border: `1px solid ${sc.border}` }}>
