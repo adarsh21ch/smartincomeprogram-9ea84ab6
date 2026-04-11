@@ -546,6 +546,10 @@ export type Database = {
           step_type: string
           time_delay_enabled: boolean | null
           time_delay_minutes: number | null
+          timer_cta_enabled: boolean | null
+          timer_cta_style: string | null
+          timer_cta_text: string | null
+          timer_cta_url: string | null
           title: string
           unlock_after_percent: number | null
           unlock_condition: string | null
@@ -580,6 +584,10 @@ export type Database = {
           step_type?: string
           time_delay_enabled?: boolean | null
           time_delay_minutes?: number | null
+          timer_cta_enabled?: boolean | null
+          timer_cta_style?: string | null
+          timer_cta_text?: string | null
+          timer_cta_url?: string | null
           title?: string
           unlock_after_percent?: number | null
           unlock_condition?: string | null
@@ -614,6 +622,10 @@ export type Database = {
           step_type?: string
           time_delay_enabled?: boolean | null
           time_delay_minutes?: number | null
+          timer_cta_enabled?: boolean | null
+          timer_cta_style?: string | null
+          timer_cta_text?: string | null
+          timer_cta_url?: string | null
           title?: string
           unlock_after_percent?: number | null
           unlock_condition?: string | null
@@ -1025,8 +1037,10 @@ export type Database = {
           phone: string | null
           referrer_url: string | null
           state: string | null
+          submission_number: number | null
           submitted_at: string | null
           user_agent: string | null
+          user_fingerprint: string | null
           user_id: string | null
           video_completed: boolean | null
           video_started: boolean | null
@@ -1051,8 +1065,10 @@ export type Database = {
           phone?: string | null
           referrer_url?: string | null
           state?: string | null
+          submission_number?: number | null
           submitted_at?: string | null
           user_agent?: string | null
+          user_fingerprint?: string | null
           user_id?: string | null
           video_completed?: boolean | null
           video_started?: boolean | null
@@ -1077,8 +1093,10 @@ export type Database = {
           phone?: string | null
           referrer_url?: string | null
           state?: string | null
+          submission_number?: number | null
           submitted_at?: string | null
           user_agent?: string | null
+          user_fingerprint?: string | null
           user_id?: string | null
           video_completed?: boolean | null
           video_started?: boolean | null
@@ -1259,6 +1277,7 @@ export type Database = {
           invite_code: string | null
           invite_code_required: boolean | null
           linked_funnel_id: string | null
+          max_submissions_per_user: number | null
           og_description: string | null
           og_image_url: string | null
           og_title: string | null
@@ -1275,6 +1294,7 @@ export type Database = {
           speaker_photo_url: string | null
           speaker_role: string | null
           status: string
+          submission_cooldown_hours: number | null
           testimonials_display_position: string
           testimonials_enabled: boolean | null
           testimonials_section_title: string | null
@@ -1321,6 +1341,7 @@ export type Database = {
           invite_code?: string | null
           invite_code_required?: boolean | null
           linked_funnel_id?: string | null
+          max_submissions_per_user?: number | null
           og_description?: string | null
           og_image_url?: string | null
           og_title?: string | null
@@ -1337,6 +1358,7 @@ export type Database = {
           speaker_photo_url?: string | null
           speaker_role?: string | null
           status?: string
+          submission_cooldown_hours?: number | null
           testimonials_display_position?: string
           testimonials_enabled?: boolean | null
           testimonials_section_title?: string | null
@@ -1383,6 +1405,7 @@ export type Database = {
           invite_code?: string | null
           invite_code_required?: boolean | null
           linked_funnel_id?: string | null
+          max_submissions_per_user?: number | null
           og_description?: string | null
           og_image_url?: string | null
           og_title?: string | null
@@ -1399,6 +1422,7 @@ export type Database = {
           speaker_photo_url?: string | null
           speaker_role?: string | null
           status?: string
+          submission_cooldown_hours?: number | null
           testimonials_display_position?: string
           testimonials_enabled?: boolean | null
           testimonials_section_title?: string | null
