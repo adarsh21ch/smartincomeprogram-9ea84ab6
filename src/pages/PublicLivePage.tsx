@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,7 +84,7 @@ const PublicLivePage = () => {
   if (!session) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <Logo size="lg" />
+        <Link to="/"><Logo size="lg" /></Link>
         <h1 className="text-xl font-heading font-bold">Session Not Found</h1>
         <p className="text-sm text-muted-foreground">This session may have been removed or hasn't been published yet.</p>
       </div>
@@ -103,7 +103,7 @@ const PublicLivePage = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border px-4 py-3">
-        <Logo size="sm" />
+        <Link to="/"><Logo size="sm" /></Link>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
