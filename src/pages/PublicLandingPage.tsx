@@ -24,7 +24,8 @@ const PublicLandingPage = () => {
   const { slug } = useParams();
   const [page, setPage] = useState<any>(null);
   const [video, setVideo] = useState<any>(null);
-  const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [regTestimonials, setRegTestimonials] = useState<any[]>([]);
+  const [postRegTestimonials, setPostRegTestimonials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
