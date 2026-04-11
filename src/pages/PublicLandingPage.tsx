@@ -264,19 +264,6 @@ const PublicLandingPage = () => {
 
         {submitted ? (
           <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in">
-            {/* Speaker Section — like a YouTube channel header */}
-            {(page.speaker_name || page.speaker_photo_url) && (
-              <div className="flex items-center gap-3 px-1">
-                {page.speaker_photo_url && (
-                  <img src={page.speaker_photo_url} alt={page.speaker_name} className="w-12 h-12 rounded-full object-cover shrink-0" style={{ border: '2px solid rgba(197,147,14,0.3)' }} />
-                )}
-                <div className="min-w-0">
-                  <h3 className="text-base font-bold leading-tight" style={{ color: '#F5F0E8' }}>{page.speaker_name}</h3>
-                  {page.speaker_role && <p className="text-xs" style={{ color: '#888' }}>{page.speaker_role}</p>}
-                </div>
-              </div>
-            )}
-
             {video?.public_url ? (
               <>
                 {page.post_submit_video_title && (
@@ -324,9 +311,34 @@ const PublicLandingPage = () => {
               </div>
             )}
 
+            {/* About Speaker — YouTube-style channel section */}
+            {(page.speaker_name || page.speaker_photo_url) && (
+              <div className="rounded-xl p-5 md:p-6" style={{ background: '#111', border: '1px solid rgba(197,147,14,0.12)' }}>
+                <div className="flex items-start gap-4">
+                  {page.speaker_photo_url && (
+                    <img
+                      src={page.speaker_photo_url}
+                      alt={page.speaker_name}
+                      className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover shrink-0"
+                      style={{ border: '2px solid rgba(197,147,14,0.4)' }}
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base md:text-lg font-bold uppercase tracking-wide" style={{ color: '#F5F0E8' }}>{page.speaker_name}</h3>
+                    {page.speaker_role && (
+                      <p className="text-xs font-medium mt-0.5" style={{ color: '#E8B830' }}>{page.speaker_role}</p>
+                    )}
+                    {page.speaker_bio && (
+                      <p className="mt-2 text-sm leading-relaxed line-clamp-3" style={{ color: '#999' }}>{page.speaker_bio}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* After Registration Testimonials */}
             {showTestimonialsPostRegistration && (
-              <div className="mt-8">
+              <div className="mt-4">
                 <TestimonialsViewer
                   testimonials={postRegTestimonials}
                   sectionTitle={page.testimonials_section_title || "What our members say"}

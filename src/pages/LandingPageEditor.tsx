@@ -606,21 +606,71 @@ const LandingPageEditor = () => {
       <p className="text-sm text-muted-foreground">Add details about the speaker or host for this session.</p>
       <div className="space-y-4 mt-4">
         <div className="p-4 bg-muted/50 rounded-xl space-y-4">
-          <ImageUploadField
-            label="Speaker Photo"
-            helperText="Upload a professional photo of the speaker"
-            value={form.speaker_photo_url}
-            onChange={(url) => updateField("speaker_photo_url", url)}
-            folder="speakers"
-          />
-          <div>
-            <Label>Speaker Name</Label>
-            <Input value={form.speaker_name} onChange={(e) => updateField("speaker_name", e.target.value)} placeholder="e.g., Adarsh Chaturvedi" className="mt-1.5 bg-muted border-border" />
+          {/* Compact identity row: Circle DP + Name + Title */}
+          <div className="flex items-start gap-4">
+            {/* Circle photo upload */}
+            <div className="shrink-0">
+              <input
+                ref={(el) => { (window as any).__speakerPhotoInput = el; }}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+                  try {
+                    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+                    const fileName = `speakers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                    const { error } = await supabase.storage.from("landing-page-assets").upload(fileName, file, { cacheControl: "3600", upsert: false });
+                    if (error) throw error;
+                    const { data: { publicUrl } } = supabase.storage.from("landing-page-assets").getPublicUrl(fileName);
+                    updateField("speaker_photo_url", publicUrl);
+                    toast.success("Photo uploaded!");
+                  } catch (err: any) { toast.error(err.message || "Upload failed"); }
+                  e.target.value = "";
+                }}
+              />
+              {form.speaker_photo_url ? (
+                <div className="relative group">
+                  <img
+                    src={form.speaker_photo_url}
+                    alt="Speaker"
+                    className="w-16 h-16 rounded-full object-cover cursor-pointer"
+                    style={{ border: '2px solid hsl(var(--primary) / 0.4)' }}
+                    onClick={() => (window as any).__speakerPhotoInput?.click()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => updateField("speaker_photo_url", "")}
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => (window as any).__speakerPhotoInput?.click()}
+                  className="w-16 h-16 rounded-full border-2 border-dashed border-border hover:border-primary/50 bg-muted/50 hover:bg-muted flex items-center justify-center transition-all cursor-pointer"
+                >
+                  <Mic size={20} className="text-muted-foreground" />
+                </button>
+              )}
+            </div>
+            {/* Name + Title inputs */}
+            <div className="flex-1 min-w-0 space-y-2">
+              <div>
+                <Label className="text-xs">Speaker Name</Label>
+                <Input value={form.speaker_name} onChange={(e) => updateField("speaker_name", e.target.value)} placeholder="e.g., Shubham Jain" className="mt-1 bg-muted border-border h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Title / Role</Label>
+                <Input value={form.speaker_role} onChange={(e) => updateField("speaker_role", e.target.value)} placeholder="e.g., Educator | Mentor" className="mt-1 bg-muted border-border h-9 text-sm" />
+              </div>
+            </div>
           </div>
-          <div>
-            <Label>Title / Role</Label>
-            <Input value={form.speaker_role} onChange={(e) => updateField("speaker_role", e.target.value)} placeholder="e.g., CEO & Founder" className="mt-1.5 bg-muted border-border" />
-          </div>
+          {/* Bio below */}
           <div>
             <Label>Speaker Bio</Label>
             <Textarea
