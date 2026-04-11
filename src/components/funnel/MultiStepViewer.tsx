@@ -1110,8 +1110,66 @@ export const MultiStepViewer = ({
                 )}
               </div>
 
-              {/* Countdown timer for delayed active step */}
-              {activeCountdown && (
+              {/* Countdown with blurred video preview */}
+              {activeCountdown && activeStep.step_type === "video" && (
+                <div className="space-y-4">
+                  <div className="relative aspect-video rounded-2xl overflow-hidden" style={{ background: sc.cardBg, border: `1px solid ${sc.border}` }}>
+                    {/* Blurred thumbnail/video preview */}
+                    {activeStep.video_thumbnail ? (
+                      <img src={activeStep.video_thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(20px) brightness(0.4)", transform: "scale(1.1)" }} />
+                    ) : (
+                      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #0a0a0a, #1a1a1a)" }} />
+                    )}
+
+                    {/* Countdown overlay */}
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }}>
+                      <Lock size={20} style={{ color: "#D4AF37" }} className="mb-2" />
+                      <p className="text-xs font-semibold tracking-wider uppercase mb-1" style={{ color: "#D4AF37" }}>Unlocks in</p>
+
+                      <div className="flex items-center gap-2 mt-2">
+                        {(() => {
+                          const rem = Math.max(0, activeCountdown - Date.now());
+                          const h = Math.floor(rem / 3600000);
+                          const m = Math.floor((rem % 3600000) / 60000);
+                          const s = Math.floor((rem % 60000) / 1000);
+                          return (
+                            <>
+                              {h > 0 && (
+                                <>
+                                  <div className="text-center px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.08)" }}>
+                                    <span className="text-3xl font-bold font-mono" style={{ color: "#fff" }}>{h}</span>
+                                    <p className="text-[9px] uppercase tracking-wider mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>hr</p>
+                                  </div>
+                                  <span className="text-xl font-bold" style={{ color: "rgba(212,175,55,0.5)" }}>:</span>
+                                </>
+                              )}
+                              <div className="text-center px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.08)" }}>
+                                <span className="text-3xl font-bold font-mono" style={{ color: "#fff" }}>{m.toString().padStart(2, "0")}</span>
+                                <p className="text-[9px] uppercase tracking-wider mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>min</p>
+                              </div>
+                              <span className="text-xl font-bold" style={{ color: "rgba(212,175,55,0.5)" }}>:</span>
+                              <div className="text-center px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.08)" }}>
+                                <span className="text-3xl font-bold font-mono" style={{ color: "#fff" }}>{s.toString().padStart(2, "0")}</span>
+                                <p className="text-[9px] uppercase tracking-wider mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>sec</p>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+
+                      <p className="text-[11px] mt-3" style={{ color: "rgba(255,255,255,0.5)" }}>
+                        Step {activeStepIndex + 1}: {activeStep.title}
+                      </p>
+                      <p className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.35)" }}>
+                        This step will unlock automatically
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Non-video countdown fallback */}
+              {activeCountdown && activeStep.step_type !== "video" && (
                 <UpNextCountdown
                   nextStep={activeStep}
                   nextStepIndex={activeStepIndex}
