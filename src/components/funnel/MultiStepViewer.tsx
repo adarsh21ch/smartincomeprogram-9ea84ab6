@@ -667,7 +667,7 @@ export const MultiStepViewer = ({
     inputBg: isDark ? "#18181b" : "#f1f5f9",
     stepBarBg: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
     stepBarBorder: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
-    stepBarActive: isDark ? "rgba(34,197,94,0.2)" : "rgba(34,197,94,0.1)",
+    stepBarActive: isDark ? "rgba(212,175,55,0.2)" : "rgba(212,175,55,0.1)",
     stepBarInactive: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.6)",
   };
 
@@ -682,11 +682,11 @@ export const MultiStepViewer = ({
         <div className="flex-1 overflow-y-auto" style={{ padding: "20px 14px" }}>
           {creatorProfile?.full_name && (
             <div className="flex items-center gap-3 pb-4 mb-4" style={{ borderBottom: `1px solid ${sc.border}` }}>
-              <div className="w-[40px] h-[40px] rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ border: "2px solid rgba(34,197,94,0.35)", boxShadow: "0 0 0 3px rgba(34,197,94,0.08)" }}>
+              <div className="w-[40px] h-[40px] rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ border: "2px solid rgba(212,175,55,0.35)", boxShadow: "0 0 0 3px rgba(212,175,55,0.08)" }}>
                 {creatorProfile.avatar_url ? (
                   <img src={creatorProfile.avatar_url} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center" style={{ background: "rgba(34,197,94,0.12)" }}>
+                  <div className="w-full h-full flex items-center justify-center" style={{ background: "rgba(212,175,55,0.12)" }}>
                     <span className="text-primary font-bold text-sm">{creatorProfile.full_name.charAt(0).toUpperCase()}</span>
                   </div>
                 )}
@@ -696,7 +696,7 @@ export const MultiStepViewer = ({
                   {creatorProfile.full_name}
                 </p>
                 {creatorProfile.kyc_status === "approved" && (
-                  <span className="flex items-center gap-1 text-[10px] font-semibold text-green-400">
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-gold">
                     <BadgeCheck size={10} /> Verified
                   </span>
                 )}
@@ -711,7 +711,7 @@ export const MultiStepViewer = ({
             <div className="h-1.5 rounded-full overflow-hidden mb-2" style={{ background: sc.progressBg }}>
               <div
                 className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${progressPct}%`, background: "linear-gradient(90deg, #22c55e, #16a34a)" }}
+                style={{ width: `${progressPct}%`, background: "linear-gradient(90deg, #D4AF37, #B8960C)" }}
               />
             </div>
             <p className="text-[12px] font-semibold" style={{ color: sc.progressText }}>
@@ -742,15 +742,15 @@ export const MultiStepViewer = ({
                     padding: "10px 12px",
                     borderRadius: "12px",
                     border: isCompleted
-                      ? "1px solid rgba(34,197,94,0.25)"
+                      ? "1px solid rgba(212,175,55,0.25)"
                       : isActive
-                      ? "1px solid rgba(34,197,94,0.3)"
+                      ? "1px solid rgba(212,175,55,0.3)"
                       : `1px solid transparent`,
-                    borderLeft: isCompleted ? "3px solid #22c55e" : isActive ? "3px solid #22c55e" : "3px solid transparent",
+                    borderLeft: isCompleted ? "3px solid #D4AF37" : isActive ? "3px solid #D4AF37" : "3px solid transparent",
                     background: isCompleted
-                      ? "rgba(34,197,94,0.1)"
+                      ? "rgba(212,175,55,0.1)"
                       : isActive
-                      ? "rgba(34,197,94,0.08)"
+                      ? "rgba(212,175,55,0.08)"
                       : isLocked
                       ? "transparent"
                       : sc.itemBg,
@@ -761,17 +761,17 @@ export const MultiStepViewer = ({
                   <div
                     className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
                     style={{
-                      background: isCompleted ? "rgba(34,197,94,0.2)" : isActive ? "rgba(34,197,94,0.15)" : sc.itemIconBg,
+                      background: isCompleted ? "rgba(212,175,55,0.2)" : isActive ? "rgba(212,175,55,0.15)" : sc.itemIconBg,
                     }}
                   >
                     {isCompleted ? (
-                      <Check size={13} className="text-green-400" />
+                      <Check size={13} className="text-gold" />
                     ) : hasCountdown ? (
                       <Timer size={11} style={{ color: "#fbbf24" }} />
                     ) : isLocked ? (
                       <Lock size={11} style={{ color: sc.iconLocked }} />
                     ) : (
-                      <Icon size={13} className={isActive ? "text-green-400" : ""} style={!isActive ? { color: sc.iconDim } : {}} />
+                      <Icon size={13} className={isActive ? "text-gold" : ""} style={!isActive ? { color: sc.iconDim } : {}} />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -859,19 +859,19 @@ export const MultiStepViewer = ({
               fontWeight: 600,
               whiteSpace: "nowrap",
               border: isActive
-                ? "1px solid rgba(34,197,94,0.4)"
+                ? "1px solid rgba(212,175,55,0.4)"
                 : isCompleted
-                ? "1px solid rgba(34,197,94,0.25)"
+                ? "1px solid rgba(212,175,55,0.25)"
                 : `1px solid ${sc.stepBarBorder}`,
               background: isActive
                 ? sc.stepBarActive
                 : isCompleted
-                ? "rgba(34,197,94,0.08)"
+                ? "rgba(212,175,55,0.08)"
                 : sc.stepBarBg,
               color: isActive
-                ? "#22c55e"
+                ? "#D4AF37"
                 : isCompleted
-                ? "#4ade80"
+                ? "#D4AF37"
                 : hasCountdown
                 ? "#fbbf24"
                 : isLocked
@@ -951,7 +951,7 @@ export const MultiStepViewer = ({
                     Step {activeStepIndex + 1} of {steps.length}
                   </span>
                   {activeProgress?.status === "completed" && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-green-400">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-gold">
                       <Check size={10} /> Completed
                     </span>
                   )}
@@ -1038,7 +1038,7 @@ export const MultiStepViewer = ({
                     <div className="rounded-2xl p-6" style={{ background: sc.cardBg, border: `1px solid ${sc.cardBorder}` }}>
                       {leadSubmitted || activeProgress?.status === "completed" ? (
                         <div className="text-center py-6">
-                          <CheckCircle2 size={40} className="text-green-400 mx-auto mb-3" />
+                          <CheckCircle2 size={40} className="text-gold mx-auto mb-3" />
                           <h3 className="font-heading font-bold" style={{ color: sc.text }}>Details Submitted</h3>
                           <p style={{ fontSize: "12px", color: sc.textMuted }} className="mt-1">Thank you for your information.</p>
                         </div>
@@ -1067,7 +1067,7 @@ export const MultiStepViewer = ({
                     <div className="rounded-2xl p-6 text-center" style={{ background: sc.cardBg, border: `1px solid ${sc.cardBorder}` }}>
                       {activeProgress?.status === "completed" ? (
                         <>
-                          <CheckCircle2 size={40} className="text-green-400 mx-auto mb-3" />
+                          <CheckCircle2 size={40} className="text-gold mx-auto mb-3" />
                           <h3 className="font-heading font-bold" style={{ color: sc.text }}>Step Completed</h3>
                         </>
                       ) : (
@@ -1089,7 +1089,7 @@ export const MultiStepViewer = ({
                     <div className="rounded-2xl p-6" style={{ background: sc.cardBg, border: `1px solid ${sc.cardBorder}` }}>
                       {paymentSubmitted || activeProgress?.status === "completed" ? (
                         <div className="text-center py-6">
-                          <CheckCircle2 size={40} className="text-green-400 mx-auto mb-3" />
+                          <CheckCircle2 size={40} className="text-gold mx-auto mb-3" />
                           <h3 className="font-heading font-bold" style={{ color: sc.text }}>Payment Submitted</h3>
                           <p style={{ fontSize: "12px", color: sc.textMuted }} className="mt-1">Your payment is being reviewed.</p>
                         </div>
@@ -1134,7 +1134,7 @@ export const MultiStepViewer = ({
                     <div className="rounded-2xl p-8 text-center" style={{ background: sc.cardBg, border: `1px solid ${sc.cardBorder}` }}>
                       {activeProgress?.status === "completed" || activeProgress?.manually_unlocked ? (
                         <>
-                          <CheckCircle2 size={40} className="text-green-400 mx-auto mb-3" />
+                          <CheckCircle2 size={40} className="text-gold mx-auto mb-3" />
                           <h3 className="font-heading font-bold" style={{ color: sc.text }}>Step Unlocked</h3>
                           <p style={{ fontSize: "12px", color: sc.textMuted }} className="mt-1">You've been approved to continue.</p>
                         </>
@@ -1161,18 +1161,18 @@ export const MultiStepViewer = ({
                   onClick={() => setActiveStepIndex(activeStepIndex + 1)}
                   className="w-full flex items-center justify-between transition-all"
                   style={{
-                    background: "rgba(34,197,94,0.1)",
-                    border: "1px solid rgba(34,197,94,0.25)",
+                    background: "rgba(212,175,55,0.1)",
+                    border: "1px solid rgba(212,175,55,0.25)",
                     borderRadius: "12px",
                     padding: "14px 18px",
                     cursor: "pointer",
                     marginTop: "16px",
                   }}
                 >
-                  <span className="flex items-center gap-2 text-sm font-semibold text-green-400">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-gold">
                     <Sparkles size={16} /> Next step unlocked!
                   </span>
-                  <span className="flex items-center gap-1 text-sm font-medium text-green-400">
+                  <span className="flex items-center gap-1 text-sm font-medium text-gold">
                     Continue to Step {activeStepIndex + 2} <ChevronRight size={16} />
                   </span>
                 </button>
@@ -1193,7 +1193,7 @@ export const MultiStepViewer = ({
           <div className="lg:hidden mt-6 space-y-3">
             {creatorProfile?.full_name && (
               <div className="flex items-center gap-3 py-3 px-1">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ border: "2px solid rgba(34,197,94,0.3)" }}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ border: "2px solid rgba(212,175,55,0.3)" }}>
                   {creatorProfile.avatar_url ? (
                     <img src={creatorProfile.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
