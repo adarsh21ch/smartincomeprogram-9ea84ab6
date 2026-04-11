@@ -901,7 +901,7 @@ export const MultiStepViewer = ({
               const status = getStepStatus(step.id);
               const Icon = STEP_ICONS[step.step_type] || Circle;
               const isActive = idx === activeStepIndex;
-              const isLocked = status === "locked" || !!countdownUnlocks[step.id];
+              const isLocked = status === "locked" && !countdownUnlocks[step.id];
               const isCompleted = status === "completed";
               const isInProgress = status === "in_progress";
               const hasCountdown = !!countdownUnlocks[step.id];
