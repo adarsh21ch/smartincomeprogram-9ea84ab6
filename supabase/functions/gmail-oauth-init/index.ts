@@ -58,9 +58,6 @@ Deno.serve(async (req) => {
       'https://www.googleapis.com/auth/userinfo.email',
     ]
 
-    const returnTo = req.headers.get('origin') || ''
-    const statePayload = btoa(JSON.stringify({ userId: user.id, returnTo }))
-
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
       redirect_uri: redirectUri,
@@ -68,7 +65,7 @@ Deno.serve(async (req) => {
       scope: scopes.join(' '),
       access_type: 'offline',
       prompt: 'consent',
-      state: statePayload,
+      state: user.id,
     })
 
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`

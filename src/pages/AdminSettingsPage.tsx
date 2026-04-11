@@ -170,31 +170,37 @@ const GmailConnectionSection = () => {
     },
   });
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const gmailStatus = params.get("gmail");
-    if (gmailStatus === "connected") {
-      refetch();
-      toast.success("Gmail connected successfully!");
-      setConnecting(false);
-      window.history.replaceState({}, "", window.location.pathname);
-    } else if (gmailStatus === "error") {
-      toast.error("Google authorization failed. If the message says the app is still being tested, add this Gmail address as a Test User in Google Cloud first.");
-      setConnecting(false);
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, [refetch]);
-
   const handleConnect = async () => {
     setConnecting(true);
+    // Open window immediately on user click to avoid popup blocker
+    const authWindow = window.open("about:blank", "_blank", "width=600,height=700");
     try {
       const { data, error } = await supabase.functions.invoke("gmail-oauth-init");
       if (error) throw error;
-      if (data?.auth_url) {
-        window.location.href = data.auth_url;
-        return;
+      if (data?.auth_url && authWindow) {
+        authWindow.location.href = data.auth_url;
+        // Poll for connection
+        const poll = setInterval(async () => {
+          const { data: token } = await supabase
+            .from("gmail_oauth_tokens")
+            .select("gmail_email")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (token) {
+            clearInterval(poll);
+            refetch();
+            toast.success("Gmail connected successfully!");
+            setConnecting(false);
+          }
+        }, 2000);
+        setTimeout(() => {
+          clearInterval(poll);
+          setConnecting(false);
+        }, 120000);
+      } else if (authWindow) {
+        authWindow.close();
       }
-      throw new Error("Could not create Google authorization URL");
     } catch (err: any) {
       toast.error(err.message || "Failed to initiate Gmail connection");
       setConnecting(false);
@@ -204,19 +210,11 @@ const GmailConnectionSection = () => {
   const handleDisconnect = async () => {
     setDisconnecting(true);
     try {
-      const { data: rows, error: fetchError } = await supabase
+      const { error } = await supabase
         .from("gmail_oauth_tokens")
-        .select("id");
-      if (fetchError) throw fetchError;
-
-      if (rows?.length) {
-        const { error } = await supabase
-          .from("gmail_oauth_tokens")
-          .delete()
-          .in("id", rows.map((row) => row.id));
-        if (error) throw error;
-      }
-
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000"); // delete all
+      if (error) throw error;
       refetch();
       toast.success("Gmail disconnected");
     } catch (err: any) {
@@ -235,20 +233,6 @@ const GmailConnectionSection = () => {
         Connect your Gmail account to send confirmation emails from your own address.
       </p>
 
-      {!gmailToken && (
-        <div className="mb-4 rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
-          <p><span className="font-medium text-foreground">Important:</span> the popup blocker issue is removed. If Google still blocks access, it means your Google OAuth app is still in <span className="font-medium text-foreground">Testing</span> and this Gmail is not added as a <span className="font-medium text-foreground">Test User</span>.</p>
-          <p>Authorized redirect URI:</p>
-          <code className="block text-[10px] bg-muted px-1.5 py-1 rounded select-all break-all">
-            {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback`}
-          </code>
-        </div>
-      )}
-
-      <p className="text-[11px] text-muted-foreground mb-4">
-        In Google Cloud: add the URI above in <span className="text-foreground font-medium">Authorized redirect URIs</span>, enable <span className="text-foreground font-medium">Gmail API</span>, and add your Gmail account in <span className="text-foreground font-medium">Audience → Test users</span> while the app is in Testing mode.
-      </p>
-
       {isLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 size={14} className="animate-spin" /> Checking connection...
@@ -256,7 +240,7 @@ const GmailConnectionSection = () => {
       ) : gmailToken ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm">
-            <CheckCircle size={16} className="text-primary" />
+            <CheckCircle size={16} className="text-green-500" />
             <span className="text-foreground font-medium">Connected:</span>
             <span className="text-muted-foreground">{gmailToken.gmail_email}</span>
           </div>
@@ -273,7 +257,7 @@ const GmailConnectionSection = () => {
       ) : (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <XCircle size={14} className="text-muted-foreground" /> Not connected
+            <XCircle size={14} className="text-yellow-500" /> Not connected
           </div>
           <Button
             variant="hero"
@@ -281,10 +265,17 @@ const GmailConnectionSection = () => {
             onClick={handleConnect}
             disabled={connecting}
           >
-            {connecting ? <><Loader2 size={14} className="animate-spin mr-1" /> Opening Google…</> : <><ExternalLink size={14} className="mr-1" /> Connect Gmail Account</>}
+            {connecting ? <><Loader2 size={14} className="animate-spin mr-1" /> Connecting...</> : <><ExternalLink size={14} className="mr-1" /> Connect Gmail Account</>}
           </Button>
         </div>
       )}
+
+      <p className="text-[11px] text-muted-foreground mt-3">
+        OAuth redirect URI for Google Cloud Console:<br />
+        <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded select-all">
+          {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback`}
+        </code>
+      </p>
     </div>
   );
 };
