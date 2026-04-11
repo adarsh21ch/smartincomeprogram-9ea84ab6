@@ -11,7 +11,7 @@ import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import ResetPassword from "./pages/ResetPassword";
 import MemberHome from "./pages/MemberHome";
-import MemberProfile from "./pages/MemberProfile";
+// MemberProfile is now integrated into MemberHome profile tab
 import Dashboard from "./pages/Dashboard";
 import FunnelsPage from "./pages/FunnelsPage";
 import FunnelEditor from "./pages/FunnelEditor";
