@@ -645,6 +645,8 @@ export const MultiStepViewer = ({
         await updateStepProgress(steps[completedStepIndex].id, { condition_met_at: new Date().toISOString() });
       }
       setCountdownUnlocks((prev) => ({ ...prev, [nextStep.id]: result.unlockAt! }));
+      // Auto-navigate to the timer-locked step so the countdown shows there
+      setActiveStepIndex(completedStepIndex + 1);
     }
   }, [steps, progressMap, updateStepProgress]);
 
