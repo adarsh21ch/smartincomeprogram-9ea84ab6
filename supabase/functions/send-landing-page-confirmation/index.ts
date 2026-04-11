@@ -4,8 +4,6 @@ const corsHeaders = {
 };
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const RESEND_API_URL = 'https://api.resend.com/emails'
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -16,11 +14,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
-
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-    if (!RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY not configured')
-    }
 
     const { registration_id, landing_page_id } = await req.json()
 
@@ -87,31 +80,29 @@ Deno.serve(async (req) => {
 </body>
 </html>`
 
-    const plainText = `${page.email_heading || 'You are registered!'}\n\n${emailBody}\n\n${page.email_footer_text || ''}\n\n${trustBadgeText}`
-
-    // Send directly via Resend API
-    const response = await fetch(RESEND_API_URL, {
+    // Send via Gmail API instead of Resend
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+    const gmailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-gmail-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
       },
       body: JSON.stringify({
-        from: `${senderDisplayName} <noreply@smartincomeprogram.in>`,
-        to: [reg.email],
+        to: reg.email,
         subject,
         html,
-        text: plainText,
+        sender_name: senderDisplayName,
       }),
     })
 
-    if (!response.ok) {
-      const errBody = await response.text()
-      throw new Error(`Resend API error [${response.status}]: ${errBody}`)
+    if (!gmailRes.ok) {
+      const errBody = await gmailRes.text()
+      throw new Error(`Gmail API error: ${errBody}`)
     }
 
-    const result = await response.json()
-    console.log('Email sent via Resend:', JSON.stringify(result))
+    const result = await gmailRes.json()
+    console.log('Email sent via Gmail:', JSON.stringify(result))
 
     // Update registration
     await supabase.from('landing_page_registrations').update({
