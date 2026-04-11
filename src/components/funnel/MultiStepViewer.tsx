@@ -36,6 +36,10 @@ interface FunnelStep {
   speaker_photo_url_custom?: string;
   video_topics_step_enabled?: boolean;
   video_topics_step?: Array<{ icon: string; text: string }>;
+  timer_cta_enabled?: boolean;
+  timer_cta_text?: string;
+  timer_cta_url?: string;
+  timer_cta_style?: string;
 }
 
 interface StepProgress {
@@ -957,12 +961,17 @@ export const MultiStepViewer = ({
                       </div>
                     )}
 
-                    {/* Countdown hint */}
-                    {hasCountdown && countdownUnlocks[step.id] && (
-                      <p className="text-[10px] mt-1 font-medium" style={{ color: "#fbbf24" }}>
-                        ⏱ Unlocks in {Math.ceil((countdownUnlocks[step.id] - Date.now()) / 60000)} min
-                      </p>
-                    )}
+                    {/* Countdown hint — live updating */}
+                    {hasCountdown && countdownUnlocks[step.id] && (() => {
+                      const rem = Math.max(0, countdownUnlocks[step.id] - countdownNow);
+                      const mm = Math.floor(rem / 60000);
+                      const ss = Math.floor((rem % 60000) / 1000);
+                      return (
+                        <p className="text-[10px] mt-1 font-medium" style={{ color: "#fbbf24" }}>
+                          ⏱ Unlocks in {mm}:{ss.toString().padStart(2, "0")}
+                        </p>
+                      );
+                    })()}
                   </div>
                 </button>
               );
@@ -999,7 +1008,7 @@ export const MultiStepViewer = ({
         {/* Footer */}
         <div className="px-4 py-3 text-center" style={{ borderTop: `1px solid ${sc.border}` }}>
           <p className="text-[11px]" style={{ color: sc.textDim }}>
-            Powered by <span style={{ color: "#D4AF37", fontWeight: 500 }}>Nevorai</span>
+            smartincomeprogram.in
           </p>
         </div>
       </div>
@@ -1119,63 +1128,126 @@ export const MultiStepViewer = ({
                 )}
               </div>
 
-              {/* Countdown with blurred video preview */}
-              {activeCountdown && activeStep.step_type === "video" && (
-                <div className="space-y-4">
-                  <div className="relative aspect-video rounded-2xl overflow-hidden" style={{ background: sc.cardBg, border: `1px solid ${sc.border}` }}>
-                    {/* Blurred thumbnail/video preview */}
-                    {activeStep.video_thumbnail ? (
-                      <img src={activeStep.video_thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(20px) brightness(0.4)", transform: "scale(1.1)" }} />
-                    ) : (
-                      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #0a0a0a, #1a1a1a)" }} />
-                    )}
+              {/* Countdown with blurred video preview — shows NEXT step blurred */}
+              {(() => {
+                // Determine if we should show next step's blurred preview with timer
+                const nextStepForTimer = activeStepIndex + 1 < steps.length ? steps[activeStepIndex + 1] : null;
+                const nextCountdownForTimer = nextStepForTimer ? countdownUnlocks[nextStepForTimer.id] : null;
+                const currentCompleted = activeProgress?.status === "completed";
+                const showNextBlurred = currentCompleted && nextCountdownForTimer && nextStepForTimer?.step_type === "video";
+                // Also show blurred timer if the active step itself has a countdown (navigated to locked step)
+                const showActiveBlurred = activeCountdown && activeStep.step_type === "video";
 
-                    {/* Countdown overlay */}
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }}>
-                      <Lock size={20} style={{ color: "#D4AF37" }} className="mb-2" />
-                      <p className="text-xs font-semibold tracking-wider uppercase mb-1" style={{ color: "#D4AF37" }}>Unlocks in</p>
+                const timerStep = showNextBlurred ? nextStepForTimer : showActiveBlurred ? activeStep : null;
+                const timerUnlockAt = showNextBlurred ? nextCountdownForTimer : showActiveBlurred ? activeCountdown : null;
+                const timerStepIndex = showNextBlurred ? activeStepIndex + 1 : activeStepIndex;
 
-                      <div className="flex items-center gap-2 mt-2">
-                        {(() => {
-                          const rem = Math.max(0, activeCountdown - countdownNow);
-                          const h = Math.floor(rem / 3600000);
-                          const m = Math.floor((rem % 3600000) / 60000);
-                          const s = Math.floor((rem % 60000) / 1000);
-                          return (
+                if (!timerStep || !timerUnlockAt) return null;
+
+                const rem = Math.max(0, timerUnlockAt - countdownNow);
+                const h = Math.floor(rem / 3600000);
+                const m = Math.floor((rem % 3600000) / 60000);
+                const s = Math.floor((rem % 60000) / 1000);
+
+                // Auto-unlock when timer reaches 0
+                if (rem <= 0 && timerStep) {
+                  setTimeout(() => {
+                    handleCountdownComplete(timerStep.id);
+                    if (showNextBlurred) switchToStep(timerStepIndex);
+                  }, 0);
+                }
+
+                return (
+                  <div className="space-y-4">
+                    <div className="relative aspect-video rounded-2xl overflow-hidden" style={{ background: sc.cardBg, border: `1px solid ${sc.border}` }}>
+                      {/* Blurred thumbnail/video preview */}
+                      {timerStep.video_thumbnail ? (
+                        <img src={timerStep.video_thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(20px) brightness(0.4)", transform: "scale(1.1)" }} />
+                      ) : timerStep.video_url ? (
+                        <video src={timerStep.video_url} muted playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(12px) brightness(0.4)", transform: "scale(1.1)" }} />
+                      ) : (
+                        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #0a0a0a, #1a1a1a)" }} />
+                      )}
+
+                      {/* Dark overlay */}
+                      <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.55)" }} />
+
+                      {/* Countdown overlay */}
+                      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 px-6">
+                        {/* Lock icon */}
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(212,160,23,0.15)", border: "1.5px solid rgba(212,160,23,0.4)" }}>
+                          <Lock size={20} style={{ color: "#D4AF37" }} />
+                        </div>
+
+                        {/* Step label */}
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold tracking-[0.12em] uppercase" style={{ color: "rgba(255,255,255,0.5)" }}>Next Step</p>
+                          <p className="text-base font-bold text-white mt-0.5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                            {timerStep.title || `Step ${timerStepIndex + 1}`}
+                          </p>
+                        </div>
+
+                        {/* Timer boxes */}
+                        <div className="flex items-center gap-2">
+                          {h > 0 && (
                             <>
-                              {h > 0 && (
-                                <>
-                                  <div className="text-center px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.08)" }}>
-                                    <span className="text-3xl font-bold font-mono" style={{ color: "#fff" }}>{h}</span>
-                                    <p className="text-[9px] uppercase tracking-wider mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>hr</p>
-                                  </div>
-                                  <span className="text-xl font-bold" style={{ color: "rgba(212,175,55,0.5)" }}>:</span>
-                                </>
-                              )}
-                              <div className="text-center px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.08)" }}>
-                                <span className="text-3xl font-bold font-mono" style={{ color: "#fff" }}>{m.toString().padStart(2, "0")}</span>
-                                <p className="text-[9px] uppercase tracking-wider mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>min</p>
+                              <div className="text-center">
+                                <div className="px-4 py-3 rounded-xl" style={{ background: "rgba(212,160,23,0.15)", border: "1.5px solid rgba(212,160,23,0.3)" }}>
+                                  <span className="text-3xl font-extrabold font-mono" style={{ color: "#D4A017", fontVariantNumeric: "tabular-nums" }}>{h.toString().padStart(2, "0")}</span>
+                                </div>
+                                <span className="text-[9px] font-semibold tracking-wider uppercase mt-1 block" style={{ color: "rgba(255,255,255,0.35)" }}>hrs</span>
                               </div>
-                              <span className="text-xl font-bold" style={{ color: "rgba(212,175,55,0.5)" }}>:</span>
-                              <div className="text-center px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.08)" }}>
-                                <span className="text-3xl font-bold font-mono" style={{ color: "#fff" }}>{s.toString().padStart(2, "0")}</span>
-                                <p className="text-[9px] uppercase tracking-wider mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>sec</p>
-                              </div>
+                              <span className="text-xl font-bold mb-4" style={{ color: "rgba(212,175,55,0.5)" }}>:</span>
                             </>
-                          );
-                        })()}
-                      </div>
+                          )}
+                          <div className="text-center">
+                            <div className="px-4 py-3 rounded-xl" style={{ background: "rgba(212,160,23,0.15)", border: "1.5px solid rgba(212,160,23,0.3)" }}>
+                              <span className="text-3xl font-extrabold font-mono" style={{ color: "#D4A017", fontVariantNumeric: "tabular-nums" }}>{m.toString().padStart(2, "0")}</span>
+                            </div>
+                            <span className="text-[9px] font-semibold tracking-wider uppercase mt-1 block" style={{ color: "rgba(255,255,255,0.35)" }}>min</span>
+                          </div>
+                          <span className="text-xl font-bold mb-4" style={{ color: "rgba(212,175,55,0.5)" }}>:</span>
+                          <div className="text-center">
+                            <div className="px-4 py-3 rounded-xl" style={{ background: "rgba(212,160,23,0.15)", border: "1.5px solid rgba(212,160,23,0.3)" }}>
+                              <span className="text-3xl font-extrabold font-mono" style={{ color: "#D4A017", fontVariantNumeric: "tabular-nums" }}>{s.toString().padStart(2, "0")}</span>
+                            </div>
+                            <span className="text-[9px] font-semibold tracking-wider uppercase mt-1 block" style={{ color: "rgba(255,255,255,0.35)" }}>sec</span>
+                          </div>
+                        </div>
 
-                      <p className="text-[11px] mt-3" style={{ color: "rgba(255,255,255,0.5)" }}>
-                        Step {activeStepIndex + 1}: {activeStep.title}
-                      </p>
-                      <p className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.35)" }}>
-                        This step will unlock automatically
-                      </p>
+                        <p className="text-[11px] text-center" style={{ color: "rgba(255,255,255,0.4)" }}>
+                          This step will unlock automatically when the timer ends
+                        </p>
+
+                        {/* CTA Button during timer */}
+                        {timerStep.timer_cta_enabled && timerStep.timer_cta_text && timerStep.timer_cta_url && (
+                          <button
+                            onClick={() => window.open(timerStep.timer_cta_url!, "_blank")}
+                            className="mt-2 transition-all hover:opacity-90 hover:-translate-y-0.5"
+                            style={{
+                              padding: "14px 28px",
+                              borderRadius: "12px",
+                              fontSize: "15px",
+                              fontWeight: 700,
+                              fontFamily: "'Plus Jakarta Sans', sans-serif",
+                              cursor: "pointer",
+                              width: "100%",
+                              maxWidth: "360px",
+                              ...(timerStep.timer_cta_style === "white"
+                                ? { background: "#fff", color: "#000", border: "none" }
+                                : timerStep.timer_cta_style === "outline"
+                                ? { background: "transparent", color: "#fff", border: "1.5px solid rgba(255,255,255,0.4)" }
+                                : { background: "#D4A017", color: "#000", border: "none" }),
+                            }}
+                          >
+                            {timerStep.timer_cta_text}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Non-video countdown fallback */}
               {activeCountdown && activeStep.step_type !== "video" && (
@@ -1416,7 +1488,7 @@ export const MultiStepViewer = ({
           {/* Footer */}
           <div className="mt-12 pt-4 pb-6 text-center" style={{ borderTop: `1px solid ${sc.border}` }}>
             <p className="text-[11px]" style={{ color: sc.textDim }}>
-              Powered by <span style={{ color: "#D4AF37", fontWeight: 500 }}>Nevorai</span> · smartincomeprogram.in
+              smartincomeprogram.in
             </p>
           </div>
         </div>
