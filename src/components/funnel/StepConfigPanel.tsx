@@ -225,7 +225,12 @@ export const StepConfigPanel = ({ open, onClose, step, stepIndex, onUpdate, onOp
                   </div>
                   <Switch
                     checked={step.time_delay_enabled ?? false}
-                    onCheckedChange={(v) => onUpdate("time_delay_enabled" as keyof FlowStep, v)}
+                    onCheckedChange={(v) => {
+                      onUpdate("time_delay_enabled" as keyof FlowStep, v);
+                      if (v && !(step.time_delay_minutes)) {
+                        onUpdate("time_delay_minutes" as keyof FlowStep, 30);
+                      }
+                    }}
                   />
                 </div>
                 {step.time_delay_enabled && (
