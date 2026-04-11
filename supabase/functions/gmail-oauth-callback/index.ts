@@ -4,17 +4,30 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url)
     const code = url.searchParams.get('code')
-    const userId = url.searchParams.get('state')
+    const state = url.searchParams.get('state')
     const error = url.searchParams.get('error')
 
+    let userId = ''
+    let returnTo = ''
+
+    if (state) {
+      try {
+        const decoded = JSON.parse(atob(state))
+        userId = decoded.userId || ''
+        returnTo = decoded.returnTo || ''
+      } catch {
+        userId = ''
+      }
+    }
+
     if (error) {
-      return new Response(renderHtml('Authorization denied', `Error: ${error}`, false), {
+      return new Response(renderHtml('Authorization denied', `Error: ${error}`, false, returnTo), {
         headers: { 'Content-Type': 'text/html' },
       })
     }
 
     if (!code || !userId) {
-      return new Response(renderHtml('Missing parameters', 'Authorization code or state missing.', false), {
+      return new Response(renderHtml('Missing parameters', 'Authorization code or state missing.', false, returnTo), {
         headers: { 'Content-Type': 'text/html' },
       })
     }
@@ -40,7 +53,7 @@ Deno.serve(async (req) => {
     if (!tokenRes.ok) {
       const errText = await tokenRes.text()
       console.error('Token exchange failed:', errText)
-      return new Response(renderHtml('Token exchange failed', errText, false), {
+      return new Response(renderHtml('Token exchange failed', errText, false, returnTo), {
         headers: { 'Content-Type': 'text/html' },
       })
     }
@@ -49,7 +62,7 @@ Deno.serve(async (req) => {
     const { access_token, refresh_token, expires_in } = tokens
 
     if (!refresh_token) {
-      return new Response(renderHtml('No refresh token', 'Please revoke access at myaccount.google.com/permissions and try again.', false), {
+      return new Response(renderHtml('No refresh token', 'Please revoke access at myaccount.google.com/permissions and try again.', false, returnTo), {
         headers: { 'Content-Type': 'text/html' },
       })
     }
@@ -80,32 +93,37 @@ Deno.serve(async (req) => {
 
     if (insertErr) {
       console.error('DB insert error:', insertErr)
-      return new Response(renderHtml('Database error', insertErr.message, false), {
+      return new Response(renderHtml('Database error', insertErr.message, false, returnTo), {
         headers: { 'Content-Type': 'text/html' },
       })
     }
 
-    return new Response(renderHtml('Gmail Connected!', `Successfully connected ${gmailEmail}. You can close this window.`, true), {
+    return new Response(renderHtml('Gmail Connected!', `Successfully connected ${gmailEmail}. Redirecting back...`, true, returnTo), {
       headers: { 'Content-Type': 'text/html' },
     })
   } catch (err: any) {
     console.error('Callback error:', err)
-    return new Response(renderHtml('Error', err.message, false), {
+    return new Response(renderHtml('Error', err.message, false, ''), {
       headers: { 'Content-Type': 'text/html' },
     })
   }
 })
 
-function renderHtml(title: string, message: string, success: boolean): string {
+function renderHtml(title: string, message: string, success: boolean, returnTo: string): string {
   const color = success ? '#22c55e' : '#ef4444'
+  const safeReturnTo = returnTo && /^https?:\/\//.test(returnTo) ? returnTo : ''
+  const redirectScript = safeReturnTo
+    ? `<script>setTimeout(()=>{ window.location.href = ${JSON.stringify(`${safeReturnTo}/admin/settings?gmail=${success ? 'connected' : 'error'}`)} }, 1800)</script>`
+    : ''
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#0a0a0f;color:#fff;margin:0;">
-<div style="text-align:center;max-width:400px;padding:40px;">
+<div style="text-align:center;max-width:520px;padding:40px;">
 <div style="width:64px;height:64px;border-radius:50%;background:${color}20;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
 <span style="font-size:28px;">${success ? '✓' : '✗'}</span>
 </div>
 <h1 style="font-size:24px;margin:0 0 12px;color:${color};">${title}</h1>
-<p style="font-size:14px;color:#94a3b8;line-height:1.6;">${message}</p>
-${success ? '<script>setTimeout(()=>window.close(),3000)</script>' : ''}
+<p style="font-size:14px;color:#94a3b8;line-height:1.6; white-space: pre-wrap;">${message}</p>
+${safeReturnTo ? '<p style="font-size:12px;color:#64748b;">Redirecting back to settings…</p>' : ''}
+${redirectScript}
 </div></body></html>`
 }
