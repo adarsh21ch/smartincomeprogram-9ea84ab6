@@ -1092,6 +1092,8 @@ const FunnelEditor = () => {
               )}
             </div>
           )}
+            </>
+          )}
         </div>
       </>
     );
