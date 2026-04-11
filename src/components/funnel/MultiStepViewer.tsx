@@ -609,11 +609,18 @@ export const MultiStepViewer = ({
       for (let i = 0; i < steps.length; i++) {
         const p = map[steps[i].id];
         if (p && (p.status === "unlocked" || p.status === "in_progress" || p.status === "completed")) furthest = i;
+        // If this step has a countdown, it's the furthest the user should see
+        if (countdowns[steps[i].id]) { furthest = i; break; }
       }
-      for (let i = 0; i <= furthest; i++) {
-        const p = map[steps[i].id];
-        if (p && p.status !== "completed") { setActiveStepIndex(i); break; }
-        if (i === furthest) setActiveStepIndex(furthest);
+      // Navigate to the furthest non-completed step, or the countdown step
+      if (countdowns[steps[furthest]?.id]) {
+        setActiveStepIndex(furthest);
+      } else {
+        for (let i = 0; i <= furthest; i++) {
+          const p = map[steps[i].id];
+          if (p && p.status !== "completed") { setActiveStepIndex(i); break; }
+          if (i === furthest) setActiveStepIndex(furthest);
+        }
       }
 
       setLoading(false);
@@ -645,6 +652,8 @@ export const MultiStepViewer = ({
         await updateStepProgress(steps[completedStepIndex].id, { condition_met_at: new Date().toISOString() });
       }
       setCountdownUnlocks((prev) => ({ ...prev, [nextStep.id]: result.unlockAt! }));
+      // Auto-navigate to the timer-locked step so the countdown shows there
+      setActiveStepIndex(completedStepIndex + 1);
     }
   }, [steps, progressMap, updateStepProgress]);
 
@@ -892,7 +901,7 @@ export const MultiStepViewer = ({
               const status = getStepStatus(step.id);
               const Icon = STEP_ICONS[step.step_type] || Circle;
               const isActive = idx === activeStepIndex;
-              const isLocked = status === "locked" || !!countdownUnlocks[step.id];
+              const isLocked = status === "locked" && !countdownUnlocks[step.id];
               const isCompleted = status === "completed";
               const isInProgress = status === "in_progress";
               const hasCountdown = !!countdownUnlocks[step.id];
@@ -1024,7 +1033,7 @@ export const MultiStepViewer = ({
       {steps.map((step, idx) => {
         const status = getStepStatus(step.id);
         const isActive = idx === activeStepIndex;
-        const isLocked = status === "locked" || !!countdownUnlocks[step.id];
+        const isLocked = status === "locked" && !countdownUnlocks[step.id];
         const isCompleted = status === "completed";
         const hasCountdown = !!countdownUnlocks[step.id];
 
@@ -1059,13 +1068,8 @@ export const MultiStepViewer = ({
   const hasContact = funnel.show_contact_buttons && (funnel.contact_whatsapp || funnel.contact_phone);
   const activeCountdown = activeStep ? countdownUnlocks[activeStep.id] : null;
 
-  // Pre-compute: is the blurred timer overlay active? Used to hide video player + UpNext duplicate
-  const nextStepForTimerCheck = activeStepIndex + 1 < steps.length ? steps[activeStepIndex + 1] : null;
-  const nextCountdownForTimerCheck = nextStepForTimerCheck ? countdownUnlocks[nextStepForTimerCheck.id] : null;
-  const isTimerBlurActive = !!(
-    (activeProgress?.status === "completed" && nextCountdownForTimerCheck && nextStepForTimerCheck?.step_type === "video") ||
-    (activeCountdown && activeStep?.step_type === "video")
-  );
+  // Timer blur is active when the ACTIVE step itself has a countdown
+  const isTimerBlurActive = !!(activeCountdown && activeStep?.step_type === "video");
 
   return (
     <div className="flex min-h-[calc(100vh-52px)]">
@@ -1137,21 +1141,12 @@ export const MultiStepViewer = ({
                 )}
               </div>
 
-              {/* Countdown with blurred video preview — shows NEXT step blurred */}
+              {/* Countdown with blurred video preview — shows on the ACTIVE step when it has a countdown */}
               {(() => {
-                // Determine if we should show next step's blurred preview with timer
-                const nextStepForTimer = activeStepIndex + 1 < steps.length ? steps[activeStepIndex + 1] : null;
-                const nextCountdownForTimer = nextStepForTimer ? countdownUnlocks[nextStepForTimer.id] : null;
-                const currentCompleted = activeProgress?.status === "completed";
-                const showNextBlurred = currentCompleted && nextCountdownForTimer && nextStepForTimer?.step_type === "video";
-                // Also show blurred timer if the active step itself has a countdown (navigated to locked step)
-                const showActiveBlurred = activeCountdown && activeStep.step_type === "video";
+                if (!activeCountdown || activeStep.step_type !== "video") return null;
 
-                const timerStep = showNextBlurred ? nextStepForTimer : showActiveBlurred ? activeStep : null;
-                const timerUnlockAt = showNextBlurred ? nextCountdownForTimer : showActiveBlurred ? activeCountdown : null;
-                const timerStepIndex = showNextBlurred ? activeStepIndex + 1 : activeStepIndex;
-
-                if (!timerStep || !timerUnlockAt) return null;
+                const timerStep = activeStep;
+                const timerUnlockAt = activeCountdown;
 
                 const rem = Math.max(0, timerUnlockAt - countdownNow);
                 const h = Math.floor(rem / 3600000);
@@ -1159,10 +1154,9 @@ export const MultiStepViewer = ({
                 const s = Math.floor((rem % 60000) / 1000);
 
                 // Auto-unlock when timer reaches 0
-                if (rem <= 0 && timerStep) {
+                if (rem <= 0) {
                   setTimeout(() => {
                     handleCountdownComplete(timerStep.id);
-                    if (showNextBlurred) switchToStep(timerStepIndex);
                   }, 0);
                 }
 
@@ -1190,9 +1184,9 @@ export const MultiStepViewer = ({
 
                         {/* Step label */}
                         <div className="text-center">
-                          <p className="text-[10px] font-bold tracking-[0.12em] uppercase" style={{ color: "rgba(255,255,255,0.5)" }}>Next Step</p>
+                          <p className="text-[10px] font-bold tracking-[0.12em] uppercase" style={{ color: "rgba(255,255,255,0.5)" }}>Upcoming</p>
                           <p className="text-base font-bold text-white mt-0.5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                            {timerStep.title || `Step ${timerStepIndex + 1}`}
+                            {timerStep.title || `Step ${activeStepIndex + 1}`}
                           </p>
                         </div>
 
