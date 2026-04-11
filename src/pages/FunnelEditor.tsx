@@ -231,6 +231,8 @@ const FunnelEditor = () => {
         speaker_about: (f as any).speaker_about || "",
         video_topics_enabled: (f as any).video_topics_enabled ?? false,
         video_topics: Array.isArray((f as any).video_topics) ? (f as any).video_topics : [],
+        speaker_scope: (f as any).speaker_scope || "global",
+        video_topics_scope: (f as any).video_topics_scope || "global",
       }));
       setModeChosen(true);
       if (f.audio_note_url) setAudioNoteEnabled(true);
@@ -264,6 +266,17 @@ const FunnelEditor = () => {
         step_type: s.step_type || "video", video_asset_id: s.video_asset_id, is_active: s.is_active ?? true,
         unlock_rule_type: s.unlock_rule_type || "auto", unlock_rule_value: s.unlock_rule_value || "",
         cta_text: s.cta_text || "", cta_url: s.cta_url || "", booking_url: s.booking_url || "",
+        unlock_condition: s.unlock_condition || "full_watch",
+        unlock_percentage: s.unlock_percentage ?? 80,
+        time_delay_enabled: s.time_delay_enabled ?? false,
+        time_delay_minutes: s.time_delay_minutes ?? 0,
+        speaker_mode_step: s.speaker_mode_step || "none",
+        speaker_name_custom: s.speaker_name_custom || "",
+        speaker_title: s.speaker_title || "",
+        speaker_bio: s.speaker_bio || "",
+        speaker_photo_url_custom: s.speaker_photo_url_custom || "",
+        video_topics_step_enabled: s.video_topics_step_enabled ?? false,
+        video_topics_step: Array.isArray(s.video_topics_step) ? s.video_topics_step : [],
       })));
     }
   }, [existingSteps]);
