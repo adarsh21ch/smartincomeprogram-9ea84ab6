@@ -298,7 +298,7 @@ const TestimonialCard = memo(({
   };
 
   const handlePlacement = (val: string) => {
-    onUpdateField(t.id, { placement: val });
+    onUpdateAndRefresh(t.id, { placement: val });
   };
 
   const badgeLabel = textEnabled && videoEnabled ? "Text + Video" : videoEnabled ? "Video" : "Text";
