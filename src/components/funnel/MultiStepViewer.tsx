@@ -990,13 +990,12 @@ export const MultiStepViewer = ({
         {/* Footer */}
         <div className="px-4 py-3 text-center" style={{ borderTop: `1px solid ${sc.border}` }}>
           <p className="text-[11px]" style={{ color: sc.textDim }}>
-            Powered by <span style={{ color: "#D4AF37", fontWeight: 500 }}>Smart Income Program</span>
+            Powered by <span style={{ color: "#D4AF37", fontWeight: 500 }}>Nevorai</span>
           </p>
         </div>
       </div>
     );
   };
-
   /* ─── MOBILE STEP PILLS ─── */
   const MobileStepBar = () => (
     <div
@@ -1350,7 +1349,7 @@ export const MultiStepViewer = ({
           {/* Footer */}
           <div className="mt-12 pt-4 pb-6 text-center" style={{ borderTop: `1px solid ${sc.border}` }}>
             <p className="text-[11px]" style={{ color: sc.textDim }}>
-              Powered by <span style={{ color: "#D4AF37", fontWeight: 500 }}>Smart Income Program</span> · smartincomeprogram.in
+              Powered by <span style={{ color: "#D4AF37", fontWeight: 500 }}>Nevorai</span> · smartincomeprogram.in
             </p>
           </div>
         </div>
