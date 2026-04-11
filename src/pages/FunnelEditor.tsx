@@ -164,6 +164,8 @@ const FunnelEditor = () => {
     speaker_name: "", speaker_photo_url: "", speaker_about: "",
     video_topics_enabled: false,
     video_topics: [] as string[],
+    speaker_scope: "global" as "global" | "per_step",
+    video_topics_scope: "global" as "global" | "per_step",
   });
 
   const [leadForm, setLeadForm] = useState({
