@@ -329,19 +329,18 @@ const VideoPlayer = ({ videoUrl, thumbnailUrl, durationSeconds, orientation }: {
       <video
         ref={videoRef}
         className="testimonial-video-el w-full h-full block"
-        preload="metadata"
+        preload="auto"
         playsInline
         poster={posterSrc}
         muted={muted}
         onEnded={handleEnded}
+        src={videoUrl}
         style={{
           objectFit: isLandscape ? "contain" : "cover",
           background: "#000",
           display: "block",
         }}
-      >
-        <source src={videoUrl} type="video/mp4" />
-        <source src={videoUrl} type="video/webm" />
+      />
       </video>
 
       {/* Play overlay — shown when not playing */}
