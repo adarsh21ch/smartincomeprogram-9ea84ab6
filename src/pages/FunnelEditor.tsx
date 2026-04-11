@@ -1333,6 +1333,7 @@ const FunnelEditor = () => {
                 selectedVideo={selectedVideo}
                 flowSteps={flowSteps}
                 leadForm={leadForm}
+                previewStepIndex={editingStepIdx}
               />
             </div>
           )}

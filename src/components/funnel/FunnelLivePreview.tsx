@@ -1,5 +1,16 @@
-import { Play, Lock, Users, MessageCircle, Phone as PhoneIcon, Eye, Layers } from "lucide-react";
+import { Play, Lock, MessageCircle, Phone as PhoneIcon, Eye, Layers } from "lucide-react";
 import logoImg from "@/assets/logo.png";
+
+interface PreviewStep {
+  title: string;
+  step_type: string;
+  step_order: number;
+  time_delay_enabled?: boolean;
+  time_delay_minutes?: number;
+  timer_cta_enabled?: boolean;
+  timer_cta_text?: string;
+  timer_cta_style?: string;
+}
 
 interface FunnelLivePreviewProps {
   funnel: {
@@ -16,7 +27,7 @@ interface FunnelLivePreviewProps {
     required_fields: { email: boolean; city: boolean; state: boolean; whatsapp: boolean };
   };
   selectedVideo: { title: string; url: string | null } | null;
-  flowSteps: { title: string; step_type: string; step_order: number }[];
+  flowSteps: PreviewStep[];
   leadForm: {
     capture_enabled: boolean;
     show_name: boolean;
@@ -26,11 +37,54 @@ interface FunnelLivePreviewProps {
     show_custom: boolean;
     custom_field_label: string;
   };
+  previewStepIndex?: number | null;
 }
 
-export const FunnelLivePreview = ({ funnel, selectedVideo, flowSteps, leadForm }: FunnelLivePreviewProps) => {
+const getTimerPreviewButtonStyle = (style?: string) => {
+  if (style === "white") {
+    return {
+      background: "hsl(0 0% 100%)",
+      color: "hsl(222 47% 11%)",
+      border: "none",
+    };
+  }
+
+  if (style === "outline") {
+    return {
+      background: "transparent",
+      color: "hsl(0 0% 100%)",
+      border: "1px solid hsl(0 0% 100% / 0.35)",
+    };
+  }
+
+  return {
+    background: "hsl(44 77% 47%)",
+    color: "hsl(222 47% 11%)",
+    border: "none",
+  };
+};
+
+export const FunnelLivePreview = ({ funnel, selectedVideo, flowSteps, leadForm, previewStepIndex = null }: FunnelLivePreviewProps) => {
   const isMulti = funnel.funnel_mode === "multi";
   const isPrivate = funnel.visibility === "private";
+  const selectedPreviewStep = typeof previewStepIndex === "number"
+    ? flowSteps[previewStepIndex]
+    : flowSteps.find((step, idx) => idx > 0 && step.time_delay_enabled && (step.time_delay_minutes || 0) > 0);
+  const timerPreviewStep = selectedPreviewStep && selectedPreviewStep.time_delay_enabled && (selectedPreviewStep.time_delay_minutes || 0) > 0
+    ? selectedPreviewStep
+    : null;
+  const timerPreviewTotalSeconds = timerPreviewStep
+    ? Math.max(59, (timerPreviewStep.time_delay_minutes || 30) * 60 - 1)
+    : 0;
+  const timerPreviewParts = timerPreviewStep
+    ? [
+        ...(timerPreviewTotalSeconds >= 3600
+          ? [{ label: "hr", value: Math.floor(timerPreviewTotalSeconds / 3600) }]
+          : []),
+        { label: "min", value: Math.floor((timerPreviewTotalSeconds % 3600) / 60) },
+        { label: "sec", value: timerPreviewTotalSeconds % 60 },
+      ]
+    : [];
 
   return (
     <div className="w-full h-full overflow-y-auto rounded-xl border border-border bg-[#09090b] text-white">
@@ -91,22 +145,114 @@ export const FunnelLivePreview = ({ funnel, selectedVideo, flowSteps, leadForm }
             {flowSteps.map((step, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px]"
+                className="flex items-start gap-2 px-2.5 py-2 rounded-lg text-[11px]"
                 style={{
-                  background: idx === 0 ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.04)",
-                  border: idx === 0 ? "1px solid rgba(34,197,94,0.25)" : "1px solid rgba(255,255,255,0.08)",
+                  background: timerPreviewStep?.step_order === step.step_order
+                    ? "rgba(232,184,48,0.1)"
+                    : idx === 0
+                    ? "rgba(34,197,94,0.1)"
+                    : "rgba(255,255,255,0.04)",
+                  border: timerPreviewStep?.step_order === step.step_order
+                    ? "1px solid rgba(232,184,48,0.28)"
+                    : idx === 0
+                    ? "1px solid rgba(34,197,94,0.25)"
+                    : "1px solid rgba(255,255,255,0.08)",
                 }}
               >
                 {idx === 0 ? (
                   <Play size={10} className="text-gold shrink-0" />
                 ) : (
-                  <Lock size={10} className="text-white/30 shrink-0" />
+                  <Lock size={10} className="text-white/30 shrink-0 mt-0.5" />
                 )}
-                <span className={idx === 0 ? "text-white font-medium" : "text-white/40"}>
-                  {step.title || `Step ${idx + 1}`}
-                </span>
+                <div className="min-w-0 flex-1">
+                  <span className={idx === 0 ? "text-white font-medium" : "text-white/40"}>
+                    {step.title || `Step ${idx + 1}`}
+                  </span>
+
+                  {(step.time_delay_enabled || step.timer_cta_enabled) && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {step.time_delay_enabled && (step.time_delay_minutes || 0) > 0 && (
+                        <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-semibold text-white/70">
+                          ⏱ {step.time_delay_minutes} min wait
+                        </span>
+                      )}
+                      {step.timer_cta_enabled && step.timer_cta_text && (
+                        <span className="rounded-full border border-[rgba(232,184,48,0.2)] bg-[rgba(232,184,48,0.08)] px-1.5 py-0.5 text-[9px] font-semibold text-[hsl(44_77%_60%)]">
+                          CTA during wait
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {timerPreviewStep && (
+          <div className="rounded-lg p-3 space-y-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-[10px] font-bold text-white/60 uppercase tracking-wider">Wait Screen Preview</p>
+                <p className="text-[10px] text-white/40 mt-1">
+                  Viewers see this before {timerPreviewStep.title || `Step ${(timerPreviewStep.step_order || 0) + 1}`} unlocks.
+                </p>
+              </div>
+              <span className="shrink-0 rounded-full border border-[rgba(232,184,48,0.25)] bg-[rgba(232,184,48,0.1)] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[hsl(44_77%_60%)]">
+                {timerPreviewStep.time_delay_minutes || 30} min
+              </span>
+            </div>
+
+            <div
+              className="relative overflow-hidden rounded-xl border border-white/10 min-h-[190px]"
+              style={{ background: "radial-gradient(circle at top, hsl(44 77% 47% / 0.18), transparent 58%), rgba(255,255,255,0.04)" }}
+            >
+              <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }} />
+
+              <div className="relative z-10 flex h-full flex-col items-center justify-center gap-3 px-3 py-5 text-center">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(232,184,48,0.12)", border: "1px solid rgba(232,184,48,0.3)" }}>
+                  <Lock size={16} style={{ color: "hsl(44 77% 60%)" }} />
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">Upcoming</p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    {timerPreviewStep.title || `Step ${(timerPreviewStep.step_order || 0) + 1}`}
+                  </p>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  {timerPreviewParts.map((part, idx) => (
+                    <div key={`${part.label}-${idx}`} className="flex items-start gap-2">
+                      <div className="text-center">
+                        <div className="min-w-[52px] rounded-lg px-2.5 py-2" style={{ background: "rgba(232,184,48,0.12)", border: "1px solid rgba(232,184,48,0.22)" }}>
+                          <span className="text-xl font-extrabold tabular-nums" style={{ color: "hsl(44 77% 60%)" }}>
+                            {part.value.toString().padStart(2, "0")}
+                          </span>
+                        </div>
+                        <span className="mt-1 block text-[8px] font-semibold uppercase tracking-[0.14em] text-white/35">
+                          {part.label}
+                        </span>
+                      </div>
+                      {idx < timerPreviewParts.length - 1 && (
+                        <span className="pt-2 text-lg font-bold text-white/35">:</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {timerPreviewStep.timer_cta_enabled ? (
+                  <div
+                    className="w-full max-w-[210px] rounded-lg px-3 py-2.5 text-[11px] font-bold"
+                    style={getTimerPreviewButtonStyle(timerPreviewStep.timer_cta_style)}
+                  >
+                    {timerPreviewStep.timer_cta_text?.trim() || "Contact your mentor on WhatsApp →"}
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-white/40">Timer CTA is disabled for this step.</p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

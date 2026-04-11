@@ -81,6 +81,41 @@ export const StepConfigPanel = ({ open, onClose, step, stepIndex, onUpdate, onOp
   };
   const removeTopic = (i: number) => onUpdate("video_topics_step" as keyof FlowStep, topics.filter((_, idx) => idx !== i));
   const updateTopicText = (i: number, text: string) => onUpdate("video_topics_step" as keyof FlowStep, topics.map((t, idx) => idx === i ? { ...t, text: text.slice(0, 100) } : t));
+  const waitPreviewMinutes = Math.max(1, step.time_delay_minutes || 30);
+  const waitPreviewTotalSeconds = Math.max(59, waitPreviewMinutes * 60 - 1);
+  const waitPreviewParts = [
+    ...(waitPreviewTotalSeconds >= 3600
+      ? [{ label: "hr", value: Math.floor(waitPreviewTotalSeconds / 3600) }]
+      : []),
+    { label: "min", value: Math.floor((waitPreviewTotalSeconds % 3600) / 60) },
+    { label: "sec", value: waitPreviewTotalSeconds % 60 },
+  ];
+  const waitPreviewTitle = step.title?.trim() || `Step ${stepIndex + 1}`;
+  const waitPreviewButtonText = step.timer_cta_text?.trim() || "Contact your mentor on WhatsApp →";
+
+  const getTimerPreviewButtonStyle = (style?: string) => {
+    if (style === "white") {
+      return {
+        background: "hsl(0 0% 100%)",
+        color: "hsl(222 47% 11%)",
+        border: "none",
+      };
+    }
+
+    if (style === "outline") {
+      return {
+        background: "transparent",
+        color: "hsl(0 0% 100%)",
+        border: "1px solid hsl(0 0% 100% / 0.35)",
+      };
+    }
+
+    return {
+      background: "hsl(44 77% 47%)",
+      color: "hsl(222 47% 11%)",
+      border: "none",
+    };
+  };
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
@@ -304,6 +339,73 @@ export const StepConfigPanel = ({ open, onClose, step, stepIndex, onUpdate, onOp
                           </div>
                         </div>
                       )}
+
+                      <div className="mt-4 rounded-2xl border border-border bg-card/60 p-4 space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <Label className="text-sm font-medium">Viewer wait screen preview</Label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              This is the countdown screen shown before this step unlocks.
+                            </p>
+                          </div>
+                          <span className="shrink-0 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary">
+                            {waitPreviewMinutes} min wait
+                          </span>
+                        </div>
+
+                        <div className="relative overflow-hidden rounded-2xl border border-border min-h-[240px] bg-gradient-to-br from-muted via-card to-background">
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_hsl(var(--primary)/0.18),_transparent_58%)]" />
+                          <div className="absolute inset-0 bg-background/65 backdrop-blur-[3px]" />
+
+                          <div className="relative z-10 flex h-full flex-col items-center justify-center gap-4 px-4 py-8 text-center">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
+                              <Lock size={18} className="text-primary" />
+                            </div>
+
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80">Upcoming</p>
+                              <p className="mt-1 text-base font-semibold text-foreground">{waitPreviewTitle}</p>
+                            </div>
+
+                            <div className="flex items-start gap-2">
+                              {waitPreviewParts.map((part, idx) => (
+                                <div key={`${part.label}-${idx}`} className="flex items-start gap-2">
+                                  <div className="text-center">
+                                    <div className="min-w-[64px] rounded-xl border border-primary/20 bg-primary/10 px-3 py-2.5">
+                                      <span className="text-2xl font-extrabold tabular-nums text-primary">
+                                        {part.value.toString().padStart(2, "0")}
+                                      </span>
+                                    </div>
+                                    <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                                      {part.label}
+                                    </span>
+                                  </div>
+                                  {idx < waitPreviewParts.length - 1 && (
+                                    <span className="pt-3 text-xl font-bold text-primary/60">:</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+
+                            <p className="max-w-[260px] text-[11px] leading-relaxed text-muted-foreground">
+                              This step unlocks automatically when the waiting period ends.
+                            </p>
+
+                            {step.timer_cta_enabled ? (
+                              <div
+                                className="w-full max-w-[280px] rounded-xl px-4 py-3 text-sm font-semibold shadow-sm"
+                                style={getTimerPreviewButtonStyle(step.timer_cta_style)}
+                              >
+                                {waitPreviewButtonText}
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-muted-foreground">
+                                Enable “Call to Action during wait” to show a button here.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

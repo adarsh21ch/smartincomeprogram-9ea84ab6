@@ -14,6 +14,10 @@ interface FlowStep {
   cta_text: string;
   cta_url: string;
   booking_url: string;
+  time_delay_enabled?: boolean;
+  time_delay_minutes?: number;
+  timer_cta_enabled?: boolean;
+  timer_cta_text?: string;
 }
 
 interface JourneyPreviewProps {
@@ -65,6 +69,21 @@ export const JourneyPreview = ({ steps, className = "" }: JourneyPreviewProps) =
                   {meta.label}
                   {idx > 0 && ` · ${UNLOCK_LABELS[step.unlock_rule_type] || "Auto"}`}
                 </p>
+
+                {(step.time_delay_enabled || step.timer_cta_enabled) && (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {step.time_delay_enabled && (step.time_delay_minutes || 0) > 0 && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                        ⏱ {step.time_delay_minutes} min wait
+                      </span>
+                    )}
+                    {step.timer_cta_enabled && step.timer_cta_text && (
+                      <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-medium text-accent-foreground">
+                        CTA during wait
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
