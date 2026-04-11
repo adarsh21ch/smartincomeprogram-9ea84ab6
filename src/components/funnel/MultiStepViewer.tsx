@@ -541,6 +541,7 @@ export const MultiStepViewer = ({
   const [countdownUnlocks, setCountdownUnlocks] = useState<Record<string, number>>({});
   const [showEndOverlay, setShowEndOverlay] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const [countdownNow, setCountdownNow] = useState(Date.now());
   const sessionId = useRef(getSessionId(funnel.id));
   const progressSaveTimer = useRef<ReturnType<typeof setInterval>>();
   const contentRef = useRef<HTMLDivElement>(null);
