@@ -264,6 +264,19 @@ const PublicLandingPage = () => {
 
         {submitted ? (
           <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in">
+            {/* Speaker Section — like a YouTube channel header */}
+            {(page.speaker_name || page.speaker_photo_url) && (
+              <div className="flex items-center gap-3 px-1">
+                {page.speaker_photo_url && (
+                  <img src={page.speaker_photo_url} alt={page.speaker_name} className="w-12 h-12 rounded-full object-cover shrink-0" style={{ border: '2px solid rgba(197,147,14,0.3)' }} />
+                )}
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold leading-tight" style={{ color: '#F5F0E8' }}>{page.speaker_name}</h3>
+                  {page.speaker_role && <p className="text-xs" style={{ color: '#888' }}>{page.speaker_role}</p>}
+                </div>
+              </div>
+            )}
+
             {video?.public_url ? (
               <>
                 {page.post_submit_video_title && (
@@ -310,6 +323,8 @@ const PublicLandingPage = () => {
                 <p className="text-sm md:text-base" style={{ color: '#888' }}>Thank you for registering. We'll see you at the session!</p>
               </div>
             )}
+
+            {/* After Registration Testimonials */}
             {showTestimonialsPostRegistration && (
               <div className="mt-8">
                 <TestimonialsViewer
@@ -318,6 +333,7 @@ const PublicLandingPage = () => {
                 />
               </div>
             )}
+
             {page.linked_funnel_id && (
               <button
                 className="w-full px-6 py-3.5 rounded-lg text-base font-semibold transition-all hover:brightness-110 flex items-center justify-center gap-2"
