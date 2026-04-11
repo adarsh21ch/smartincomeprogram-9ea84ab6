@@ -438,7 +438,7 @@ const FunnelEditor = () => {
 
   // ── Render helper for common steps ──
   // Single: 0=Controls, 1=Speaker, 2=VideoTopics, 3=LeadForm, 4=Whatsapp, 5=Payment, 6=Privacy, 7=Publish
-  // Multi:  0=Controls, 1=Speaker, 2=VideoTopics, 3=Whatsapp, 4=Payment, 5=Privacy, 6=Publish
+  // Multi:  0=Controls, 1=Speaker, 2=VideoTopics, 3=Whatsapp, 4=Privacy, 5=Publish (Payment hidden)
   const renderCommonStep = (offset: number) => {
     const idx = wizardStep - offset;
     if (idx === 0) return renderControlsStep();
@@ -446,9 +446,9 @@ const FunnelEditor = () => {
     if (idx === 2) return renderVideoTopicsStep();
     if (!isMulti && idx === 3) return renderLeadFormStep();
     const whatsappIdx = isMulti ? 3 : 4;
-    const paymentIdx = isMulti ? 4 : 5;
-    const privacyIdx = isMulti ? 5 : 6;
-    const publishIdx = isMulti ? 6 : 7;
+    const paymentIdx = isMulti ? -1 : 5; // Payment hidden for multi
+    const privacyIdx = isMulti ? 4 : 6;
+    const publishIdx = isMulti ? 5 : 7;
     if (idx === whatsappIdx) return renderWhatsappStep();
     if (idx === paymentIdx) return renderPaymentStep();
     if (idx === privacyIdx) return renderPrivacyStep();
