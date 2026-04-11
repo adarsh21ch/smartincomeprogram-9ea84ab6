@@ -341,7 +341,6 @@ const VideoPlayer = ({ videoUrl, thumbnailUrl, durationSeconds, orientation }: {
           display: "block",
         }}
       />
-      </video>
 
       {/* Play overlay — shown when not playing */}
       {!playing && (
