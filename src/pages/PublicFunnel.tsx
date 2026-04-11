@@ -745,7 +745,7 @@ const PublicFunnel = () => {
         <div className="flex items-center gap-2">
           <img src={logoImg} alt="Smart Income Program" className="h-6 w-6" />
           <span className="font-heading font-bold text-[15px]" style={{ color: tc.text, letterSpacing: "-0.02em" }}>Smart Income</span>
-          <span className="font-heading font-extrabold text-primary text-[15px]" style={{ letterSpacing: "-0.03em", fontStyle: "italic", transform: "skewX(-4deg)", display: "inline-block", marginLeft: "-2px" }}>Program</span>
+          <span className="font-heading font-extrabold text-primary text-[15px]" style={{ letterSpacing: "-0.02em", marginLeft: "4px" }}>Program</span>
         </div>
         <div className="flex items-center gap-1">
           <button
