@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
         (async () => {
           const { data: steps } = await supabase
             .from("funnel_steps")
-            .select("id, step_order, title, description, step_type, video_asset_id, is_active, unlock_rule_type, unlock_rule_value, cta_text, cta_url, booking_url")
+            .select("id, step_order, title, description, step_type, video_asset_id, is_active, unlock_rule_type, unlock_rule_value, cta_text, cta_url, booking_url, unlock_condition, unlock_percentage, time_delay_enabled, time_delay_minutes, speaker_mode_step, speaker_name_custom, speaker_title, speaker_bio, speaker_photo_url_custom, video_topics_step_enabled, video_topics_step")
             .eq("funnel_id", funnel.id)
             .eq("is_active", true)
             .order("step_order");
