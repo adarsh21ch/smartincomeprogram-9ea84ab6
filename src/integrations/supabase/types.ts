@@ -1038,6 +1038,8 @@ export type Database = {
           is_active: boolean
           landing_page_id: string
           owner_id: string
+          placement: string
+          rating: number
           review_text: string | null
           student_location: string | null
           student_name: string
@@ -1058,6 +1060,8 @@ export type Database = {
           is_active?: boolean
           landing_page_id: string
           owner_id: string
+          placement?: string
+          rating?: number
           review_text?: string | null
           student_location?: string | null
           student_name: string
@@ -1078,6 +1082,8 @@ export type Database = {
           is_active?: boolean
           landing_page_id?: string
           owner_id?: string
+          placement?: string
+          rating?: number
           review_text?: string | null
           student_location?: string | null
           student_name?: string
