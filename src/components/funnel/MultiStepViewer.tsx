@@ -1442,18 +1442,20 @@ export const MultiStepViewer = ({
                 </>
               )}
 
-              {/* ═══ UP NEXT SECTION (always visible below content) ═══ */}
-              <UpNextSection
-                nextStep={nextStep}
-                nextStepIndex={activeStepIndex + 1}
-                totalSteps={steps.length}
-                unlockResult={nextStepUnlockResult}
-                countdownUnlockAt={nextCountdownAt}
-                currentWatchPct={currentWatchPct}
-                onPlayNext={() => switchToStep(activeStepIndex + 1)}
-                onCountdownComplete={() => nextStep && handleCountdownComplete(nextStep.id)}
-                isDark={isDark}
-              />
+              {/* ═══ UP NEXT SECTION (hidden when blurred timer overlay is active) ═══ */}
+              {!isTimerBlurActive && (
+                <UpNextSection
+                  nextStep={nextStep}
+                  nextStepIndex={activeStepIndex + 1}
+                  totalSteps={steps.length}
+                  unlockResult={nextStepUnlockResult}
+                  countdownUnlockAt={nextCountdownAt}
+                  currentWatchPct={currentWatchPct}
+                  onPlayNext={() => switchToStep(activeStepIndex + 1)}
+                  onCountdownComplete={() => nextStep && handleCountdownComplete(nextStep.id)}
+                  isDark={isDark}
+                />
+              )}
             </div>
           )}
 
