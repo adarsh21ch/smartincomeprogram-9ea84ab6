@@ -265,6 +265,18 @@ export const VideoPlayer = ({
             if (video) saveProgress(video.currentTime, video.duration);
           }}
         />
+        {/* Unmute pill */}
+        <UnmutePill
+          visible={showUnmutePill && isMuted}
+          onUnmute={() => {
+            const video = videoRef.current;
+            if (video) {
+              video.muted = false;
+              setIsMuted(false);
+            }
+            setShowUnmutePill(false);
+          }}
+        />
         {!isPlaying && (
           <button
             onClick={togglePlay}
