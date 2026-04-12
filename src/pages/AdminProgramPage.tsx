@@ -1,4 +1,5 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { CourseCardsManager } from "@/components/admin/CourseCardsManager";
 import { useProgramSettings } from "@/hooks/useProgramSettings";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -651,6 +652,9 @@ const AdminProgramPage = () => {
             Save About Tab
           </Button>
         </section>
+
+        {/* Course Cards Manager */}
+        <CourseCardsManager />
 
         {/* Preview */}
         <section className="glass-card p-6 space-y-4">
