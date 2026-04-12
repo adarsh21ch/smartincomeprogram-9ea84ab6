@@ -6,9 +6,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, LogOut, Video, CheckCircle2, Calendar, Info } from "lucide-react";
+import { Lock, LogOut, Video, CheckCircle2, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
+import { brand } from "@/config/brand";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -234,20 +235,11 @@ export const ProfileTab = ({ stats }: ProfileTabProps) => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* About Nevorai Flow */}
-      <div className="rounded-2xl border border-border bg-card p-4 text-center">
-        <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-          <Info size={12} />
-          <span>Nevorai Flow · v2.0</span>
-        </div>
-        <a
-          href="https://nevorai.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors mt-1 block"
-        >
-          nevorai.com
-        </a>
+      {/* Footer branding */}
+      <div className="pt-2 pb-4 text-center">
+        <p className="text-[10px] text-muted-foreground/50">
+          {brand.footer.copyright} · Powered by Nevorai
+        </p>
       </div>
     </div>
   );
