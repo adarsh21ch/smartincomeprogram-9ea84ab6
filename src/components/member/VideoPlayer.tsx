@@ -96,6 +96,7 @@ export const VideoPlayer = ({
           time_spent_seconds: timeSpentSecondsRef.current,
           status: isCompleted ? "completed" : watchedPercent > 0 ? "in_progress" : "unlocked",
           completed_at: isCompleted ? new Date().toISOString() : null,
+          permanently_unlocked: isCompleted ? true : undefined,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "funnel_id,funnel_step_id,session_id", ignoreDuplicates: false }
@@ -224,15 +225,68 @@ export const VideoPlayer = ({
     setShowSpeedMenu(false);
   };
 
+  const enterFullscreen = async (videoEl: HTMLVideoElement) => {
+    try {
+      // iOS Safari — uses native fullscreen on the video element
+      if ((videoEl as any).webkitEnterFullscreen) {
+        (videoEl as any).webkitEnterFullscreen();
+        return;
+      }
+      // Standard
+      if (videoEl.requestFullscreen) {
+        await videoEl.requestFullscreen();
+        return;
+      }
+      // Older webkit
+      if ((videoEl as any).webkitRequestFullscreen) {
+        await (videoEl as any).webkitRequestFullscreen();
+        return;
+      }
+      // Firefox
+      if ((videoEl as any).mozRequestFullScreen) {
+        await (videoEl as any).mozRequestFullScreen();
+        return;
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+    }
+  };
+
+  const exitFullscreen = () => {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
+    else if ((document as any).mozCancelFullScreen) (document as any).mozCancelFullScreen();
+  };
+
   const toggleFullscreen = () => {
     const video = videoRef.current;
     if (!video) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      video.requestFullscreen();
-    }
+    const isFs = document.fullscreenElement || (document as any).webkitFullscreenElement;
+    if (isFs) exitFullscreen();
+    else enterFullscreen(video);
   };
+
+  // Lock orientation to landscape in fullscreen on mobile
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const onBeginFs = () => {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("landscape").catch(() => {});
+      }
+    };
+    const onEndFs = () => {
+      if (screen.orientation && (screen.orientation as any).unlock) {
+        (screen.orientation as any).unlock();
+      }
+    };
+    video.addEventListener("webkitbeginfullscreen", onBeginFs);
+    video.addEventListener("webkitendfullscreen", onEndFs);
+    return () => {
+      video.removeEventListener("webkitbeginfullscreen", onBeginFs);
+      video.removeEventListener("webkitendfullscreen", onEndFs);
+    };
+  }, []);
 
   if (!videoUrl) {
     return (
@@ -265,6 +319,10 @@ export const VideoPlayer = ({
           className="w-full h-full"
           onClick={togglePlay}
           playsInline
+          {...{ "webkit-playsinline": "" } as any}
+          x-webkit-airplay="allow"
+          controlsList="nodownload"
+          preload="auto"
           onEnded={() => {
             setIsPlaying(false);
             const video = videoRef.current;
@@ -343,7 +401,12 @@ export const VideoPlayer = ({
                 </div>
               )}
             </div>
-            <button onClick={toggleFullscreen} className="text-muted-foreground hover:text-foreground">
+            <button
+              onClick={toggleFullscreen}
+              onTouchEnd={(e) => { e.preventDefault(); toggleFullscreen(); }}
+              className="text-muted-foreground hover:text-foreground relative z-50"
+              style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "all" }}
+            >
               <Maximize size={16} />
             </button>
           </div>

@@ -47,6 +47,7 @@ export interface RichStepData {
     condition_met_at?: string | null;
     max_watched_seconds?: number;
     time_spent_seconds?: number;
+    permanently_unlocked?: boolean;
   };
 }
 
@@ -106,9 +107,16 @@ const getInitialProgressState = (step: RichStepData): LocalStepProgress => ({
 const checkStepUnlock = (
   step: RichStepData,
   stepIndex: number,
-  prevProgress: { watch_percent: number; is_completed: boolean; condition_met_at?: string | null; time_spent_seconds?: number } | null
+  prevProgress: { watch_percent: number; is_completed: boolean; condition_met_at?: string | null; time_spent_seconds?: number } | null,
+  currentStepProgress?: { permanently_unlocked?: boolean } | null
 ): UnlockResult => {
   if (stepIndex === 0) return { unlocked: true };
+
+  // CHECK FIRST: if this step was ever permanently unlocked
+  if (currentStepProgress?.permanently_unlocked === true) {
+    return { unlocked: true };
+  }
+
   if (!prevProgress) return { unlocked: false, reason: "previous_not_started" };
 
   const condition = step.unlock_condition || "full_watch";
@@ -507,7 +515,13 @@ const UpNextSection = ({
   if (cond === "time_spent") conditionText = `Spend at least ${nextStep.unlock_percentage || 10} minutes on the current step.`;
 
   return (
-    <div className="rounded-2xl p-4 border border-border/50 bg-muted/10">
+    <div
+      className="rounded-2xl p-4 border mt-4"
+      style={{
+        background: "rgba(212,175,55,0.05)",
+        borderColor: "rgba(212,175,55,0.15)",
+      }}
+    >
       <div className="flex items-center gap-2 mb-2">
         <Lock size={12} className="text-muted-foreground/50" />
         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Up Next — Locked</p>
@@ -516,19 +530,6 @@ const UpNextSection = ({
         Step {nextIndex + 1}: {nextStep.title}
       </p>
       <p className="text-xs text-muted-foreground mt-1">{conditionText}</p>
-      {requiredPct > 0 && (
-        <div className="mt-2 hidden md:block">
-          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full rounded-full bg-primary/60 transition-all duration-500"
-              style={{ width: `${progressToward}%` }}
-            />
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-1">
-            {Math.floor(currentWatchPct)}% / {requiredPct}% needed
-          </p>
-        </div>
-      )}
     </div>
   );
 };
@@ -579,7 +580,8 @@ export const ProgramTab = ({ funnel, steps, completionPct, creatorProfile, onSte
     if (stepIndex === 0) return { unlocked: true };
     const step = steps[stepIndex];
     const prevStep = steps[stepIndex - 1];
-    return checkStepUnlock(step, stepIndex, getProgressSnapshot(prevStep));
+    const currentStepProgress = step.progress;
+    return checkStepUnlock(step, stepIndex, getProgressSnapshot(prevStep), currentStepProgress);
   }, [steps, getProgressSnapshot]);
 
   // Persist resume state whenever activeStepIndex or localProgress changes
@@ -659,7 +661,7 @@ export const ProgramTab = ({ funnel, steps, completionPct, creatorProfile, onSte
     for (let i = 1; i < steps.length; i++) {
       const step = steps[i];
       const prevStep = steps[i - 1];
-      const result = checkStepUnlock(step, i, getProgressSnapshot(prevStep));
+      const result = checkStepUnlock(step, i, getProgressSnapshot(prevStep), step.progress);
 
       if (result.reason === "delay_countdown" && result.unlockAt) {
         countdowns[step.id] = result.unlockAt;

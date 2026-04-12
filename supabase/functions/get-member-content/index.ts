@@ -111,10 +111,10 @@ Deno.serve(async (req) => {
 
     const r2PublicUrl = Deno.env.get("R2_PUBLIC_URL") || "";
 
-    // Fetch progress
+    // Fetch progress including permanently_unlocked
     const { data: progressData } = await supabase
       .from("funnel_step_progress")
-      .select("funnel_step_id, status, watched_percentage, completed_at, last_position_seconds, condition_met_at, max_watched_seconds, time_spent_seconds")
+      .select("funnel_step_id, status, watched_percentage, completed_at, last_position_seconds, condition_met_at, max_watched_seconds, time_spent_seconds, permanently_unlocked")
       .eq("funnel_id", funnelId)
       .eq("session_id", user.id);
 
@@ -174,10 +174,16 @@ Deno.serve(async (req) => {
 
       let isLocked = false;
       if (index > 0) {
-        const prevStep = (steps as any[])[index - 1];
-        const prevProgress = progressMap[prevStep.id];
-        const prevCompleted = prevProgress?.status === "completed" || !!prevProgress?.completed_at;
-        isLocked = !prevCompleted;
+        // Check if this step is permanently unlocked first
+        const thisStepProgress = progressMap[step.id];
+        if (thisStepProgress?.permanently_unlocked) {
+          isLocked = false;
+        } else {
+          const prevStep = (steps as any[])[index - 1];
+          const prevProgress = progressMap[prevStep.id];
+          const prevCompleted = prevProgress?.status === "completed" || !!prevProgress?.completed_at;
+          isLocked = !prevCompleted;
+        }
       }
 
       const asset = step.video_asset_id ? videoAssets[step.video_asset_id] : null;
@@ -219,6 +225,7 @@ Deno.serve(async (req) => {
           condition_met_at: progress?.condition_met_at || null,
           max_watched_seconds: progress?.max_watched_seconds || 0,
           time_spent_seconds: progress?.time_spent_seconds || 0,
+          permanently_unlocked: progress?.permanently_unlocked || false,
         },
       };
     });

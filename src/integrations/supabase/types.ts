@@ -497,6 +497,7 @@ export type Database = {
           lead_id: string | null
           manually_unlocked: boolean | null
           max_watched_seconds: number | null
+          permanently_unlocked: boolean | null
           session_id: string | null
           status: string
           time_spent_seconds: number | null
@@ -517,6 +518,7 @@ export type Database = {
           lead_id?: string | null
           manually_unlocked?: boolean | null
           max_watched_seconds?: number | null
+          permanently_unlocked?: boolean | null
           session_id?: string | null
           status?: string
           time_spent_seconds?: number | null
@@ -537,6 +539,7 @@ export type Database = {
           lead_id?: string | null
           manually_unlocked?: boolean | null
           max_watched_seconds?: number | null
+          permanently_unlocked?: boolean | null
           session_id?: string | null
           status?: string
           time_spent_seconds?: number | null

@@ -96,12 +96,36 @@ export const PostSubmitVideoPlayer = ({ videoUrl, thumbnailUrl }: PostSubmitVide
     v.currentTime = pct * v.duration;
   };
 
+  const enterFullscreen = async (videoEl: HTMLVideoElement) => {
+    try {
+      if ((videoEl as any).webkitEnterFullscreen) {
+        (videoEl as any).webkitEnterFullscreen();
+        return;
+      }
+      if (videoEl.requestFullscreen) {
+        await videoEl.requestFullscreen();
+        return;
+      }
+      if ((videoEl as any).webkitRequestFullscreen) {
+        await (videoEl as any).webkitRequestFullscreen();
+        return;
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+    }
+  };
+
   const toggleFullscreen = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const el = containerRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) document.exitFullscreen();
-    else el.requestFullscreen();
+    const v = videoRef.current;
+    if (!v) return;
+    const isFs = document.fullscreenElement || (document as any).webkitFullscreenElement;
+    if (isFs) {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
+    } else {
+      enterFullscreen(v);
+    }
   };
 
   const fmt = (s: number) => {
@@ -123,6 +147,7 @@ export const PostSubmitVideoPlayer = ({ videoUrl, thumbnailUrl }: PostSubmitVide
         poster={thumbnailUrl || undefined}
         muted
         playsInline
+        {...{ "webkit-playsinline": "" } as any}
         preload="auto"
         className="w-full h-full object-contain"
         onEnded={() => { setIsPlaying(false); setProgress(100); }}
@@ -175,7 +200,12 @@ export const PostSubmitVideoPlayer = ({ videoUrl, thumbnailUrl }: PostSubmitVide
               {fmt(currentTime)} / {fmt(duration)}
             </span>
           </div>
-          <button onClick={toggleFullscreen} className="text-white hover:text-white/80">
+          <button
+            onClick={toggleFullscreen}
+            onTouchEnd={(e) => { e.preventDefault(); const v = videoRef.current; if (!v) return; const isFs = document.fullscreenElement || (document as any).webkitFullscreenElement; if (isFs) { if (document.exitFullscreen) document.exitFullscreen(); } else { enterFullscreen(v); } }}
+            className="text-white hover:text-white/80"
+            style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "all" }}
+          >
             <Maximize size={16} />
           </button>
         </div>
