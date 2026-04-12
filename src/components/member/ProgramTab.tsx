@@ -849,7 +849,11 @@ export const ProgramTab = ({ funnel, steps, completionPct, creatorProfile, onSte
     onStepComplete();
 
     const nextStep = steps[stepIndex + 1];
-    if (!nextStep) return;
+    if (!nextStep) {
+      // This was the last step — program complete!
+      toast.success("🎉 Program Complete! You can rewatch any video anytime.", { duration: 5000 });
+      return;
+    }
 
     if (!meetsUnlockCondition(nextStep, {
       watchedPercent: completedProgress.watch_percent,
