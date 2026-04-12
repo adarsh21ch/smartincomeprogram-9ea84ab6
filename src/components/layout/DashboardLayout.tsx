@@ -79,7 +79,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
   };
 
   return (
-    <div className="min-h-screen flex" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+    <div className="min-h-screen flex">
       {/* Desktop sidebar */}
       <aside className={cn("hidden md:flex flex-col border-r border-border bg-sidebar transition-all duration-200 sticky top-0 h-screen", collapsed ? "w-16" : "w-60")}>
         <div className="flex items-center justify-between h-16 px-4 border-b border-border shrink-0">
