@@ -61,16 +61,14 @@ export const CoursesTab = () => {
     enabled: !!user,
   });
 
-  const canAccess = (card: CourseCard) => {
-    // If no funnel is linked, treat as locked for regular members
-    if (!card.funnel_slug && !isAdmin && !isSubAdmin) return false;
+  const hasAccess = (cardId: string) => {
     if (isAdmin || isSubAdmin) return true;
-    return accessibleCardIds.has(card.id);
+    return accessibleCardIds.has(cardId);
   };
 
   const handleWatchTraining = (card: CourseCard) => {
     if (!card.funnel_slug) {
-      toast.info("Content coming soon!");
+      toast.info("Training content coming soon! Stay tuned.");
       return;
     }
     navigate(`/f/${card.funnel_slug}`);
