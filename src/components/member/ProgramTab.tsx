@@ -953,7 +953,7 @@ export const ProgramTab = ({ funnel, steps, completionPct, creatorProfile, onSte
                   stepTitle={activeStep.title}
                   stepId={activeStep.id}
                   funnelId={funnel.id}
-                  initialPosition={activeProgress?.last_position_seconds ?? 0}
+                  initialPosition={activeProgress?.status === "completed" ? 0 : (activeProgress?.last_position_seconds ?? 0)}
                   durationSeconds={activeStep.duration_seconds}
                   initialTimeSpentSeconds={activeProgress?.time_spent_seconds ?? 0}
                   completionThreshold={95}
