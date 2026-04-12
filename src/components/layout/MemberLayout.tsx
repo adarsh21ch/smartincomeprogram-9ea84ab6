@@ -45,7 +45,7 @@ export const MemberLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       {isPreview && (
         <div className="bg-primary text-primary-foreground text-center text-xs py-1.5 font-medium sticky top-0 z-[60]">
           Preview Mode —{" "}
