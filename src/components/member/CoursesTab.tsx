@@ -175,30 +175,17 @@ export const CoursesTab = () => {
 
               {/* Action footer */}
               <div className="pt-3 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-                {unlocked ? (
-                  card.funnel_slug ? (
-                    <button
-                      onClick={() => handleWatchTraining(card)}
-                      className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-1.5"
-                      style={{
-                        background: "rgba(212,175,55,0.15)",
-                        color: "rgb(212,175,55)",
-                      }}
-                    >
-                      <Play size={14} /> Watch Training →
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => toast.info("Training content coming soon! Stay tuned.")}
-                      className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-1.5"
-                      style={{
-                        background: "rgba(212,175,55,0.08)",
-                        color: "rgba(212,175,55,0.6)",
-                      }}
-                    >
-                      <Sparkles size={14} /> Coming Soon
-                    </button>
-                  )
+                {unlocked && card.funnel_slug ? (
+                  <button
+                    onClick={() => handleWatchTraining(card)}
+                    className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-1.5"
+                    style={{
+                      background: "rgba(212,175,55,0.15)",
+                      color: "rgb(212,175,55)",
+                    }}
+                  >
+                    <Play size={14} /> Watch Training →
+                  </button>
                 ) : (
                   <button
                     onClick={() => handleAskMentor(card.title)}
@@ -208,8 +195,7 @@ export const CoursesTab = () => {
                       color: "rgba(212,175,55,0.7)",
                     }}
                   >
-                    <Lock size={14} />
-                    Get Access
+                    <Lock size={14} /> Get Access
                   </button>
                 )}
               </div>
