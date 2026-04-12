@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Search, Users, Mail, Phone, Shield } from "lucide-react";
+import { SubAdminManager } from "@/components/admin/SubAdminManager";
 
 const AdminUsersPage = () => {
   const [search, setSearch] = useState("");
@@ -94,6 +95,11 @@ const AdminUsersPage = () => {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Sub-Admins Section */}
+        <div className="glass-card p-6">
+          <SubAdminManager />
         </div>
       </div>
     </AdminLayout>
