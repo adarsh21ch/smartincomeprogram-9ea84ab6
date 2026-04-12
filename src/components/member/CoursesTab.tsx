@@ -133,8 +133,8 @@ export const CoursesTab = () => {
 
       {/* Cards grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {cards.map((card, i) => {
-          const hasAccess = canAccess(card.id);
+         {cards.map((card, i) => {
+          const unlocked = hasAccess(card.id);
           return (
             <motion.div
               key={card.id}
@@ -144,10 +144,10 @@ export const CoursesTab = () => {
               className="rounded-2xl p-5 border transition-all duration-200 hover:-translate-y-0.5 group"
               style={{
                 background: "hsl(var(--card))",
-                borderColor: hasAccess ? "rgba(212,175,55,0.2)" : "rgba(255,255,255,0.07)",
+                borderColor: unlocked ? "rgba(212,175,55,0.2)" : "rgba(255,255,255,0.07)",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = hasAccess ? "rgba(212,175,55,0.4)" : "rgba(212,175,55,0.2)")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = hasAccess ? "rgba(212,175,55,0.2)" : "rgba(255,255,255,0.07)")}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = unlocked ? "rgba(212,175,55,0.4)" : "rgba(212,175,55,0.2)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = unlocked ? "rgba(212,175,55,0.2)" : "rgba(255,255,255,0.07)")}
             >
               {/* Top row: icon + badge */}
               <div className="flex items-start justify-between mb-3">
@@ -157,12 +157,12 @@ export const CoursesTab = () => {
                 <span
                   className="text-[11px] font-medium px-2.5 py-1 rounded-full border"
                   style={{
-                    color: hasAccess ? "rgb(212,175,55)" : "hsl(var(--muted-foreground))",
-                    borderColor: hasAccess ? "rgba(212,175,55,0.3)" : "rgba(255,255,255,0.1)",
-                    background: hasAccess ? "rgba(212,175,55,0.08)" : "transparent",
+                    color: unlocked ? "rgb(212,175,55)" : "hsl(var(--muted-foreground))",
+                    borderColor: unlocked ? "rgba(212,175,55,0.3)" : "rgba(255,255,255,0.1)",
+                    background: unlocked ? "rgba(212,175,55,0.08)" : "transparent",
                   }}
                 >
-                  {hasAccess ? "✅ " : "🔒 "}
+                  {unlocked ? "✅ " : "🔒 "}
                   {card.badge_text}
                 </span>
               </div>
@@ -175,7 +175,7 @@ export const CoursesTab = () => {
 
               {/* Action footer */}
               <div className="pt-3 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-                {hasAccess ? (
+                {unlocked ? (
                   <button
                     onClick={() => handleWatchTraining(card)}
                     className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-1.5"
@@ -184,8 +184,11 @@ export const CoursesTab = () => {
                       color: "rgb(212,175,55)",
                     }}
                   >
-                    <Play size={14} />
-                    Watch Training →
+                    {card.funnel_slug ? (
+                      <><Play size={14} /> Watch Training →</>
+                    ) : (
+                      <><Sparkles size={14} /> Coming Soon</>
+                    )}
                   </button>
                 ) : (
                   <button
