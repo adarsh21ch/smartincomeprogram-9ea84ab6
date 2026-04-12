@@ -87,7 +87,7 @@ export const ProfileTab = ({ stats }: ProfileTabProps) => {
     : "—";
 
   return (
-    <div className="space-y-5 max-w-lg">
+    <div className="space-y-5 max-w-lg mx-auto w-full">
       <h1 className="text-xl font-heading font-bold">Profile</h1>
 
       {/* Profile Header */}
