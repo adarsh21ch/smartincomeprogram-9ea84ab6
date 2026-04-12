@@ -71,6 +71,39 @@ export type Database = {
         }
         Relationships: []
       }
+      course_cards: {
+        Row: {
+          badge_text: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          title: string
+        }
+        Insert: {
+          badge_text?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          title: string
+        }
+        Update: {
+          badge_text?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          title?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
