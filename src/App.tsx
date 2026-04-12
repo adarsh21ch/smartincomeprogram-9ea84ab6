@@ -51,6 +51,7 @@ import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import RefundPolicyPage from "./pages/RefundPolicyPage";
 import InstallApp from "./pages/InstallApp";
+import SubAdminAccessPage from "./pages/SubAdminAccessPage";
 
 /** Redirects old paths like /funnels/:id/edit → /admin/funnels/:id/edit */
 const LegacyRedirect = ({ prefix }: { prefix: string }) => {
@@ -96,6 +97,7 @@ const App = () => (
               <Route path="/home/program" element={<MemberRoute><MemberHome tab="program" /></MemberRoute>} />
               <Route path="/home/courses" element={<MemberRoute><MemberHome tab="courses" /></MemberRoute>} />
               <Route path="/home/profile" element={<MemberRoute><MemberHome tab="profile" /></MemberRoute>} />
+              <Route path="/home/manage-access" element={<MemberRoute><SubAdminAccessPage /></MemberRoute>} />
               <Route path="/profile" element={<Navigate to="/home/profile" replace />} />
 
               {/* Legacy redirects — preserve sub-paths */}
