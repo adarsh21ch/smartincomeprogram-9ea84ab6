@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Logo } from "@/components/landing/Logo";
-import { House, Target, BookOpen, User, LogOut, Shield, Sun, Moon } from "lucide-react";
+import { House, Target, GraduationCap, User, LogOut, Shield, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -13,7 +13,7 @@ import {
 const tabs = [
   { icon: House, label: "Home", path: "/home" },
   { icon: Target, label: "Program", path: "/home/program" },
-  { icon: BookOpen, label: "Courses", path: "/home/courses" },
+  { icon: GraduationCap, label: "Trainings", path: "/home/courses" },
   { icon: User, label: "Profile", path: "/home/profile" },
 ];
 

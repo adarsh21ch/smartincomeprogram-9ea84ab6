@@ -1,4 +1,4 @@
-import { BookOpen, Sparkles, Lock, ArrowRight } from "lucide-react";
+import { GraduationCap, Sparkles, Lock, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,7 +44,7 @@ export const CoursesTab = () => {
   if (!isLoading && cards.length === 0) {
     return (
       <div className="space-y-5">
-        <h1 className="text-xl font-heading font-bold">Courses</h1>
+        <h1 className="text-xl font-heading font-bold">Trainings</h1>
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -52,7 +52,7 @@ export const CoursesTab = () => {
           className="rounded-2xl border border-border bg-card p-8 text-center space-y-4"
         >
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-            <BookOpen size={28} className="text-primary" />
+            <GraduationCap size={28} className="text-primary" />
           </div>
           <div>
             <h2 className="text-lg font-heading font-semibold text-foreground">
