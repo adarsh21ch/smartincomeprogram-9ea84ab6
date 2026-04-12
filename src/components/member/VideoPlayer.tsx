@@ -44,6 +44,7 @@ export const VideoPlayer = ({
   autoPlayMuted = false,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const seekBarRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(durationSeconds || 0);
@@ -52,6 +53,7 @@ export const VideoPlayer = ({
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
   const [showUnmutePill, setShowUnmutePill] = useState(false);
+  const [isSeeking, setIsSeeking] = useState(false);
   const progressSaveRef = useRef<NodeJS.Timeout>();
   const maxWatchedSecondsRef = useRef(initialPosition);
   const timeSpentSecondsRef = useRef(initialTimeSpentSeconds);
@@ -201,14 +203,39 @@ export const VideoPlayer = ({
     }
   };
 
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+  const seekToPosition = useCallback((clientX: number) => {
     const video = videoRef.current;
-    if (!video) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const pct = x / rect.width;
+    const bar = seekBarRef.current;
+    if (!video || !bar || !video.duration) return;
+    const rect = bar.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     video.currentTime = pct * video.duration;
+  }, []);
+
+  const handleSeekDown = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    setIsSeeking(true);
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    seekToPosition(clientX);
   };
+
+  useEffect(() => {
+    if (!isSeeking) return;
+    const onMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      seekToPosition(clientX);
+    };
+    const onUp = () => setIsSeeking(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchmove", onMove);
+    window.addEventListener("touchend", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onUp);
+    };
+  }, [isSeeking, seekToPosition]);
 
   const toggleMute = () => {
     const video = videoRef.current;
@@ -354,13 +381,24 @@ export const VideoPlayer = ({
       </div>
 
       {/* Controls */}
-      <div className="px-3 py-2 space-y-1.5">
+      <div className="px-3 py-2 space-y-1.5 group">
         {/* Seek bar */}
-        <div className="h-1.5 bg-muted rounded-full cursor-pointer" onClick={handleSeek}>
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-100"
-            style={{ width: `${seekPercent}%` }}
-          />
+        <div
+          ref={seekBarRef}
+          className="relative h-4 flex items-center cursor-pointer touch-none select-none"
+          onMouseDown={handleSeekDown}
+          onTouchStart={handleSeekDown}
+        >
+          <div className="h-1.5 bg-muted rounded-full w-full relative">
+            <div
+              className="h-full bg-primary rounded-full"
+              style={{ width: `${seekPercent}%` }}
+            />
+            <div
+              className={`absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-primary border-2 border-background shadow-md transition-opacity ${isSeeking ? "opacity-100 scale-110" : "opacity-0 group-hover:opacity-100"}`}
+              style={{ left: `calc(${seekPercent}% - 7px)` }}
+            />
+          </div>
         </div>
 
         <div className="flex items-center justify-between">
