@@ -48,6 +48,7 @@ export const VideoPlayer = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(durationSeconds || 0);
   const [isMuted, setIsMuted] = useState(autoPlayMuted);
@@ -143,6 +144,7 @@ export const VideoPlayer = ({
 
     maxWatchedSecondsRef.current = initialPosition;
     timeSpentSecondsRef.current = initialTimeSpentSeconds;
+    setIsBuffering(true);
 
     const handleLoaded = () => {
       setDuration(video.duration);
@@ -169,12 +171,22 @@ export const VideoPlayer = ({
       emitProgress(video.currentTime, video.duration);
     };
 
+    const handleCanPlay = () => setIsBuffering(false);
+    const handleWaiting = () => setIsBuffering(true);
+    const handlePlaying = () => setIsBuffering(false);
+
     video.addEventListener("loadedmetadata", handleLoaded);
     video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("canplay", handleCanPlay);
+    video.addEventListener("waiting", handleWaiting);
+    video.addEventListener("playing", handlePlaying);
 
     return () => {
       video.removeEventListener("loadedmetadata", handleLoaded);
       video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("canplay", handleCanPlay);
+      video.removeEventListener("waiting", handleWaiting);
+      video.removeEventListener("playing", handlePlaying);
     };
   }, [emitProgress, initialPosition, initialTimeSpentSeconds]);
 
