@@ -189,10 +189,11 @@ export const CoursesTab = () => {
                 ) : (
                   <button
                     onClick={() => handleAskMentor(card.title)}
-                    className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-1.5"
+                    className="w-full py-3 rounded-xl text-[13px] font-bold transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
                     style={{
-                      background: "rgba(212,175,55,0.08)",
-                      color: "rgba(212,175,55,0.7)",
+                      background: "linear-gradient(135deg, rgba(212,175,55,0.25), rgba(212,175,55,0.12))",
+                      color: "rgb(212,175,55)",
+                      border: "1px solid rgba(212,175,55,0.3)",
                     }}
                   >
                     <Lock size={14} /> Get Access
