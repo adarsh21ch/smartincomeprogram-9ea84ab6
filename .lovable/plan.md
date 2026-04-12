@@ -1,19 +1,17 @@
 
 
-## Plan: Add Inline Video Playback in Admin Testimonial Editor
+## Plan: Hide Redundant Progress Bar on Mobile
 
 ### Problem
-The testimonial video preview in the admin editor shows a static thumbnail with a play icon, but clicking it does nothing. You want to watch the video right there without leaving the editor.
+On mobile, the "Up Next — Locked" section's progress bar (showing "6% / 95% needed") appears directly below the video player's seek bar, creating visual clutter.
 
 ### Change
 
-**File: `src/components/funnel/TestimonialVideoUpload.tsx`**
+**File: `src/components/member/ProgramTab.tsx`** (UpNextSection component, ~lines 519-530)
 
-- Add a `playing` state toggle
-- When the play button overlay is clicked, set `playing = true` and render a `<video>` element with `controls`, `autoPlay`, and the video `src` — replacing the static thumbnail view
-- Add a click handler on the play button (not the whole card) to start playback
-- When the video ends or the user clicks outside, return to the thumbnail preview
-- Keep all existing upload/replace/remove functionality untouched
+- Wrap the progress bar and percentage text inside the locked "Up Next" section with a `hidden md:block` class, so it only shows on tablet/desktop
+- On mobile, users still see the "Up Next — Locked" label, step title, and condition text — just not the redundant progress bar
+- The video player's own yellow seek bar remains the single progress indicator on mobile
 
-This is a minimal, safe change — only the preview area gains interactivity.
+This is a one-line CSS class change — no logic changes needed.
 
