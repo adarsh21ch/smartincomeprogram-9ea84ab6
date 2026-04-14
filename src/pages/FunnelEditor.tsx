@@ -24,6 +24,7 @@ import { JourneyPreview } from "@/components/funnel/JourneyPreview";
 import { PrivacySettings } from "@/components/funnel/PrivacySettings";
 import { FunnelLivePreview } from "@/components/funnel/FunnelLivePreview";
 import { SpeakerPhotoUpload } from "@/components/funnel/SpeakerPhotoUpload";
+import { PerStepSpeakerAssignment } from "@/components/funnel/PerStepSpeakerAssignment";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { usePlan } from "@/hooks/usePlan";
 import { Crown } from "lucide-react";
