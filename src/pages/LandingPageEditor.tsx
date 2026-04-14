@@ -17,6 +17,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   FileText, Palette, ClipboardList, Mail, Video, Link2, Rocket, Mic,
   Save, ArrowLeft, Check, X, Plus, Trash2, GripVertical, Eye, Edit3, Star,
+  Globe, Lock as LockIcon, EyeOff,
 } from "lucide-react";
 import { TestimonialsBuilderStep } from "@/components/funnel/TestimonialsBuilderStep";
 import { toast } from "sonner";
@@ -76,6 +77,8 @@ We look forward to having you there.`,
   testimonials_enabled: false,
   testimonials_section_title: "What our members say",
   testimonials_display_position: "post_registration",
+  visibility: "public",
+  access_code_hash: null as string | null,
 };
 
 const sectionTypes = [
@@ -105,7 +108,8 @@ const WIZARD_STEPS = [
   { icon: Mic, label: "Speaker", num: "5" },
   { icon: Video, label: "Video", num: "6" },
   { icon: Star, label: "Testimonials", num: "7" },
-  { icon: Rocket, label: "Publish", num: "8" },
+  { icon: LockIcon, label: "Privacy", num: "8" },
+  { icon: Rocket, label: "Publish", num: "9" },
 ];
 
 const LandingPageEditor = () => {
