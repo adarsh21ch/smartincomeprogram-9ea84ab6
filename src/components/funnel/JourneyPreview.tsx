@@ -18,6 +18,7 @@ interface FlowStep {
   time_delay_minutes?: number;
   timer_cta_enabled?: boolean;
   timer_cta_text?: string;
+  access_code_enabled?: boolean;
 }
 
 interface JourneyPreviewProps {
@@ -70,8 +71,13 @@ export const JourneyPreview = ({ steps, className = "" }: JourneyPreviewProps) =
                   {idx > 0 && ` · ${UNLOCK_LABELS[step.unlock_rule_type] || "Auto"}`}
                 </p>
 
-                {(step.time_delay_enabled || step.timer_cta_enabled) && (
+                {(step.time_delay_enabled || step.timer_cta_enabled || step.access_code_enabled) && (
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {step.access_code_enabled && (
+                      <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-500">
+                        🔐 Code
+                      </span>
+                    )}
                     {step.time_delay_enabled && (step.time_delay_minutes || 0) > 0 && (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                         ⏱ {step.time_delay_minutes} min wait

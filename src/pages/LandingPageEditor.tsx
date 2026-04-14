@@ -17,6 +17,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   FileText, Palette, ClipboardList, Mail, Video, Link2, Rocket, Mic,
   Save, ArrowLeft, Check, X, Plus, Trash2, GripVertical, Eye, Edit3, Star,
+  Globe, Lock as LockIcon, EyeOff,
 } from "lucide-react";
 import { TestimonialsBuilderStep } from "@/components/funnel/TestimonialsBuilderStep";
 import { toast } from "sonner";
@@ -76,6 +77,8 @@ We look forward to having you there.`,
   testimonials_enabled: false,
   testimonials_section_title: "What our members say",
   testimonials_display_position: "post_registration",
+  visibility: "public",
+  access_code_hash: null as string | null,
 };
 
 const sectionTypes = [
@@ -105,7 +108,8 @@ const WIZARD_STEPS = [
   { icon: Mic, label: "Speaker", num: "5" },
   { icon: Video, label: "Video", num: "6" },
   { icon: Star, label: "Testimonials", num: "7" },
-  { icon: Rocket, label: "Publish", num: "8" },
+  { icon: LockIcon, label: "Privacy", num: "8" },
+  { icon: Rocket, label: "Publish", num: "9" },
 ];
 
 const LandingPageEditor = () => {
@@ -122,6 +126,8 @@ const LandingPageEditor = () => {
   const [previewStage, setPreviewStage] = useState<"form" | "after-submit">("form");
   const [videoToggle, setVideoToggle] = useState(false);
   const [funnelToggle, setFunnelToggle] = useState(false);
+  const [accessCodePlain, setAccessCodePlain] = useState("");
+  const [showAccessCode, setShowAccessCode] = useState(false);
 
   const { data: existing, isLoading } = useQuery({
     queryKey: ["landing-page", id],
@@ -182,7 +188,7 @@ const LandingPageEditor = () => {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const payload = { ...form, owner_id: user!.id };
+      const payload: any = { ...form, owner_id: user!.id };
       // Auto-generate slug from title if not manually set
       if (!payload.slug && payload.title) {
         payload.slug = generateSlug(payload.title);
@@ -191,11 +197,20 @@ const LandingPageEditor = () => {
       if (!isEdit && payload.slug) {
         payload.slug = `${payload.slug}-${Date.now().toString(36).slice(-4)}`;
       }
+      // Hash access code if private and code provided
+      if (payload.visibility === "private" && accessCodePlain) {
+        const encoder = new TextEncoder();
+        const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(accessCodePlain.trim().toUpperCase()));
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        payload.access_code_hash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+      } else if (payload.visibility === "public") {
+        payload.access_code_hash = null;
+      }
       if (isEdit) {
-        const { error } = await supabase.from("landing_pages").update(payload as any).eq("id", id!);
+        const { error } = await supabase.from("landing_pages").update(payload).eq("id", id!);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("landing_pages").insert(payload as any);
+        const { error } = await supabase.from("landing_pages").insert(payload);
         if (error) throw error;
       }
     },
@@ -854,6 +869,76 @@ const LandingPageEditor = () => {
     />
   );
 
+  const renderPrivacyStep = () => {
+    const isPrivate = form.visibility === "private";
+    return (
+      <>
+        <h2 className="text-lg font-heading font-semibold">Privacy Settings</h2>
+        <p className="text-sm text-muted-foreground">Control who can access this landing page.</p>
+        <div className="space-y-4 mt-4">
+          <div className="p-4 bg-muted/50 rounded-xl">
+            <Label className="font-semibold mb-3 block">Page Visibility</Label>
+            <div className="flex gap-2 p-1 bg-muted rounded-lg">
+              <button
+                onClick={() => updateField("visibility", "public")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-md transition-all ${
+                  !isPrivate ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Globe size={14} /> Public
+              </button>
+              <button
+                onClick={() => updateField("visibility", "private")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-md transition-all ${
+                  isPrivate ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <LockIcon size={14} /> Private
+              </button>
+            </div>
+            <div className="flex items-center gap-2 mt-3">
+              <span className={`w-2 h-2 rounded-full ${isPrivate ? "bg-amber-500" : "bg-primary"}`} />
+              <p className="text-xs text-muted-foreground">
+                {isPrivate
+                  ? "Viewers must enter an access code to view this page"
+                  : "Anyone with the link can view this page"}
+              </p>
+            </div>
+          </div>
+
+          {isPrivate && (
+            <div className="p-4 bg-muted/50 rounded-xl space-y-3 animate-in slide-in-from-top-2 duration-300">
+              <Label className="font-semibold flex items-center gap-2">
+                <LockIcon size={14} /> Access Code
+              </Label>
+              <div className="relative">
+                <Input
+                  type={showAccessCode ? "text" : "password"}
+                  value={accessCodePlain}
+                  onChange={(e) => setAccessCodePlain(e.target.value.toUpperCase().slice(0, 20))}
+                  placeholder="E.g. VIP1500, TEAM2024"
+                  className="bg-muted border-border pr-10 uppercase tracking-wider font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAccessCode(!showAccessCode)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showAccessCode ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {isEdit && form.access_code_hash && !accessCodePlain
+                  ? "A code is already set. Enter a new code to replace it, or leave blank to keep the existing one."
+                  : "Store this code safely — it cannot be retrieved after saving."}
+              </p>
+            </div>
+          )}
+        </div>
+      </>
+    );
+  };
+
   const renderWizardContent = () => {
     switch (wizardStep) {
       case 0: return renderPageInfo();
@@ -863,7 +948,8 @@ const LandingPageEditor = () => {
       case 4: return renderSpeakerStep();
       case 5: return renderVideoStep();
       case 6: return renderTestimonialsStep();
-      case 7: return renderPublishStep();
+      case 7: return renderPrivacyStep();
+      case 8: return renderPublishStep();
       default: return null;
     }
   };

@@ -548,6 +548,21 @@ export const MultiStepViewer = ({
   const [countdownUnlocks, setCountdownUnlocks] = useState<Record<string, number>>({});
   const [showEndOverlay, setShowEndOverlay] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const [stepCodeUnlocked, setStepCodeUnlocked] = useState<Record<string, boolean>>({});
+
+  // Check localStorage for previously unlocked step codes
+  useEffect(() => {
+    const unlocked: Record<string, boolean> = {};
+    for (const step of steps) {
+      if (step.access_code_enabled) {
+        const key = `nf_step_code_${step.id}_${sessionId.current}`;
+        if (localStorage.getItem(key) === "true") {
+          unlocked[step.id] = true;
+        }
+      }
+    }
+    setStepCodeUnlocked(unlocked);
+  }, [steps]);
   const [countdownNow, setCountdownNow] = useState(Date.now());
   const sessionId = useRef(getSessionId(funnel.id));
   const progressSaveTimer = useRef<ReturnType<typeof setInterval>>();
@@ -1280,7 +1295,20 @@ export const MultiStepViewer = ({
               {/* Step content */}
               {!activeCountdown && !isTimerBlurActive && getStepStatus(activeStep.id) !== "locked" && (
                 <>
-                  {activeStep.step_type === "video" && activeStep.video_url && (
+                  {/* Access Code Gate — shown when step is unlocked but code not yet entered */}
+                  {activeStep.access_code_enabled && !stepCodeUnlocked[activeStep.id] && activeStep.step_type === "video" && (
+                    <StepCodeGate
+                      funnelId={funnel.id}
+                      stepId={activeStep.id}
+                      stepTitle={activeStep.title}
+                      message={activeStep.access_code_message || "To unlock this step, contact your mentor and request the access code for this session."}
+                      sessionId={sessionId.current}
+                      onSuccess={() => setStepCodeUnlocked((prev) => ({ ...prev, [activeStep.id]: true }))}
+                      isDark={isDark}
+                    />
+                  )}
+
+                  {activeStep.step_type === "video" && activeStep.video_url && (!activeStep.access_code_enabled || stepCodeUnlocked[activeStep.id]) && (
                     <div className="space-y-4">
                       <div className="relative">
                         <VideoPlayer

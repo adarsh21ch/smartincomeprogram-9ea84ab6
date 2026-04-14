@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { LandingPageCodeGate } from "@/components/funnel/LandingPageCodeGate";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +35,7 @@ const PublicLandingPage = () => {
   const [honeypot, setHoneypot] = useState("");
   const [showUnmuteHint, setShowUnmuteHint] = useState(true);
   const [showSpeakerBio, setShowSpeakerBio] = useState(false);
+  const [codeGateOpen, setCodeGateOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Auto-hide unmute hint after 5 seconds
@@ -62,6 +64,15 @@ const PublicLandingPage = () => {
         .single();
       if (data) {
         setPage(data);
+        // Check if private page needs code gate
+        if (data.visibility === "private" && data.access_code_hash) {
+          const codeOk = localStorage.getItem(`nf_lp_code_${data.id}`);
+          if (!codeOk) {
+            setCodeGateOpen(true);
+            setLoading(false);
+            return;
+          }
+        }
         const saved = localStorage.getItem(`nf_registered_${data.id}`);
         if (saved) setSubmitted(true);
         if (data.post_submit_video_asset_id) {
@@ -144,6 +155,32 @@ const PublicLandingPage = () => {
           <p className="text-muted-foreground">This landing page doesn't exist or isn't published.</p>
         </div>
       </div>
+    );
+  }
+
+  if (codeGateOpen && page) {
+    return (
+      <LandingPageCodeGate
+        pageId={page.id}
+        pageTitle={page.title}
+        onSuccess={() => {
+          localStorage.setItem(`nf_lp_code_${page.id}`, "true");
+          setCodeGateOpen(false);
+          const saved = localStorage.getItem(`nf_registered_${page.id}`);
+          if (saved) setSubmitted(true);
+          if (page.post_submit_video_asset_id) {
+            supabase.from("video_assets").select("id,title,public_url,thumbnail_url").eq("id", page.post_submit_video_asset_id).single().then(({ data: v }) => { if (v) setVideo(v); });
+          }
+          supabase.rpc("increment_landing_page_views", { _landing_page_id: page.id });
+          if (page.testimonials_enabled) {
+            supabase.from("landing_page_testimonials").select("*").eq("landing_page_id", page.id).eq("is_active", true).order("display_order", { ascending: true }).then(({ data: tData }) => {
+              const all = (tData || []) as any[];
+              setRegTestimonials(all.filter((t: any) => (t.placement || "registration") === "registration"));
+              setPostRegTestimonials(all.filter((t: any) => t.placement === "after_registration"));
+            });
+          }
+        }}
+      />
     );
   }
 
