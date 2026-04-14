@@ -1,5 +1,4 @@
 import { Play, Lock, MessageCircle, Phone as PhoneIcon, Eye, Layers } from "lucide-react";
-import logoImg from "@/assets/logo.png";
 
 interface PreviewStep {
   title: string;
@@ -87,29 +86,23 @@ export const FunnelLivePreview = ({ funnel, selectedVideo, flowSteps, leadForm, 
     : [];
 
   return (
-    <div className="w-full h-full overflow-y-auto rounded-xl border border-border bg-[#09090b] text-white">
+    <div className="w-full h-full overflow-y-auto rounded-xl border border-border bg-card text-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+      <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center gap-1.5">
-          <Eye size={11} className="text-primary" />
+          <Eye size={12} className="text-primary" />
           <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Live Preview</span>
         </div>
+        <p className="text-[10px] text-muted-foreground mt-0.5">This is what your prospects see</p>
       </div>
 
       <div className="p-3 space-y-3">
-        {/* Logo */}
-        <div className="flex items-center gap-1.5 justify-center">
-          <img src={logoImg} alt="" className="h-4 w-4" />
-          <span className="font-heading font-bold text-[11px]">Smart Income</span>
-          <span className="font-heading font-extrabold text-primary text-[11px]" style={{ fontStyle: "italic" }}>Flow</span>
-        </div>
-
         {/* Title */}
-        <h2 className="font-heading font-extrabold text-center text-sm leading-tight">
+        <h2 className="font-heading font-extrabold text-center text-sm leading-tight text-foreground">
           {funnel.title || "Your Funnel Title"}
         </h2>
         {funnel.description && (
-          <p className="text-[10px] text-white/60 text-center">{funnel.description}</p>
+          <p className="text-[10px] text-muted-foreground text-center">{funnel.description}</p>
         )}
 
         {/* Private badge */}

@@ -626,26 +626,31 @@ const FunnelEditor = () => {
         </div>
       </div>
 
-      <div className="lg:grid lg:grid-cols-[1fr_240px] lg:gap-5 mt-4">
-        {/* Left: Steps list */}
-        <div>
-          {flowSteps.length === 0 ? (
-            <div className="border-2 border-dashed border-border rounded-[14px] p-10 text-center">
-              <Layers size={36} className="text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm font-semibold text-foreground mb-1">No steps yet</p>
-              <p className="text-xs text-muted-foreground mb-4">Start building your journey by adding the first step.</p>
-              <Button variant="hero" size="sm" onClick={() => setStepTypeSelectorOpen(true)}>
-                <Plus size={14} /> Add First Step
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              {flowSteps.map((fs, idx) => {
-                const meta = getStepTypeMeta(fs.step_type);
-                return (
+      <div className="mt-4">
+        {flowSteps.length === 0 ? (
+          <div className="border-2 border-dashed border-border rounded-xl p-10 text-center">
+            <Layers size={36} className="text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm font-semibold text-foreground mb-1">No steps yet</p>
+            <p className="text-xs text-muted-foreground mb-4">Start building your journey by adding the first step.</p>
+            <Button variant="hero" size="sm" onClick={() => setStepTypeSelectorOpen(true)}>
+              <Plus size={14} /> Add First Step
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-0">
+            {flowSteps.map((fs, idx) => {
+              const meta = getStepTypeMeta(fs.step_type);
+              const isEditing = editingStepIdx === idx;
+              return (
+                <div key={idx}>
+                  {/* Step Card */}
                   <div
-                    key={idx}
-                    className="group flex flex-col gap-2.5 p-4 rounded-[14px] border border-border hover:border-primary/30 bg-card/50 transition-all"
+                    className={`group relative rounded-xl border transition-all duration-150 ${
+                      isEditing
+                        ? "border-l-[3px] border-l-gold border-t border-r border-b border-border bg-card shadow-lg shadow-gold/5"
+                        : "border-border bg-card hover:border-primary/20"
+                    }`}
+                    style={{ padding: "16px 20px" }}
                   >
                     {/* Top row */}
                     <div className="flex items-center gap-3">
@@ -656,35 +661,41 @@ const FunnelEditor = () => {
                       </div>
 
                       {/* Icon */}
-                      <div className={`w-8 h-8 rounded-lg ${meta.bg} flex items-center justify-center shrink-0`}>
+                      <div className={`w-9 h-9 rounded-lg ${meta.bg} flex items-center justify-center shrink-0`}>
                         <meta.icon size={16} className={meta.color} />
                       </div>
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Step {idx + 1}</span>
-                          {!fs.is_active && <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Inactive</span>}
+                          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Step {idx + 1}</span>
+                          {!fs.is_active && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive">Inactive</span>}
                         </div>
-                        <p className="text-[15px] font-semibold text-foreground truncate mt-0.5">
+                        <p className="text-[15px] font-semibold text-foreground truncate mt-1">
                           {fs.title || <span className="text-muted-foreground italic">Untitled {meta.label}</span>}
                         </p>
                       </div>
 
                       {/* Edit button */}
-                      <Button variant="outline" size="sm" className="h-8 text-xs shrink-0" onClick={() => setEditingStepIdx(idx)}>
-                        Edit
+                      <Button
+                        variant={isEditing ? "default" : "outline"}
+                        size="sm"
+                        className="h-8 text-xs shrink-0 gap-1.5"
+                        onClick={() => setEditingStepIdx(isEditing ? null : idx)}
+                      >
+                        <Pencil size={12} />
+                        {isEditing ? "Editing" : "Edit"}
                       </Button>
                     </div>
 
-                    {/* Bottom row: type badge + unlock rule + new badges + actions */}
-                    <div className="flex items-center justify-between pl-[52px]">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground">
+                    {/* Bottom row: badges */}
+                    <div className="flex items-center justify-between mt-3 pl-[52px]">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-primary/10 text-primary">
                           {meta.label}
                         </span>
                         {idx > 0 && (
-                          <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground flex items-center gap-1">
+                          <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-muted text-muted-foreground flex items-center gap-1">
                             <Lock size={9} />
                             {fs.unlock_condition === "full_watch" ? "Full watch" :
                              fs.unlock_condition === "percentage" ? `${fs.unlock_percentage || 80}%` :
@@ -692,18 +703,23 @@ const FunnelEditor = () => {
                              UNLOCK_LABELS[fs.unlock_rule_type] || "Auto"}
                           </span>
                         )}
+                        {fs.access_code_enabled && (
+                          <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-500 flex items-center gap-1">
+                            🔐 Code
+                          </span>
+                        )}
                         {fs.time_delay_enabled && (fs.time_delay_minutes || 0) > 0 && (
-                          <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-600 flex items-center gap-1">
-                            ⏱ +{fs.time_delay_minutes} min delay
+                          <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-600 flex items-center gap-1">
+                            ⏱ {fs.time_delay_minutes}m wait
                           </span>
                         )}
                         {fs.speaker_mode_step && fs.speaker_mode_step !== "none" && (
-                          <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-blue-500/10 text-blue-400 flex items-center gap-1">
+                          <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-blue-500/10 text-blue-400 flex items-center gap-1">
                             👤 {fs.speaker_mode_step === "account" ? "Account" : "Custom"}
                           </span>
                         )}
                         {fs.video_topics_step_enabled && (fs.video_topics_step?.length || 0) > 0 && (
-                          <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-gold/10 text-gold flex items-center gap-1">
+                          <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-gold/10 text-gold flex items-center gap-1">
                             📋 {fs.video_topics_step?.length} topics
                           </span>
                         )}
@@ -718,51 +734,37 @@ const FunnelEditor = () => {
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
 
-          {/* Add Step button */}
-          {flowSteps.length > 0 && (
-            <button
-              onClick={() => setStepTypeSelectorOpen(true)}
-              className="w-full mt-3 rounded-[14px] py-5 text-center transition-all border-2 border-dashed border-border text-muted-foreground font-semibold text-sm hover:border-primary/40 hover:text-primary hover:bg-primary/5"
-            >
-              <Plus size={16} className="inline mr-1.5" />
-              Add Step
-              <span className="block text-[11px] font-normal mt-0.5 opacity-60">Add a video, form, call booking, or payment step</span>
-            </button>
-          )}
-        </div>
-
-        {/* Right: Live Preview (desktop) */}
-        {flowSteps.length > 0 && (
-          <div className="hidden lg:block">
-            <div className="sticky top-24 p-4 border border-border rounded-xl bg-card/50">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-3">Live Preview</p>
-              <JourneyPreview steps={flowSteps} />
-              <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">Prospects see this exact order.</p>
-            </div>
+                  {/* Connector line between cards */}
+                  {idx < flowSteps.length - 1 && (
+                    <div className="flex justify-center py-1">
+                      <div className="w-px h-5 bg-border relative">
+                        <ChevronDown size={10} className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-muted-foreground" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
+        )}
+
+        {/* Add Step button */}
+        {flowSteps.length > 0 && (
+          <button
+            onClick={() => setStepTypeSelectorOpen(true)}
+            className="w-full mt-4 rounded-xl py-5 text-center transition-all duration-150 border-2 border-dashed border-border text-muted-foreground font-semibold text-sm hover:border-gold/40 hover:text-gold hover:bg-gold/5 group"
+          >
+            <Plus size={16} className="inline mr-1.5" />
+            Add Step
+            <span className="block text-[11px] font-normal mt-0.5 opacity-60">Add a video, form, call booking, or payment step</span>
+          </button>
         )}
       </div>
 
-      {/* Mobile journey preview */}
-      {flowSteps.length > 0 && (
-        <Collapsible open={previewOpen} onOpenChange={setPreviewOpen} className="lg:hidden mt-4 border border-border rounded-xl overflow-hidden">
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            Journey Preview
-            <ChevronDown size={14} className={`transition-transform ${previewOpen ? "rotate-180" : ""}`} />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="p-3 pt-0">
-            <JourneyPreview steps={flowSteps} />
-          </CollapsibleContent>
-        </Collapsible>
-      )}
-
       {/* Modals */}
       <StepTypeSelector open={stepTypeSelectorOpen} onClose={() => setStepTypeSelectorOpen(false)} onSelect={addFlowStep} />
+      {/* StepConfigPanel as Sheet — only on mobile / when NOT on Build Journey desktop */}
       <StepConfigPanel
         open={editingStepIdx !== null}
         onClose={() => setEditingStepIdx(null)}
@@ -1284,9 +1286,9 @@ const FunnelEditor = () => {
           </div>
         )}
 
-        {/* Main content + Live Preview */}
+        {/* Main content + Right Panel */}
         <div className="flex-1 flex gap-6 min-w-0">
-          <div className="flex-1 max-w-2xl min-w-0">
+          <div className={`flex-1 min-w-0 ${isMulti && wizardStep === 1 ? "max-w-none" : "max-w-2xl"}`}>
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex-1 min-w-0">
@@ -1300,7 +1302,7 @@ const FunnelEditor = () => {
               )}
             </div>
 
-            {/* Mobile compact step selector — wrapping grid, no horizontal scroll */}
+            {/* Mobile compact step selector */}
             {modeChosen && (
               <div className="lg:hidden grid grid-cols-4 sm:grid-cols-5 gap-1.5 pb-3 mb-3">
                 {visibleSteps.map((s, i) => (
@@ -1332,7 +1334,7 @@ const FunnelEditor = () => {
               {renderWizardContent()}
             </div>
 
-            {/* Navigation — always visible, no horizontal scroll needed */}
+            {/* Navigation */}
             <div className="flex gap-3 mt-4">
               {(modeChosen && wizardStep > 0) && <Button variant="outline" size="sm" onClick={() => setWizardStep(wizardStep - 1)}>Previous</Button>}
               <div className="flex-1" />
@@ -1346,16 +1348,18 @@ const FunnelEditor = () => {
             </div>
           </div>
 
-          {/* Live Preview — desktop only */}
+          {/* Right Panel — desktop only */}
           {modeChosen && (
-            <div className="hidden xl:block w-[300px] shrink-0 sticky top-4 h-[calc(100vh-10rem)]">
-              <FunnelLivePreview
-                funnel={funnel}
-                selectedVideo={selectedVideo}
-                flowSteps={flowSteps}
-                leadForm={leadForm}
-                previewStepIndex={editingStepIdx}
-              />
+            <div className="hidden lg:block w-[320px] shrink-0">
+              <div className="sticky top-4 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-xl">
+                <FunnelLivePreview
+                  funnel={funnel}
+                  selectedVideo={selectedVideo}
+                  flowSteps={flowSteps}
+                  leadForm={leadForm}
+                  previewStepIndex={editingStepIdx}
+                />
+              </div>
             </div>
           )}
         </div>
