@@ -440,7 +440,7 @@ export const VideoPlayer = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="relative">
+            {allowSpeed && <div className="relative">
               <button
                 onClick={() => setShowSpeedMenu(!showSpeedMenu)}
                 className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5"
@@ -462,7 +462,7 @@ export const VideoPlayer = ({
                   ))}
                 </div>
               )}
-            </div>
+            </div>}
             <button
               onClick={toggleFullscreen}
               onTouchEnd={(e) => { e.preventDefault(); toggleFullscreen(); }}

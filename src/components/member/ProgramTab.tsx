@@ -1034,6 +1034,8 @@ export const ProgramTab = ({ funnel, steps, completionPct, creatorProfile, onSte
                 onClose={() => {}}
                 hideHeader
                 autoPlayMuted
+                allowSeek={funnel.allow_seek !== false}
+                allowSpeed={funnel.allow_speed_change !== false}
               />
             ) : null}
 
@@ -1130,7 +1132,20 @@ export const ProgramTab = ({ funnel, steps, completionPct, creatorProfile, onSte
           ) : (
             /* Unlocked step content */
             <>
-              {activeStep.step_type === "video" && activeStep.video_url ? (
+              {/* Access Code Gate — shown when step is unlocked but code not yet entered */}
+              {activeStep.access_code_enabled && !stepCodeUnlocked[activeStep.id] && activeStep.step_type === "video" ? (
+                <StepCodeGate
+                  funnelId={funnel.id}
+                  stepId={activeStep.id}
+                  stepTitle={activeStep.title}
+                  message={activeStep.access_code_message || "Enter the access code to unlock this step."}
+                  sessionId={user?.id || "anon"}
+                  onSuccess={() => {
+                    setStepCodeUnlocked((prev) => ({ ...prev, [activeStep.id]: true }));
+                  }}
+                  isDark={true}
+                />
+              ) : activeStep.step_type === "video" && activeStep.video_url ? (
                 <VideoPlayer
                   key={activeStep.id}
                   videoUrl={activeStep.video_url}
@@ -1147,6 +1162,8 @@ export const ProgramTab = ({ funnel, steps, completionPct, creatorProfile, onSte
                   hideHeader
                   autoPlayMuted
                   preloadNextUrl={nextStep?.video_url ?? null}
+                  allowSeek={funnel.allow_seek !== false}
+                  allowSpeed={funnel.allow_speed_change !== false}
                 />
               ) : activeStep.step_type === "video" && !activeStep.video_url ? (
                 <div className="aspect-video rounded-2xl flex items-center justify-center bg-card border border-border">
