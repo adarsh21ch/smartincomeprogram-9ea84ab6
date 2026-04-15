@@ -136,7 +136,7 @@ export const VideoPlayer = ({
         toast.success("Step completed! Next step unlocked 🎉");
       }
     } catch (e) {
-      // silent fail on progress save
+      console.error("[VideoPlayer] saveProgress failed:", e);
     }
   }, [completionThreshold, emitProgress, funnelId, stepId, hasCompleted, onComplete]);
 
