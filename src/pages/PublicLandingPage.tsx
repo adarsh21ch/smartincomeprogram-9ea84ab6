@@ -539,8 +539,8 @@ const PublicLandingPage = () => {
 
                   <button
                     type="submit"
-                    disabled={submitting}
-                    className="w-full px-6 py-3 rounded-lg text-base font-semibold transition-all hover:brightness-110 disabled:opacity-50 flex items-center justify-center"
+                    disabled={submitting || !!ageError}
+                    className="w-full px-6 py-3 rounded-lg text-base font-semibold transition-all hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     style={{ background: 'linear-gradient(135deg, #E8B830, #C99A18)', color: '#000' }}
                   >
                     {submitting ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
@@ -629,6 +629,22 @@ const PublicLandingPage = () => {
                                 ))}
                               </SelectContent>
                             </Select>
+                          ) : (f as any).fieldType === "dob" ? (
+                            <>
+                              <Input
+                                type="date"
+                                max={new Date().toISOString().split("T")[0]}
+                                value={formData[f.key] || ""}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                                required={f.required}
+                                className={`bg-[#181818] text-white placeholder:text-[#555] h-12 ${ageError ? "border-red-500" : "border-[rgba(197,147,14,0.2)]"}`}
+                              />
+                              {ageError && (
+                                <p className="text-xs font-medium text-red-400 mt-1 flex items-center gap-1">
+                                  <span aria-hidden>⚠</span> {ageError}
+                                </p>
+                              )}
+                            </>
                           ) : (
                             <Input
                               type={(f as any).type || "text"}
@@ -646,8 +662,8 @@ const PublicLandingPage = () => {
                     <div className="mt-auto pt-6 space-y-4">
                       <button
                         type="submit"
-                        disabled={submitting}
-                        className="w-full px-8 py-4 rounded-lg text-lg font-semibold transition-all hover:brightness-110 disabled:opacity-50 flex items-center justify-center"
+                        disabled={submitting || !!ageError}
+                        className="w-full px-8 py-4 rounded-lg text-lg font-semibold transition-all hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                         style={{ background: 'linear-gradient(135deg, #E8B830, #C99A18)', color: '#000' }}
                       >
                         {submitting ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
