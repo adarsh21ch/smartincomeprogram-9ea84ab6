@@ -102,11 +102,36 @@ const PublicLandingPage = () => {
     load();
   }, [slug]);
 
+  // Compute age (in years) from a YYYY-MM-DD string. Returns null if invalid.
+  const computeAge = (dob: string): number | null => {
+    if (!dob) return null;
+    const d = new Date(dob);
+    if (isNaN(d.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - d.getFullYear();
+    const m = today.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+    return age;
+  };
+
+  const dobValue = formData.age || "";
+  const computedAge = dobValue ? computeAge(dobValue) : null;
+  const minAge = page?.min_age_enabled ? (page?.min_age ?? 18) : null;
+  const ageError =
+    page?.field_age_enabled && minAge !== null && dobValue && computedAge !== null && computedAge < minAge
+      ? `You must be ${minAge} or older to register.`
+      : null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!page || submitting) return;
     if (honeypot) { setSubmitted(true); return; }
 
+    // Age gate (client-side)
+    if (ageError) {
+      toast.error(ageError);
+      return;
+    }
     setSubmitting(true);
     try {
       const payload: any = {
