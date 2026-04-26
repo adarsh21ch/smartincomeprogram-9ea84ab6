@@ -128,19 +128,64 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Submission limit enforcement
+    // Submission limit enforcement — HYBRID duplicate detection.
+    // A submission is treated as duplicate if ANY of these match a prior
+    // registration on the same landing page:
+    //   1) same email (case-insensitive, trimmed)         -- strongest
+    //   2) same phone (digits-only normalized)            -- if collected
+    //   3) same per-browser client_id fingerprint         -- catches same device
+    // This keeps families/offices on shared WiFi able to register with
+    // different emails, while preventing the same person from bypassing
+    // the limit via incognito or by clearing cookies.
     const maxSubmissions = page.max_submissions_per_user ?? 1;
     const cooldownHours = page.submission_cooldown_hours ?? 0;
     const userFingerprint = await generateFingerprint(ip, user_agent || '', client_id || '');
 
-    const { data: existingSubmissions } = await supabase
-      .from('landing_page_registrations')
-      .select('id, submitted_at, submission_number')
-      .eq('landing_page_id', landing_page_id)
-      .eq('user_fingerprint', userFingerprint)
-      .order('submitted_at', { ascending: false });
+    const normalizedEmail = email ? String(email).trim().toLowerCase() : null;
+    const normalizedPhone = phone ? String(phone).replace(/\D/g, '') : null;
 
-    const submissionCount = existingSubmissions?.length || 0;
+    // Run the three checks in parallel.
+    const [byFingerprint, byEmail, byPhone] = await Promise.all([
+      supabase
+        .from('landing_page_registrations')
+        .select('id, submitted_at, submission_number')
+        .eq('landing_page_id', landing_page_id)
+        .eq('user_fingerprint', userFingerprint)
+        .order('submitted_at', { ascending: false }),
+      normalizedEmail
+        ? supabase
+            .from('landing_page_registrations')
+            .select('id, submitted_at, submission_number')
+            .eq('landing_page_id', landing_page_id)
+            .ilike('email', normalizedEmail)
+            .order('submitted_at', { ascending: false })
+        : Promise.resolve({ data: [] as any[] }),
+      normalizedPhone && normalizedPhone.length >= 6
+        ? supabase
+            .from('landing_page_registrations')
+            .select('id, submitted_at, submission_number, phone')
+            .eq('landing_page_id', landing_page_id)
+            .order('submitted_at', { ascending: false })
+            .limit(500)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    // Merge & dedupe by registration id. For phone, normalize stored
+    // value the same way before comparing.
+    const collected = new Map<string, { id: string; submitted_at: string; submission_number?: number }>();
+    for (const r of (byFingerprint.data || []) as any[]) collected.set(r.id, r);
+    for (const r of (byEmail.data || []) as any[]) collected.set(r.id, r);
+    if (normalizedPhone && normalizedPhone.length >= 6) {
+      for (const r of (byPhone.data || []) as any[]) {
+        const stored = r?.phone ? String(r.phone).replace(/\D/g, '') : '';
+        if (stored && stored === normalizedPhone) collected.set(r.id, r);
+      }
+    }
+
+    const existingSubmissions = Array.from(collected.values()).sort(
+      (a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
+    );
+    const submissionCount = existingSubmissions.length;
 
     if (maxSubmissions > 0 && submissionCount >= maxSubmissions) {
       if (cooldownHours === 0) {
