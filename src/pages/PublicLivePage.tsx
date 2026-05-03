@@ -677,14 +677,22 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
               </div>
             </div>
           )}
-          {/* Custom controls */}
+          {/* Custom controls — LIVE style: bar fills relative to live edge, no total duration */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2 space-y-1.5">
-            <div className="relative h-1.5 bg-white/20 rounded-full overflow-hidden">
-              <div className="absolute h-full bg-primary" style={{ width: `${(progress / Math.max(1, duration)) * 100}%` }} />
-              <div className="absolute h-full bg-white/10" style={{
-                left: `${(maxWatched / Math.max(1, duration)) * 100}%`,
-                right: 0,
-              }} />
+            <div
+              className="relative h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer"
+              onClick={(e) => {
+                const v = videoRef.current; if (!v) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                const target = pct * Math.max(1, maxWatched);
+                if (target <= maxWatched + 1) v.currentTime = target;
+              }}
+            >
+              <div
+                className="absolute h-full bg-red-500 transition-[width] duration-300"
+                style={{ width: `${Math.min(100, (progress / Math.max(1, maxWatched)) * 100)}%` }}
+              />
             </div>
             <div className="flex items-center justify-between text-white text-xs">
               <div className="flex items-center gap-2">
@@ -694,7 +702,27 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
                 <button onClick={() => { const v = videoRef.current; if (v) { v.muted = !v.muted; setMuted(v.muted); } }} aria-label="Mute">
                   {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                 </button>
-                <span className="tabular-nums">{fmtTime(progress)} / {fmtTime(duration)}</span>
+                <span className="tabular-nums">{fmtTime(progress)}</span>
+                {progress < maxWatched - 5 ? (
+                  <button
+                    onClick={() => { const v = videoRef.current; if (v) v.currentTime = maxWatched; }}
+                    className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold uppercase tracking-wider"
+                  >
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
+                    </span>
+                    Live
+                  </button>
+                ) : (
+                  <span className="ml-1 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-500">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+                    </span>
+                    Live
+                  </span>
+                )}
               </div>
               <button onClick={() => videoRef.current?.requestFullscreen?.()} aria-label="Fullscreen">
                 <Maximize size={16} />
