@@ -696,7 +696,6 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
               className="w-full aspect-video"
               playsInline
               autoPlay
-              muted
               preload="auto"
               onClick={handleVideoTap}
               onPause={() => setPaused(true)}
