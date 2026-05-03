@@ -97,6 +97,31 @@ const LiveDetailPage = () => {
     !search || [r.name, r.email, r.phone].some((v) => v?.toLowerCase().includes(search.toLowerCase())),
   );
 
+  // Registrations-over-time (last 14 days)
+  const regChartData = useMemo(() => {
+    const days: { day: string; count: number; date: number }[] = [];
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today.getTime() - i * 86400000);
+      days.push({ day: format(d, "MMM d"), count: 0, date: d.getTime() });
+    }
+    for (const r of registrations as any[]) {
+      const t = new Date(r.registered_at).getTime();
+      const day = days.find((d) => t >= d.date && t < d.date + 86400000);
+      if (day) day.count++;
+    }
+    return days;
+  }, [registrations]);
+
+  const joinedRate = registrations.length
+    ? Math.round((registrations.filter((r: any) => r.joined_at).length / registrations.length) * 100)
+    : 0;
+
+  const shareOnWhatsApp = () => {
+    const text = `🎬 You're invited to: *${session.title}*\n\n${upcoming ? `📅 ${format(upcoming, "EEE, MMM d 'at' h:mm a")}\n\n` : ""}Register here: ${publicUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
   const goLive = async () => {
     await updateMutation.mutateAsync({ status: "live" });
     toast.success(`🔴 Your session "${session.title}" is now live!`);
