@@ -133,6 +133,9 @@ interface WizardState {
   registrationRequired: boolean;
   regFields: { name: boolean; phone: boolean; email: boolean };
   maxAttendees: number | null;
+  sendConfirmationEmail: boolean;
+  sendReminderEmail: boolean;
+  reminderMinutesBefore: number;
 }
 
 const initialState = (editing?: SessionRow | null): WizardState => {
