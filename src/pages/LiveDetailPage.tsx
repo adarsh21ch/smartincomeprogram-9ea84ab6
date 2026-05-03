@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   ArrowLeft, Radio, Copy, ExternalLink, Share2, Pencil, Calendar, Users,
-  Search, Download, Eye, X,
+  Search, Download, Eye, X, MessageCircle, BarChart3,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { LiveSessionWizard } from "@/components/live/LiveSessionWizard";
@@ -95,6 +96,31 @@ const LiveDetailPage = () => {
   const filteredRegs = registrations.filter((r: any) =>
     !search || [r.name, r.email, r.phone].some((v) => v?.toLowerCase().includes(search.toLowerCase())),
   );
+
+  // Registrations-over-time (last 14 days)
+  const regChartData = useMemo(() => {
+    const days: { day: string; count: number; date: number }[] = [];
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today.getTime() - i * 86400000);
+      days.push({ day: format(d, "MMM d"), count: 0, date: d.getTime() });
+    }
+    for (const r of registrations as any[]) {
+      const t = new Date(r.registered_at).getTime();
+      const day = days.find((d) => t >= d.date && t < d.date + 86400000);
+      if (day) day.count++;
+    }
+    return days;
+  }, [registrations]);
+
+  const joinedRate = registrations.length
+    ? Math.round((registrations.filter((r: any) => r.joined_at).length / registrations.length) * 100)
+    : 0;
+
+  const shareOnWhatsApp = () => {
+    const text = `🎬 You're invited to: *${session.title}*\n\n${upcoming ? `📅 ${format(upcoming, "EEE, MMM d 'at' h:mm a")}\n\n` : ""}Register here: ${publicUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
 
   const goLive = async () => {
     await updateMutation.mutateAsync({ status: "live" });
@@ -203,6 +229,7 @@ const LiveDetailPage = () => {
             </AlertDialog>
           )}
 
+          <Button variant="outline" onClick={shareOnWhatsApp}><MessageCircle size={14} /> WhatsApp</Button>
           <Button variant="outline" onClick={() => setEditOpen(true)}><Pencil size={14} /> Edit</Button>
         </div>
 
@@ -295,6 +322,29 @@ const LiveDetailPage = () => {
             <button onClick={() => setEditOpen(true)} className="text-[11px] text-primary mt-1 hover:underline">Edit settings</button>
           </Card>
         </div>
+
+        {/* Analytics */}
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-heading font-semibold text-sm flex items-center gap-2"><BarChart3 size={14} /> Analytics</h3>
+            <div className="flex gap-4 text-xs">
+              <span className="text-muted-foreground">Views <strong className="text-foreground ml-1">{session.total_views ?? 0}</strong></span>
+              <span className="text-muted-foreground">Joined <strong className="text-foreground ml-1">{joinedRate}%</strong></span>
+            </div>
+          </div>
+          <div className="h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={regChartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", fontSize: 12, borderRadius: 8 }} />
+                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1 text-center">Registrations over the last 14 days</p>
+        </Card>
 
         {/* Registrations */}
         <Card className="p-4">
