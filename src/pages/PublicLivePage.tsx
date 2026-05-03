@@ -125,6 +125,22 @@ const PublicLivePage = () => {
     return () => clearTimeout(timer);
   }, [sessionId, state?.state, state?.seconds_until_next, fetchState]);
 
+  // Auto-refetch the moment the countdown hits zero (avoid waiting up to 10s for poll)
+  useEffect(() => {
+    if (!state) return;
+    if (state.state !== "waiting" && state.state !== "between_slots") return;
+    if (!state.next_slot) return;
+    const target = new Date(state.next_slot).getTime();
+    const msLeft = target - Date.now();
+    if (msLeft <= 0) {
+      fetchState();
+      return;
+    }
+    // refetch right when slot starts, plus 500ms buffer
+    const t = setTimeout(() => fetchState(), msLeft + 500);
+    return () => clearTimeout(t);
+  }, [state?.state, state?.next_slot, fetchState]);
+
   // Realtime: instant transitions
   useEffect(() => {
     if (!sessionId) return;
