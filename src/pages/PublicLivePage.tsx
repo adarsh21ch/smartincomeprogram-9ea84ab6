@@ -649,126 +649,162 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
     }
   };
 
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: state.session_data?.title, url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied");
+      }
+    } catch {}
+  };
+
   return (
-    <PageShell>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-lg sm:text-xl font-heading font-bold truncate flex-1">{state.session_data?.title}</h1>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
-            </span>
-            <span className="text-xs font-bold text-red-500 uppercase tracking-wider">Live</span>
-          </div>
+    <div className="min-h-[100dvh] bg-[#0b0e14] text-white flex flex-col">
+      {/* Top: LIVE NOW + Title */}
+      <div className="pt-6 sm:pt-10 px-4 text-center">
+        <div className="inline-flex items-center gap-2 mb-3 sm:mb-5">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+          </span>
+          <span className="text-[11px] sm:text-sm font-bold text-red-500 uppercase tracking-[0.25em]">Live Now</span>
         </div>
-
-        <div className="relative bg-black rounded-2xl overflow-hidden">
-          <video
-            ref={videoRef}
-            src={state.video_url ?? undefined}
-            className="w-full aspect-video"
-            playsInline
-            autoPlay
-            muted
-            preload="auto"
-            onClick={handleVideoTap}
-            onPause={() => setPaused(true)}
-            onPlay={() => setPaused(false)}
-          />
-          {/* Tap-to-unmute pill */}
-          {muted && !paused && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const v = videoRef.current; if (!v) return;
-                v.muted = false;
-                setMuted(false);
-                v.play().catch(() => {});
-              }}
-              className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/85 backdrop-blur text-white text-xs font-semibold shadow-lg animate-fade-in"
-            >
-              <VolumeX size={14} /> Tap to unmute
-            </button>
-          )}
-          {/* Tap feedback */}
-          {showFeedback && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="bg-black/60 text-white rounded-full p-4 animate-fade-in">
-                {showFeedback === "play" && <Play size={32} />}
-                {showFeedback === "pause" && <Pause size={32} />}
-                {showFeedback === "back" && <RotateCcw size={32} />}
-              </div>
-            </div>
-          )}
-          {/* Custom controls — LIVE style: bar fills relative to live edge, no total duration */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2 space-y-1.5">
-            <div
-              className="relative h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer"
-              onClick={(e) => {
-                const v = videoRef.current; if (!v) return;
-                const rect = e.currentTarget.getBoundingClientRect();
-                const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                const target = pct * Math.max(1, maxWatched);
-                if (target <= maxWatched + 1) v.currentTime = target;
-              }}
-            >
-              <div
-                className="absolute h-full bg-red-500 transition-[width] duration-300"
-                style={{ width: `${Math.min(100, (progress / Math.max(1, maxWatched)) * 100)}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-white text-xs">
-              <div className="flex items-center gap-2">
-                <button onClick={togglePlay} aria-label="Play/Pause">
-                  {paused ? <Play size={16} /> : <Pause size={16} />}
-                </button>
-                <button onClick={() => { const v = videoRef.current; if (v) { v.muted = !v.muted; setMuted(v.muted); } }} aria-label="Mute">
-                  {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                </button>
-                <span className="tabular-nums">{fmtTime(progress)}</span>
-                {progress < maxWatched - 5 ? (
-                  <button
-                    onClick={() => { const v = videoRef.current; if (v) v.currentTime = maxWatched; }}
-                    className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold uppercase tracking-wider"
-                  >
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
-                    </span>
-                    Live
-                  </button>
-                ) : (
-                  <span className="ml-1 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-500">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
-                    </span>
-                    Live
-                  </span>
-                )}
-              </div>
-              <button onClick={() => videoRef.current?.requestFullscreen?.()} aria-label="Fullscreen">
-                <Maximize size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p className="text-xs text-muted-foreground text-center">🔴 LIVE — you cannot skip ahead</p>
-        {paused && (
-          <Card className="p-3 text-xs text-muted-foreground text-center">
-            ⚠️ You'll jump to the current live position when you resume
-          </Card>
-        )}
-
-        {state.session_data?.description && (
-          <Card className="p-4">
-            <p className="text-sm">{state.session_data.description}</p>
-          </Card>
-        )}
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-heading font-bold uppercase tracking-tight px-2 break-words">
+          {state.session_data?.title}
+        </h1>
       </div>
-    </PageShell>
+
+      {/* Video stage */}
+      <div className="flex-1 flex items-center justify-center px-3 sm:px-6 py-4 sm:py-8">
+        <div className="w-full max-w-5xl">
+          <div className="relative bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/5">
+            <video
+              ref={videoRef}
+              src={state.video_url ?? undefined}
+              className="w-full aspect-video"
+              playsInline
+              autoPlay
+              muted
+              preload="auto"
+              onClick={handleVideoTap}
+              onPause={() => setPaused(true)}
+              onPlay={() => setPaused(false)}
+            />
+
+            {/* LIVE pill top-left */}
+            <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold uppercase tracking-wider shadow-lg">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
+              </span>
+              Live
+            </div>
+
+            {/* Tap-to-unmute */}
+            {muted && !paused && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const v = videoRef.current; if (!v) return;
+                  v.muted = false; setMuted(false); v.play().catch(() => {});
+                }}
+                className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/85 backdrop-blur text-white text-xs font-semibold shadow-lg animate-fade-in"
+              >
+                <VolumeX size={14} /> Tap to unmute
+              </button>
+            )}
+
+            {/* Tap feedback */}
+            {showFeedback && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="bg-black/60 text-white rounded-full p-4 animate-fade-in">
+                  {showFeedback === "play" && <Play size={32} />}
+                  {showFeedback === "pause" && <Pause size={32} />}
+                  {showFeedback === "back" && <RotateCcw size={32} />}
+                </div>
+              </div>
+            )}
+
+            {/* Custom controls */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent px-3 py-2 space-y-1.5">
+              <div
+                className="relative h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer"
+                onClick={(e) => {
+                  const v = videoRef.current; if (!v) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  const target = pct * Math.max(1, maxWatched);
+                  if (target <= maxWatched + 1) v.currentTime = target;
+                }}
+              >
+                <div
+                  className="absolute h-full bg-red-500 transition-[width] duration-300"
+                  style={{ width: `${Math.min(100, (progress / Math.max(1, maxWatched)) * 100)}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-white text-xs">
+                <div className="flex items-center gap-2">
+                  <button onClick={togglePlay} aria-label="Play/Pause">
+                    {paused ? <Play size={16} /> : <Pause size={16} />}
+                  </button>
+                  <button onClick={() => { const v = videoRef.current; if (v) { v.muted = !v.muted; setMuted(v.muted); } }} aria-label="Mute">
+                    {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                  </button>
+                  <span className="tabular-nums">{fmtTime(progress)}</span>
+                  {progress < maxWatched - 5 && (
+                    <button
+                      onClick={() => { const v = videoRef.current; if (v) v.currentTime = maxWatched; }}
+                      className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold uppercase tracking-wider"
+                    >
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
+                      </span>
+                      Back to Live
+                    </button>
+                  )}
+                </div>
+                <button onClick={() => videoRef.current?.requestFullscreen?.()} aria-label="Fullscreen">
+                  <Maximize size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Info row below video */}
+          <div className="mt-3 sm:mt-4 flex items-center justify-between gap-3 text-xs sm:text-sm text-white/60">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="inline-flex items-center gap-1.5 text-red-400 font-medium shrink-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                Live
+              </span>
+              <span className="hidden sm:inline">•</span>
+              <span className="truncate">forward seek &amp; speed disabled</span>
+            </div>
+            <button
+              onClick={handleShare}
+              className="inline-flex items-center gap-1.5 hover:text-white transition-colors shrink-0"
+            >
+              <Share2 size={14} /> Share
+            </button>
+          </div>
+
+          {state.session_data?.description && (
+            <p className="mt-4 text-sm text-white/70 text-center max-w-3xl mx-auto">
+              {state.session_data.description}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Footer brand */}
+      <div className="text-center pb-4 sm:pb-6 text-[11px] text-white/40">
+        <span className="font-semibold text-white/60">SIP</span> by Smart Income Program
+      </div>
+    </div>
   );
 };
 
