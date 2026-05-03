@@ -84,20 +84,7 @@ const LiveDetailPage = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["live-session", id] }),
   });
 
-  if (isLoading || !session) {
-    return <DashboardLayout><div className="py-20 text-center text-sm text-muted-foreground">Loading…</div></DashboardLayout>;
-  }
-
-  const slots: Date[] = (Array.isArray(session.scheduled_times) ? session.scheduled_times : []).map((t: any) => new Date(t)).sort((a: Date, b: Date) => a.getTime() - b.getTime());
-  const now = Date.now();
-  const upcoming = slots.find((d) => d.getTime() > now);
-  const lastPlayed = [...slots].reverse().find((d) => d.getTime() <= now);
-  const publicUrl = `${window.location.origin}/s/${session.slug}`;
-  const filteredRegs = registrations.filter((r: any) =>
-    !search || [r.name, r.email, r.phone].some((v) => v?.toLowerCase().includes(search.toLowerCase())),
-  );
-
-  // Registrations-over-time (last 14 days)
+  // Registrations-over-time (last 14 days) — must be before any early return (Rules of Hooks)
   const regChartData = useMemo(() => {
     const days: { day: string; count: number; date: number }[] = [];
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -112,6 +99,19 @@ const LiveDetailPage = () => {
     }
     return days;
   }, [registrations]);
+
+  if (isLoading || !session) {
+    return <DashboardLayout><div className="py-20 text-center text-sm text-muted-foreground">Loading…</div></DashboardLayout>;
+  }
+
+  const slots: Date[] = (Array.isArray(session.scheduled_times) ? session.scheduled_times : []).map((t: any) => new Date(t)).sort((a: Date, b: Date) => a.getTime() - b.getTime());
+  const now = Date.now();
+  const upcoming = slots.find((d) => d.getTime() > now);
+  const lastPlayed = [...slots].reverse().find((d) => d.getTime() <= now);
+  const publicUrl = `${window.location.origin}/s/${session.slug}`;
+  const filteredRegs = registrations.filter((r: any) =>
+    !search || [r.name, r.email, r.phone].some((v) => v?.toLowerCase().includes(search.toLowerCase())),
+  );
 
   const joinedRate = registrations.length
     ? Math.round((registrations.filter((r: any) => r.joined_at).length / registrations.length) * 100)
