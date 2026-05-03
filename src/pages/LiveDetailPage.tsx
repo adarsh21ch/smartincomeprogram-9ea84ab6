@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   ArrowLeft, Radio, Copy, ExternalLink, Share2, Pencil, Calendar, Users,
-  Search, Download, Eye, X,
+  Search, Download, Eye, X, MessageCircle, BarChart3,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { LiveSessionWizard } from "@/components/live/LiveSessionWizard";
