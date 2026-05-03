@@ -269,7 +269,7 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
         <DialogHeader>
           <DialogTitle className="font-heading">
             {isEdit ? "Edit Live Session" : "New Live Session"}
-            <span className="text-xs font-normal text-muted-foreground ml-2">Step {s.step} of 4</span>
+            <span className="text-xs font-normal text-muted-foreground ml-2">Step {s.step - 1} of 3</span>
           </DialogTitle>
         </DialogHeader>
 
