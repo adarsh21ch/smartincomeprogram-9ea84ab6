@@ -853,8 +853,7 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
               src={state.video_url ?? undefined}
               className="w-full aspect-video"
               playsInline
-              // @ts-expect-error iOS attribute
-              webkit-playsinline="true"
+              {...({ "webkit-playsinline": "true" } as any)}
               autoPlay
               preload="auto"
               onClick={handleVideoTap}
