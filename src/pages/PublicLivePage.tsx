@@ -671,10 +671,28 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
             src={state.video_url ?? undefined}
             className="w-full aspect-video"
             playsInline
+            autoPlay
+            muted
+            preload="auto"
             onClick={handleVideoTap}
             onPause={() => setPaused(true)}
             onPlay={() => setPaused(false)}
           />
+          {/* Tap-to-unmute pill */}
+          {muted && !paused && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const v = videoRef.current; if (!v) return;
+                v.muted = false;
+                setMuted(false);
+                v.play().catch(() => {});
+              }}
+              className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/85 backdrop-blur text-white text-xs font-semibold shadow-lg animate-fade-in"
+            >
+              <VolumeX size={14} /> Tap to unmute
+            </button>
+          )}
           {/* Tap feedback */}
           {showFeedback && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
