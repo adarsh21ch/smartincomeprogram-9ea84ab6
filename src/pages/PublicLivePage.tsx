@@ -818,9 +818,7 @@ const ReplayState = ({ state }: { state: StateResponse }) => {
   const [speed, setSpeed] = useState(1);
   const [showFeedback, setShowFeedback] = useState<"play" | "pause" | "back" | "fwd" | null>(null);
 
-  if (!state.video_url) {
-    return <PageShell><p className="text-sm text-center text-muted-foreground">Replay is not available.</p></PageShell>;
-  }
+  const noVideo = !state.video_url;
 
   useEffect(() => {
     const v = videoRef.current; if (!v) return;
