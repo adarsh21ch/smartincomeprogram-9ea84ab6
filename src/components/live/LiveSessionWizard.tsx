@@ -145,8 +145,8 @@ const initialState = (editing?: SessionRow | null): WizardState => {
     .sort((a: Date, b: Date) => a.getTime() - b.getTime());
   const first = slots[0];
   return {
-    step: 1,
-    sessionType: editing?.session_type === "external_link" ? "external_link" : "funnel_video",
+    step: 2,
+    sessionType: "funnel_video",
     title: editing?.title ?? "",
     description: editing?.description ?? "",
     videoAssetId: editing?.video_asset_id ?? null,
@@ -269,7 +269,7 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
         <DialogHeader>
           <DialogTitle className="font-heading">
             {isEdit ? "Edit Live Session" : "New Live Session"}
-            <span className="text-xs font-normal text-muted-foreground ml-2">Step {s.step} of 4</span>
+            <span className="text-xs font-normal text-muted-foreground ml-2">Step {s.step - 1} of 3</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -282,9 +282,9 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
           </Card>
         )}
 
-        {/* Step indicator */}
+        {/* Step indicator (3 steps: Source, Schedule, Settings) */}
         <div className="flex items-center gap-1.5">
-          {[1, 2, 3, 4].map((i) => (
+          {[2, 3, 4].map((i) => (
             <div key={i} className={cn(
               "h-1.5 flex-1 rounded-full",
               i <= s.step ? "bg-primary" : "bg-muted",
@@ -694,9 +694,9 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
-          <Button variant="ghost" onClick={s.step === 1 ? onClose : () => upd("step", s.step - 1)}>
-            {s.step === 1 ? <X size={14} /> : <ChevronLeft size={14} />}
-            {s.step === 1 ? "Cancel" : "Back"}
+          <Button variant="ghost" onClick={s.step <= 2 ? onClose : () => upd("step", s.step - 1)}>
+            {s.step <= 2 ? <X size={14} /> : <ChevronLeft size={14} />}
+            {s.step <= 2 ? "Cancel" : "Back"}
           </Button>
           {s.step < 4 ? (
             <Button variant="hero" onClick={() => upd("step", s.step + 1)} disabled={!canNext()}>
