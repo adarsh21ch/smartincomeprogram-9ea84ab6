@@ -533,7 +533,7 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
   // Start muted for guaranteed instant autoplay (browser policy)
   useEffect(() => {
     const v = videoRef.current;
-    if (!v || !state.video_url) return;
+    if (!v || !state.video_url || isExternalLink) return;
     v.muted = true;
     setMuted(true);
     const startPlayback = () => {
