@@ -664,6 +664,31 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
                 <Input type="number" value={s.maxAttendees ?? ""} onChange={(e) => upd("maxAttendees", e.target.value ? parseInt(e.target.value) : null)} placeholder="Unlimited" className="mt-1" />
               </div>
             </Card>
+
+            {/* Email reminders */}
+            <Card className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-semibold">Send confirmation email</Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Sent immediately after a viewer registers</p>
+                </div>
+                <Switch checked={s.sendConfirmationEmail} onCheckedChange={(v) => upd("sendConfirmationEmail", v)} />
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-border">
+                <div>
+                  <Label className="text-sm font-semibold">Send reminder before each slot</Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Auto-emails registrants before the session starts</p>
+                </div>
+                <Switch checked={s.sendReminderEmail} onCheckedChange={(v) => upd("sendReminderEmail", v)} />
+              </div>
+              {s.sendReminderEmail && (
+                <div>
+                  <Label className="text-xs">Reminder lead time (minutes before)</Label>
+                  <Input type="number" min={5} max={120} value={s.reminderMinutesBefore} onChange={(e) => upd("reminderMinutesBefore", parseInt(e.target.value) || 15)} className="mt-1" />
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground">Emails are sent only when registration is enabled and the viewer provided an email.</p>
+            </Card>
           </div>
         )}
 
