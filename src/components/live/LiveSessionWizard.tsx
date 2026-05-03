@@ -176,6 +176,9 @@ const initialState = (editing?: SessionRow | null): WizardState => {
       email: editing?.registration_fields?.email ?? true,
     },
     maxAttendees: editing?.max_attendees ?? null,
+    sendConfirmationEmail: (editing as any)?.send_confirmation_email ?? true,
+    sendReminderEmail: (editing as any)?.send_reminder_email ?? true,
+    reminderMinutesBefore: (editing as any)?.reminder_minutes_before ?? 15,
   };
 };
 
