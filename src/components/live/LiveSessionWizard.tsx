@@ -694,9 +694,9 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
-          <Button variant="ghost" onClick={s.step === 1 ? onClose : () => upd("step", s.step - 1)}>
-            {s.step === 1 ? <X size={14} /> : <ChevronLeft size={14} />}
-            {s.step === 1 ? "Cancel" : "Back"}
+          <Button variant="ghost" onClick={s.step <= 2 ? onClose : () => upd("step", s.step - 1)}>
+            {s.step <= 2 ? <X size={14} /> : <ChevronLeft size={14} />}
+            {s.step <= 2 ? "Cancel" : "Back"}
           </Button>
           {s.step < 4 ? (
             <Button variant="hero" onClick={() => upd("step", s.step + 1)} disabled={!canNext()}>
