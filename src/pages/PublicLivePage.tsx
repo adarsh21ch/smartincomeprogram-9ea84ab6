@@ -810,7 +810,7 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
 
       {/* Footer brand */}
       <div className="text-center pb-4 sm:pb-6 text-[11px] text-white/40">
-        <span className="font-semibold text-white/60">SIP</span> by Smart Income Program
+        <span className="font-semibold text-white/60">Smart Income Program</span> powered by Nevorai
       </div>
     </div>
   );
