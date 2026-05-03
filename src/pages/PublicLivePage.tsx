@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Logo } from "@/components/landing/Logo";
 import {
   Calendar, Play, Pause, ExternalLink, Copy, Share2, RotateCcw,
-  Volume2, VolumeX, Maximize, Users, Radio, AlertCircle, RefreshCw,
+  Volume2, VolumeX, Maximize, Minimize, Users, Radio, AlertCircle, RefreshCw, Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 
