@@ -335,16 +335,7 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
         {/* STEP 2 — Source */}
         {s.step === 2 && (
           <div className="space-y-4">
-            <div>
-              <Label className="text-xs">Session Title *</Label>
-              <Input value={s.title} onChange={(e) => upd("title", e.target.value)} placeholder="e.g. Weekly Training" className="mt-1" />
-            </div>
-            <div>
-              <Label className="text-xs">Description</Label>
-              <Textarea value={s.description} onChange={(e) => upd("description", e.target.value)} rows={2} className="mt-1" />
-            </div>
-
-            {s.sessionType === "funnel_video" ? (
+            {s.sessionType === "funnel_video" && (
               <div>
                 <Label className="text-xs">Video *</Label>
                 <Button variant="outline" className="mt-1 w-full justify-start" onClick={() => setPickerOpen(true)}>
@@ -368,7 +359,17 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
                   }}
                 />
               </div>
-            ) : (
+            )}
+            <div>
+              <Label className="text-xs">Session Title *</Label>
+              <Input value={s.title} onChange={(e) => upd("title", e.target.value)} placeholder="e.g. Weekly Training" className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Description</Label>
+              <Textarea value={s.description} onChange={(e) => upd("description", e.target.value)} rows={2} className="mt-1" />
+            </div>
+
+            {s.sessionType !== "funnel_video" && (
               <>
                 <div>
                   <Label className="text-xs">Platform</Label>
