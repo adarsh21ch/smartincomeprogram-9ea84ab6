@@ -644,6 +644,24 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
     } catch {}
   };
 
+  if (isExternalLink) {
+    return (
+      <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center px-4 text-center gap-6">
+        <div className="inline-flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+          </span>
+          <span className="text-xs sm:text-sm font-bold text-red-500 uppercase tracking-[0.2em]">Live Now</span>
+        </div>
+        <h1 className="text-3xl sm:text-5xl font-heading font-bold uppercase tracking-tight">{state.session_data?.title}</h1>
+        <Button variant="hero" size="lg" onClick={() => window.open(state.video_url!, "_blank")}>
+          <ExternalLink size={16} /> Join Live Session
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[100dvh] bg-[#0b0e14] text-white flex flex-col">
       {/* Top: LIVE NOW + Title */}
