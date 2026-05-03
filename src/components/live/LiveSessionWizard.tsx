@@ -145,8 +145,8 @@ const initialState = (editing?: SessionRow | null): WizardState => {
     .sort((a: Date, b: Date) => a.getTime() - b.getTime());
   const first = slots[0];
   return {
-    step: 1,
-    sessionType: editing?.session_type === "external_link" ? "external_link" : "funnel_video",
+    step: 2,
+    sessionType: "funnel_video",
     title: editing?.title ?? "",
     description: editing?.description ?? "",
     videoAssetId: editing?.video_asset_id ?? null,
