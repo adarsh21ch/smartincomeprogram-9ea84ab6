@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Logo } from "@/components/landing/Logo";
 import {
   Calendar, Play, Pause, ExternalLink, Copy, Share2, RotateCcw,
-  Volume2, VolumeX, Maximize, Users, Radio, AlertCircle, RefreshCw,
+  Volume2, VolumeX, Maximize, Minimize, Users, Radio, AlertCircle, RefreshCw, Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -520,50 +520,90 @@ const NotAvailableState = () => (
 // --- LIVE ---
 const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: () => Promise<void> }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userPausedRef = useRef(false);
+
+  const [joined, setJoined] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
+  const [showAudioBanner, setShowAudioBanner] = useState(false);
   const [maxWatched, setMaxWatched] = useState(state.seek_seconds);
   const [progress, setProgress] = useState(state.seek_seconds);
   const [duration, setDuration] = useState(0);
   const [showFeedback, setShowFeedback] = useState<"play" | "pause" | "back" | null>(null);
-  const userPausedRef = useRef(false);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [now, setNowTick] = useState(Date.now());
 
   const isExternalLink = !!state.video_url && /^https?:\/\//.test(state.video_url) && !state.video_url.match(/\.(mp4|webm|mov|m3u8)/i);
 
-  // Try unmuted autoplay first (live session); fall back to muted if browser blocks it
   useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Fullscreen change listeners
+  useEffect(() => {
+    const handleFs = () => {
+      const fs = !!(document.fullscreenElement || (document as any).webkitFullscreenElement || (document as any).mozFullScreenElement || (document as any).msFullscreenElement);
+      setIsFullscreen(fs);
+    };
+    document.addEventListener("fullscreenchange", handleFs);
+    document.addEventListener("webkitfullscreenchange", handleFs);
+    document.addEventListener("mozfullscreenchange", handleFs);
+    document.addEventListener("MSFullscreenChange", handleFs);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFs);
+      document.removeEventListener("webkitfullscreenchange", handleFs);
+      document.removeEventListener("mozfullscreenchange", handleFs);
+      document.removeEventListener("MSFullscreenChange", handleFs);
+    };
+  }, []);
+
+  // Start playback after user joins
+  useEffect(() => {
+    if (!joined) return;
     const v = videoRef.current;
     if (!v || !state.video_url || isExternalLink) return;
-    const startPlayback = async () => {
+    const start = async () => {
       try { v.currentTime = state.seek_seconds; } catch {}
       setMaxWatched(state.seek_seconds);
-      // Attempt unmuted autoplay
       v.muted = false;
       try {
         await v.play();
         setMuted(false);
+        setShowAudioBanner(false);
+        setVideoReady(true);
       } catch {
-        // Blocked → fall back to muted autoplay so video at least starts
         v.muted = true;
         setMuted(true);
+        setShowAudioBanner(true);
         try { await v.play(); } catch {}
+        setVideoReady(true);
       }
     };
     if (v.readyState >= 1) {
-      setDuration(v.duration);
-      startPlayback();
+      setDuration(v.duration || 0);
+      start();
     }
-    const onLoaded = () => {
-      setDuration(v.duration);
-      startPlayback();
-    };
+    const onLoaded = () => { setDuration(v.duration || 0); start(); };
     v.addEventListener("loadedmetadata", onLoaded);
     return () => v.removeEventListener("loadedmetadata", onLoaded);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.video_url]);
+  }, [joined, state.video_url]);
 
-  // Periodically resync max watched (live edge moves)
   useEffect(() => {
+    if (!joined) return;
     const t = setInterval(() => {
       setMaxWatched((prev) => {
         const elapsed = Math.floor(((Date.now() - new Date(state.current_slot_start!).getTime()) / 1000));
@@ -571,9 +611,8 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [state.current_slot_start]);
+  }, [state.current_slot_start, joined]);
 
-  // Block forward seek
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -592,14 +631,42 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
     };
   }, [maxWatched]);
 
+  // Page-level interaction to enable audio when fallback was triggered
+  useEffect(() => {
+    if (!showAudioBanner) return;
+    const enable = () => {
+      const v = videoRef.current; if (!v) return;
+      v.muted = false;
+      setMuted(false);
+      setShowAudioBanner(false);
+      v.play().catch(() => {});
+    };
+    document.addEventListener("click", enable, { once: true });
+    document.addEventListener("touchstart", enable, { once: true });
+    return () => {
+      document.removeEventListener("click", enable);
+      document.removeEventListener("touchstart", enable);
+    };
+  }, [showAudioBanner]);
+
+  const showControlsTemp = useCallback(() => {
+    setControlsVisible(true);
+    if (isMobile) return;
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    controlsTimerRef.current = setTimeout(() => setControlsVisible(false), 3000);
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (joined) showControlsTemp();
+  }, [joined, showControlsTemp]);
+
   const togglePlay = () => {
     const v = videoRef.current; if (!v) return;
     if (v.paused) {
-      // resume → force resync to live position
       const liveSeek = Math.floor((Date.now() - new Date(state.current_slot_start!).getTime()) / 1000);
-      try { v.currentTime = Math.min(liveSeek, duration); } catch {}
+      try { v.currentTime = Math.min(liveSeek, duration || liveSeek); } catch {}
       userPausedRef.current = false;
-      v.play().catch(()=>{});
+      v.play().catch(() => {});
       setPaused(false);
       setShowFeedback("play");
     } else {
@@ -613,20 +680,19 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
 
   const handleVideoTap = (e: React.MouseEvent) => {
     const v = videoRef.current; if (!v) return;
+    showControlsTemp();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = e.clientX - rect.left;
     const isLeft = x < rect.width / 2;
-    // Detect double tap via time
     const lastTap = (handleVideoTap as any)._t ?? 0;
     const t = Date.now();
     if (t - lastTap < 280) {
-      // double tap
       if (isLeft) {
         v.currentTime = Math.max(0, v.currentTime - 10);
         setShowFeedback("back");
         setTimeout(() => setShowFeedback(null), 600);
       } else {
-        toast.info("Cannot skip ahead in a live session");
+        toast.info("🔴 Can't skip ahead during live");
       }
       (handleVideoTap as any)._t = 0;
     } else {
@@ -637,6 +703,35 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
           (handleVideoTap as any)._t = 0;
         }
       }, 280);
+    }
+  };
+
+  const handleFullscreen = () => {
+    const v = videoRef.current as any;
+    const c = containerRef.current as any;
+    if (!v) return;
+    const fsEl = document.fullscreenElement || (document as any).webkitFullscreenElement || (document as any).mozFullScreenElement || (document as any).msFullscreenElement;
+    if (!fsEl) {
+      try {
+        if (c?.requestFullscreen) c.requestFullscreen();
+        else if (c?.webkitRequestFullscreen) c.webkitRequestFullscreen();
+        else if (c?.mozRequestFullScreen) c.mozRequestFullScreen();
+        else if (c?.msRequestFullscreen) c.msRequestFullscreen();
+        else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+      } catch {}
+      try {
+        if ((screen as any).orientation?.lock) (screen as any).orientation.lock("landscape").catch(() => {});
+      } catch {}
+    } else {
+      try {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
+        else if ((document as any).mozCancelFullScreen) (document as any).mozCancelFullScreen();
+        else if ((document as any).msExitFullscreen) (document as any).msExitFullscreen();
+      } catch {}
+      try {
+        if ((screen as any).orientation?.unlock) (screen as any).orientation.unlock();
+      } catch {}
     }
   };
 
@@ -670,9 +765,69 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
     );
   }
 
+  // ---------- GATEWAY ----------
+  if (!joined) {
+    const startedMin = state.current_slot_start
+      ? Math.max(0, Math.floor((now - new Date(state.current_slot_start).getTime()) / 60000))
+      : 0;
+    const speaker = state.session_data?.speaker_name || state.session_data?.host_name;
+    const speakerPhoto = state.session_data?.speaker_photo_url || state.session_data?.host_photo_url;
+    return (
+      <div className="min-h-[100dvh] bg-[#0b0e14] text-white flex flex-col">
+        <div className="px-4 py-4">
+          <Link to="/"><Logo size="sm" /></Link>
+        </div>
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="w-full max-w-md text-center space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/30">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+              </span>
+              <span className="text-[11px] font-bold text-red-500 uppercase tracking-[0.2em]">Live Now</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-heading font-bold leading-tight">
+              {state.session_data?.title}
+            </h1>
+            <p className="text-sm text-white/60">
+              {startedMin > 0 ? `Session started ${startedMin} minute${startedMin === 1 ? "" : "s"} ago` : "Session just started"}
+            </p>
+            {speaker && (
+              <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                {speakerPhoto ? (
+                  <img src={speakerPhoto} alt={speaker} className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <span className="w-6 h-6 rounded-full bg-white/10 inline-flex items-center justify-center text-[10px] font-bold">
+                    {speaker.charAt(0)}
+                  </span>
+                )}
+                <span className="text-xs text-white/80">with {speaker}</span>
+              </div>
+            )}
+            <div className="pt-2">
+              <button
+                onClick={() => setJoined(true)}
+                className="w-full sm:w-[360px] h-14 rounded-xl bg-red-500 hover:bg-red-600 active:scale-[0.98] transition-all text-white font-bold text-base shadow-[0_8px_30px_-8px_rgba(239,68,68,0.6)] inline-flex items-center justify-center gap-2"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                </span>
+                Join Live Session
+              </button>
+              <p className="text-[11px] text-white/40 mt-3">Audio will play automatically when you join</p>
+            </div>
+          </div>
+        </div>
+        <div className="text-center pb-5 text-[11px] text-white/40">
+          <span className="font-semibold text-white/60">Smart Income Program</span> powered by Nevorai
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[100dvh] bg-[#0b0e14] text-white flex flex-col">
-      {/* Top: LIVE NOW + Title */}
       <div className="pt-6 sm:pt-10 px-4 text-center">
         <div className="inline-flex items-center gap-2 mb-3 sm:mb-5">
           <span className="relative flex h-2.5 w-2.5">
@@ -686,24 +841,36 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
         </h1>
       </div>
 
-      {/* Video stage */}
       <div className="flex-1 flex items-center justify-center px-3 sm:px-6 py-4 sm:py-8">
         <div className="w-full max-w-5xl">
-          <div className="relative bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/5">
+          <div
+            ref={containerRef}
+            className="relative bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/5 group"
+            onMouseMove={showControlsTemp}
+          >
             <video
               ref={videoRef}
               src={state.video_url ?? undefined}
               className="w-full aspect-video"
               playsInline
+              {...({ "webkit-playsinline": "true" } as any)}
               autoPlay
               preload="auto"
               onClick={handleVideoTap}
               onPause={() => setPaused(true)}
               onPlay={() => setPaused(false)}
+              onWaiting={() => setVideoReady(false)}
+              onPlaying={() => setVideoReady(true)}
             />
 
-            {/* LIVE pill top-left */}
-            <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold uppercase tracking-wider shadow-lg">
+            {!videoReady && (
+              <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-3 z-20">
+                <Loader2 className="animate-spin text-white/80" size={32} />
+                <p className="text-sm text-white/70">Joining live session…</p>
+              </div>
+            )}
+
+            <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold uppercase tracking-wider shadow-lg animate-[pulse_1.5s_ease-in-out_infinite]">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
@@ -711,21 +878,12 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
               Live
             </div>
 
-            {/* Tap-to-unmute */}
-            {muted && !paused && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const v = videoRef.current; if (!v) return;
-                  v.muted = false; setMuted(false); v.play().catch(() => {});
-                }}
-                className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/85 backdrop-blur text-white text-xs font-semibold shadow-lg animate-fade-in"
-              >
-                <VolumeX size={14} /> Tap to unmute
-              </button>
+            {showAudioBanner && (
+              <div className="absolute top-0 left-0 right-0 z-20 bg-black/85 backdrop-blur text-white text-center text-xs sm:text-sm py-2.5 px-4 animate-fade-in">
+                🔊 Tap anywhere to enable audio
+              </div>
             )}
 
-            {/* Tap feedback */}
             {showFeedback && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="bg-black/60 text-white rounded-full p-4 animate-fade-in">
@@ -736,10 +894,13 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
               </div>
             )}
 
-            {/* Custom controls */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent px-3 py-2 space-y-1.5">
+            <div
+              className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 sm:px-4 pt-8 pb-2.5 transition-opacity duration-300 ${
+                controlsVisible || isMobile || paused ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}
+            >
               <div
-                className="relative h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer"
+                className="relative h-1 hover:h-1.5 bg-white/20 rounded-full cursor-pointer transition-all mb-2"
                 onClick={(e) => {
                   const v = videoRef.current; if (!v) return;
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -749,23 +910,35 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
                 }}
               >
                 <div
-                  className="absolute h-full bg-red-500 transition-[width] duration-300"
+                  className="absolute h-full bg-red-500 transition-[width] duration-300 rounded-full"
                   style={{ width: `${Math.min(100, (progress / Math.max(1, maxWatched)) * 100)}%` }}
                 />
+                <span className="absolute right-0 top-1/2 -translate-y-1/2 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                </span>
               </div>
               <div className="flex items-center justify-between text-white text-xs">
-                <div className="flex items-center gap-2">
-                  <button onClick={togglePlay} aria-label="Play/Pause">
-                    {paused ? <Play size={16} /> : <Pause size={16} />}
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <button
+                    onClick={togglePlay}
+                    aria-label="Play/Pause"
+                    className="p-2 -m-2 hover:scale-110 transition-transform"
+                  >
+                    {paused ? <Play size={isMobile ? 22 : 24} fill="currentColor" /> : <Pause size={isMobile ? 22 : 24} fill="currentColor" />}
                   </button>
-                  <button onClick={() => { const v = videoRef.current; if (v) { v.muted = !v.muted; setMuted(v.muted); } }} aria-label="Mute">
-                    {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                  <button
+                    onClick={() => { const v = videoRef.current; if (v) { v.muted = !v.muted; setMuted(v.muted); } }}
+                    aria-label="Mute"
+                    className="p-2 -m-2 hover:scale-110 transition-transform"
+                  >
+                    {muted ? <VolumeX size={isMobile ? 18 : 20} /> : <Volume2 size={isMobile ? 18 : 20} />}
                   </button>
-                  <span className="tabular-nums">{fmtTime(progress)}</span>
+                  <span className="tabular-nums text-xs sm:text-sm font-medium">{fmtTime(progress)}</span>
                   {progress < maxWatched - 5 && (
                     <button
                       onClick={() => { const v = videoRef.current; if (v) v.currentTime = maxWatched; }}
-                      className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold uppercase tracking-wider"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500 hover:bg-red-600 text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-wider animate-fade-in"
                     >
                       <span className="relative flex h-1.5 w-1.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
@@ -775,14 +948,17 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
                     </button>
                   )}
                 </div>
-                <button onClick={() => videoRef.current?.requestFullscreen?.()} aria-label="Fullscreen">
-                  <Maximize size={16} />
+                <button
+                  onClick={handleFullscreen}
+                  aria-label="Fullscreen"
+                  className="p-3 -m-2 hover:scale-110 transition-transform min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+                >
+                  {isFullscreen ? <Minimize size={isMobile ? 18 : 20} /> : <Maximize size={isMobile ? 18 : 20} />}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Info row below video */}
           <div className="mt-3 sm:mt-4 flex items-center justify-between gap-3 text-xs sm:text-sm text-white/60">
             <div className="flex items-center gap-2 min-w-0">
               <span className="inline-flex items-center gap-1.5 text-red-400 font-medium shrink-0">
@@ -808,7 +984,6 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
         </div>
       </div>
 
-      {/* Footer brand */}
       <div className="text-center pb-4 sm:pb-6 text-[11px] text-white/40">
         <span className="font-semibold text-white/60">Smart Income Program</span> powered by Nevorai
       </div>
