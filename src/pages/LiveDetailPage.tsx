@@ -229,6 +229,7 @@ const LiveDetailPage = () => {
             </AlertDialog>
           )}
 
+          <Button variant="outline" onClick={shareOnWhatsApp}><MessageCircle size={14} /> WhatsApp</Button>
           <Button variant="outline" onClick={() => setEditOpen(true)}><Pencil size={14} /> Edit</Button>
         </div>
 
