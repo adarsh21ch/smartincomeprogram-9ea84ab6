@@ -868,6 +868,10 @@ const ReplayState = ({ state }: { state: StateResponse }) => {
 
   const slot = state.current_slot_start ? new Date(state.current_slot_start) : null;
 
+  if (noVideo) {
+    return <PageShell><p className="text-sm text-center text-muted-foreground">Replay is not available.</p></PageShell>;
+  }
+
   return (
     <PageShell>
       <div className="space-y-4">
