@@ -282,9 +282,9 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
           </Card>
         )}
 
-        {/* Step indicator */}
+        {/* Step indicator (3 steps: Source, Schedule, Settings) */}
         <div className="flex items-center gap-1.5">
-          {[1, 2, 3, 4].map((i) => (
+          {[2, 3, 4].map((i) => (
             <div key={i} className={cn(
               "h-1.5 flex-1 rounded-full",
               i <= s.step ? "bg-primary" : "bg-muted",
