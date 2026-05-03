@@ -531,21 +531,19 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
   // External link case (Zoom etc.)
   if (state.video_url && /^https?:\/\//.test(state.video_url) && !state.video_url.match(/\.(mp4|webm|mov|m3u8)/i)) {
     return (
-      <PageShell>
-        <div className="text-center space-y-5">
-          <div className="inline-flex items-center gap-2">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
-            </span>
-            <span className="text-sm font-bold text-red-500 uppercase tracking-wider">Live Now</span>
-          </div>
-          <h1 className="text-2xl font-heading font-bold">{state.session_data?.title}</h1>
-          <Button variant="hero" size="lg" onClick={() => window.open(state.video_url!, "_blank")}>
-            <ExternalLink size={16} /> Join Live Session
-          </Button>
+      <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center px-4 text-center gap-6">
+        <div className="inline-flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+          </span>
+          <span className="text-xs sm:text-sm font-bold text-red-500 uppercase tracking-[0.2em]">Live Now</span>
         </div>
-      </PageShell>
+        <h1 className="text-3xl sm:text-5xl font-heading font-bold uppercase tracking-tight">{state.session_data?.title}</h1>
+        <Button variant="hero" size="lg" onClick={() => window.open(state.video_url!, "_blank")}>
+          <ExternalLink size={16} /> Join Live Session
+        </Button>
+      </div>
     );
   }
 
