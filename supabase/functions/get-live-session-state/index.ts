@@ -85,6 +85,9 @@ Deno.serve(async (req) => {
         if (!duration && va.duration_seconds) duration = va.duration_seconds;
       }
     }
+    // Fallback duration: if unknown, assume 2 hours so the session can still go live.
+    // The player will end naturally when the video file finishes.
+    if (!duration || duration <= 0) duration = 7200;
 
     const slotsRaw = Array.isArray(session.scheduled_times) ? session.scheduled_times : [];
     const slots = slotsRaw
