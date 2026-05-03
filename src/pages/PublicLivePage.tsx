@@ -530,16 +530,24 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
 
   const isExternalLink = !!state.video_url && /^https?:\/\//.test(state.video_url) && !state.video_url.match(/\.(mp4|webm|mov|m3u8)/i);
 
-  // Start muted for guaranteed instant autoplay (browser policy)
+  // Try unmuted autoplay first (live session); fall back to muted if browser blocks it
   useEffect(() => {
     const v = videoRef.current;
     if (!v || !state.video_url || isExternalLink) return;
-    v.muted = true;
-    setMuted(true);
-    const startPlayback = () => {
+    const startPlayback = async () => {
       try { v.currentTime = state.seek_seconds; } catch {}
       setMaxWatched(state.seek_seconds);
-      v.play().catch(() => {});
+      // Attempt unmuted autoplay
+      v.muted = false;
+      try {
+        await v.play();
+        setMuted(false);
+      } catch {
+        // Blocked → fall back to muted autoplay so video at least starts
+        v.muted = true;
+        setMuted(true);
+        try { await v.play(); } catch {}
+      }
     };
     if (v.readyState >= 1) {
       setDuration(v.duration);
