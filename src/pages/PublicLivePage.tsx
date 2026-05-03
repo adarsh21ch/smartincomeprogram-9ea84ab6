@@ -521,7 +521,7 @@ const NotAvailableState = () => (
 const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: () => Promise<void> }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [maxWatched, setMaxWatched] = useState(state.seek_seconds);
   const [progress, setProgress] = useState(state.seek_seconds);
   const [duration, setDuration] = useState(0);
@@ -549,16 +549,24 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
     );
   }
 
-  // Set initial position when video loads
+  // Start muted for guaranteed instant autoplay (browser policy)
   useEffect(() => {
     const v = videoRef.current;
     if (!v || !state.video_url) return;
-    const onLoaded = () => {
-      setDuration(v.duration);
-      // jump to the exact live position
+    v.muted = true;
+    setMuted(true);
+    const startPlayback = () => {
       try { v.currentTime = state.seek_seconds; } catch {}
       setMaxWatched(state.seek_seconds);
-      v.play().catch(() => { /* autoplay blocked → user must click */ });
+      v.play().catch(() => {});
+    };
+    if (v.readyState >= 1) {
+      setDuration(v.duration);
+      startPlayback();
+    }
+    const onLoaded = () => {
+      setDuration(v.duration);
+      startPlayback();
     };
     v.addEventListener("loadedmetadata", onLoaded);
     return () => v.removeEventListener("loadedmetadata", onLoaded);
@@ -663,10 +671,28 @@ const LiveState = ({ state, fetchState }: { state: StateResponse; fetchState: ()
             src={state.video_url ?? undefined}
             className="w-full aspect-video"
             playsInline
+            autoPlay
+            muted
+            preload="auto"
             onClick={handleVideoTap}
             onPause={() => setPaused(true)}
             onPlay={() => setPaused(false)}
           />
+          {/* Tap-to-unmute pill */}
+          {muted && !paused && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const v = videoRef.current; if (!v) return;
+                v.muted = false;
+                setMuted(false);
+                v.play().catch(() => {});
+              }}
+              className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/85 backdrop-blur text-white text-xs font-semibold shadow-lg animate-fade-in"
+            >
+              <VolumeX size={14} /> Tap to unmute
+            </button>
+          )}
           {/* Tap feedback */}
           {showFeedback && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
