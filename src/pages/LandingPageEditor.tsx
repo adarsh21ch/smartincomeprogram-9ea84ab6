@@ -608,8 +608,8 @@ const LandingPageEditor = () => {
                     </div>
                   </label>
                 </div>
-                <p className="text-[11px] text-muted-foreground/70 mt-2">
-                  Email will appear as: <span className="font-mono text-foreground/60">{form.sender_display_name || "Smart Income Program"} &lt;noreply@smartincomeprogram.com&gt;</span>
+                <p className="text-[11px] text-muted-foreground/70 mt-2 break-all">
+                  Email will appear as: <span className="font-mono text-foreground/60 break-all">{form.sender_display_name || "Smart Income Program"} &lt;noreply@smartincomeprogram.com&gt;</span>
                 </p>
               </div>
             </div>
@@ -1064,9 +1064,10 @@ const LandingPageEditor = () => {
         </div>
 
         {/* Main editor area */}
-        <div className="flex-1 min-w-0 flex gap-6">
+        <div className="flex-1 min-w-0 flex gap-6 w-full">
           {/* Editor column */}
-          <div className="flex-1 max-w-2xl min-w-0 w-full">
+          <div className="flex-1 max-w-2xl min-w-0 w-full overflow-hidden">
+
             {/* Header */}
             <div className="flex items-center justify-between mb-4 gap-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -1091,7 +1092,7 @@ const LandingPageEditor = () => {
             <div className="lg:hidden -mx-1 px-1 overflow-x-auto scrollbar-none pb-3 mb-3">
               <div className="flex gap-1.5 w-max">
                 {WIZARD_STEPS.map((s, i) => (
-                  <button key={i} onClick={() => setWizardStep(i)}
+                  <button key={i} onClick={(e) => { setWizardStep(i); (e.currentTarget as HTMLElement).scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); }}
                     className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-semibold transition-all shrink-0 w-[68px] ${
                       wizardStep === i
                         ? "bg-primary text-primary-foreground"
@@ -1113,7 +1114,7 @@ const LandingPageEditor = () => {
             </div>
 
             {/* Content card */}
-            <div className="glass-card p-4 sm:p-6 space-y-4 overflow-hidden">
+            <div className="glass-card p-4 sm:p-6 space-y-4 overflow-hidden break-words max-w-full">
               {renderWizardContent()}
             </div>
 
