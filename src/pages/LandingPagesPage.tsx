@@ -90,7 +90,7 @@ const LandingPagesPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 w-full max-w-full overflow-x-hidden min-w-0">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div>
@@ -99,7 +99,7 @@ const LandingPagesPage = () => {
             </div>
             {limitBadge}
           </div>
-          <Button onClick={handleCreate} className="bg-primary">
+          <Button onClick={handleCreate} className="bg-primary w-full sm:w-auto">
             <Plus size={16} className="mr-2" /> Create Landing Page
           </Button>
         </div>
@@ -109,8 +109,8 @@ const LandingPagesPage = () => {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input placeholder="Search landing pages..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
-          <Tabs value={filter} onValueChange={setFilter}>
-            <TabsList>
+          <Tabs value={filter} onValueChange={setFilter} className="w-full sm:w-auto">
+            <TabsList className="w-full sm:w-auto overflow-x-auto scrollbar-hide flex-nowrap justify-start">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="published">Published</TabsTrigger>
               <TabsTrigger value="draft">Draft</TabsTrigger>
@@ -137,11 +137,11 @@ const LandingPagesPage = () => {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((page: any) => (
-              <Card key={page.id} className="p-5 space-y-3">
-                <div className="flex items-start justify-between">
+              <Card key={page.id} className="p-5 space-y-3 min-w-0 max-w-full overflow-hidden">
+                <div className="flex items-start justify-between gap-2 min-w-0">
                   <Badge variant={statusColor(page.status) as any} className="capitalize">{page.status}</Badge>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical size={16} /></Button></DropdownMenuTrigger>
+                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><MoreVertical size={16} /></Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => navigate(`/landing-pages/${page.id}/edit`)}><Pencil size={14} className="mr-2" /> Edit</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => window.open(`/l/${page.slug}`, "_blank")}><ExternalLink size={14} className="mr-2" /> Preview</DropdownMenuItem>
@@ -149,17 +149,17 @@ const LandingPagesPage = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <h3 className="font-semibold text-lg leading-tight">{page.title}</h3>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="truncate">{window.location.origin}/l/{page.slug}</span>
-                  <button onClick={() => copyLink(page.slug)} className="hover:text-foreground"><Copy size={12} /></button>
+                <h3 className="font-semibold text-lg leading-tight break-words">{page.title}</h3>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                  <span className="truncate min-w-0 flex-1">{window.location.origin}/l/{page.slug}</span>
+                  <button onClick={() => copyLink(page.slug)} className="hover:text-foreground shrink-0"><Copy size={12} /></button>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1"><Eye size={14} /> {page.total_views || 0} views</span>
                   <span className="flex items-center gap-1"><Users size={14} /> {page.total_registrations || 0} registrations</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Created {format(new Date(page.created_at), "d MMM yyyy")}</p>
-                <div className="flex gap-2 pt-1">
+                <div className="flex flex-wrap gap-2 pt-1">
                   <Button variant="outline" size="sm" onClick={() => navigate(`/landing-pages/${page.id}/edit`)}>Edit</Button>
                   <Button variant="outline" size="sm" onClick={() => navigate(`/landing-pages/${page.id}`)}>Registrations</Button>
                   <Button variant="outline" size="sm" onClick={() => window.open(`/l/${page.slug}`, "_blank")}>Preview</Button>
