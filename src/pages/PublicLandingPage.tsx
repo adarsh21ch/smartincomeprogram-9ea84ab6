@@ -457,7 +457,7 @@ const PublicLandingPage = () => {
                 )}
               </div>
 
-              {(page.speaker_name || page.speaker_photo_url) && (
+              {page.speaker_enabled !== false && (page.speaker_name || page.speaker_photo_url) && (
                 <div className="sip-card p-4 flex flex-col sm:flex-row gap-3 items-center">
                   {page.speaker_photo_url && (
                     <img src={page.speaker_photo_url} alt={page.speaker_name} className="w-20 h-20 rounded-full object-cover shrink-0" style={{ border: '2px solid rgba(197,147,14,0.3)' }} />
