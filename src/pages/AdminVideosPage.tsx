@@ -126,16 +126,16 @@ const AdminVideosPage = () => {
         <div className="glass-card p-6 space-y-4">
           <h2 className="text-base font-heading font-semibold">Upload New Video</h2>
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <Label className="text-xs">Title</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Video title" className="mt-1 bg-muted border-border" />
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Video title" className="mt-1 bg-muted border-border w-full" />
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end w-full sm:w-auto">
               <input type="file" ref={fileInputRef} accept="video/*" className="hidden" onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) handleUpload(file);
               }} />
-              <Button variant="hero" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+              <Button variant="hero" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="w-full sm:w-auto h-11">
                 {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
                 {uploading ? "Uploading..." : "Upload Video"}
               </Button>
