@@ -668,9 +668,17 @@ const LandingPageEditor = () => {
       <h2 className="text-lg font-heading font-semibold">Speaker / Host</h2>
       <p className="text-sm text-muted-foreground">Add details about the speaker or host for this session.</p>
       <div className="space-y-4 mt-4">
+        <div className="p-4 bg-muted/50 rounded-xl flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <Label className="font-semibold">Show Speaker Section</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">Display the speaker / host block on the public page</p>
+          </div>
+          <Switch checked={form.speaker_enabled !== false} onCheckedChange={(v) => updateField("speaker_enabled", v)} />
+        </div>
+        {form.speaker_enabled !== false && (
         <div className="p-4 bg-muted/50 rounded-xl space-y-4">
           {/* Compact identity row: Circle DP + Name + Title */}
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-3 sm:gap-4">
             {/* Circle photo upload */}
             <div className="shrink-0">
               <input
@@ -699,7 +707,7 @@ const LandingPageEditor = () => {
                   <img
                     src={form.speaker_photo_url}
                     alt="Speaker"
-                    className="w-16 h-16 rounded-full object-cover cursor-pointer"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover cursor-pointer"
                     style={{ border: '2px solid hsl(var(--primary) / 0.4)' }}
                     onClick={() => (window as any).__speakerPhotoInput?.click()}
                   />
@@ -715,7 +723,7 @@ const LandingPageEditor = () => {
                 <button
                   type="button"
                   onClick={() => (window as any).__speakerPhotoInput?.click()}
-                  className="w-16 h-16 rounded-full border-2 border-dashed border-border hover:border-primary/50 bg-muted/50 hover:bg-muted flex items-center justify-center transition-all cursor-pointer"
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-dashed border-border hover:border-primary/50 bg-muted/50 hover:bg-muted flex items-center justify-center transition-all cursor-pointer"
                 >
                   <Mic size={20} className="text-muted-foreground" />
                 </button>
@@ -725,11 +733,11 @@ const LandingPageEditor = () => {
             <div className="flex-1 min-w-0 space-y-2">
               <div>
                 <Label className="text-xs">Speaker Name</Label>
-                <Input value={form.speaker_name} onChange={(e) => updateField("speaker_name", e.target.value)} placeholder="e.g., Shubham Jain" className="mt-1 bg-muted border-border h-9 text-sm" />
+                <Input value={form.speaker_name} onChange={(e) => updateField("speaker_name", e.target.value)} placeholder="e.g., Shubham Jain" className="mt-1 bg-muted border-border h-9 text-sm w-full" />
               </div>
               <div>
                 <Label className="text-xs">Title / Role</Label>
-                <Input value={form.speaker_role} onChange={(e) => updateField("speaker_role", e.target.value)} placeholder="e.g., Educator | Mentor" className="mt-1 bg-muted border-border h-9 text-sm" />
+                <Input value={form.speaker_role} onChange={(e) => updateField("speaker_role", e.target.value)} placeholder="e.g., Educator | Mentor" className="mt-1 bg-muted border-border h-9 text-sm w-full" />
               </div>
             </div>
           </div>
@@ -741,10 +749,11 @@ const LandingPageEditor = () => {
               onChange={(e) => updateField("speaker_bio", e.target.value)}
               rows={4}
               placeholder="A short bio about the speaker's expertise and background..."
-              className="mt-1.5 bg-muted border-border"
+              className="mt-1.5 bg-muted border-border w-full"
             />
           </div>
         </div>
+        )}
       </div>
     </>
   );
