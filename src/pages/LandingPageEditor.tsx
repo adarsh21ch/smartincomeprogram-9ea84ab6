@@ -16,7 +16,7 @@ import { LandingPagePreview } from "@/components/funnel/LandingPagePreview";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   FileText, Palette, ClipboardList, Mail, Video, Link2, Rocket, Mic,
-  Save, ArrowLeft, Check, X, Plus, Trash2, GripVertical, Eye, Edit3, Star,
+  Save, ArrowLeft, Check, X, Plus, Trash2, GripVertical, Eye, Star,
   Globe, Lock as LockIcon, EyeOff,
 } from "lucide-react";
 import { TestimonialsBuilderStep } from "@/components/funnel/TestimonialsBuilderStep";
