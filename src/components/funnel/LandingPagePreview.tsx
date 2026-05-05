@@ -65,7 +65,7 @@ export const LandingPagePreview = ({
   const cardBg = form.background_style === "light" ? "bg-gray-50 border-gray-200" : "bg-gray-900/50 border-gray-800";
 
   const sections = form.sections || [];
-  const hasSpeaker = !!(form.speaker_name || form.speaker_photo_url);
+  const hasSpeaker = form.speaker_enabled !== false && !!(form.speaker_name || form.speaker_photo_url);
   const activeTestimonials = testimonials.filter((t) => {
     if (t.type === "both") return Boolean(t.review_text?.trim()) || Boolean(t.video_url);
     return t.is_active && (t.type === "text" ? Boolean(t.review_text?.trim()) : Boolean(t.video_url));
