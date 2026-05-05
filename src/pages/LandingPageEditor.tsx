@@ -1064,9 +1064,10 @@ const LandingPageEditor = () => {
         </div>
 
         {/* Main editor area */}
-        <div className="flex-1 min-w-0 flex gap-6">
+        <div className="flex-1 min-w-0 flex gap-6 w-full">
           {/* Editor column */}
-          <div className="flex-1 max-w-2xl min-w-0 w-full">
+          <div className="flex-1 max-w-2xl min-w-0 w-full overflow-hidden">
+
             {/* Header */}
             <div className="flex items-center justify-between mb-4 gap-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
