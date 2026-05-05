@@ -608,8 +608,8 @@ const LandingPageEditor = () => {
                     </div>
                   </label>
                 </div>
-                <p className="text-[11px] text-muted-foreground/70 mt-2">
-                  Email will appear as: <span className="font-mono text-foreground/60">{form.sender_display_name || "Smart Income Program"} &lt;noreply@smartincomeprogram.com&gt;</span>
+                <p className="text-[11px] text-muted-foreground/70 mt-2 break-all">
+                  Email will appear as: <span className="font-mono text-foreground/60 break-all">{form.sender_display_name || "Smart Income Program"} &lt;noreply@smartincomeprogram.com&gt;</span>
                 </p>
               </div>
             </div>
