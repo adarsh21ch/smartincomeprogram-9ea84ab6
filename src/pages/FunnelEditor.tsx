@@ -15,7 +15,7 @@ import {
   FileText, Video, Settings, ClipboardList, Mic, MessageCircle, IndianRupee,
   Radio, Rocket, Check, Copy, Plus, Trash2, GripVertical, Lock, ExternalLink,
   Play, CreditCard, UserCheck, Calendar, Layers, ChevronDown, ChevronUp, Pencil,
-  User, ListChecks, X
+  User, ListChecks, X, Eye
 } from "lucide-react";
 import { VideoPickerModal } from "@/components/VideoPickerModal";
 import { StepTypeSelector, getStepTypeMeta } from "@/components/funnel/StepTypeSelector";
@@ -1265,7 +1265,7 @@ const FunnelEditor = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex gap-6 min-h-[calc(100vh-8rem)]">
+      <div className="builder-shell flex flex-col lg:flex-row gap-6 min-h-[calc(100vh-8rem)] w-full max-w-full min-w-0 overflow-x-hidden lg:overflow-visible">
         {/* Sidebar nav — desktop only */}
         {modeChosen && (
           <div className="hidden lg:flex flex-col gap-1 w-48 shrink-0">
@@ -1289,16 +1289,16 @@ const FunnelEditor = () => {
         )}
 
         {/* Main content + Right Panel */}
-        <div className="flex-1 flex gap-6 min-w-0">
-          <div className={`flex-1 min-w-0 ${isMulti && wizardStep === 1 ? "max-w-none" : "max-w-2xl"}`}>
+        <div className="flex-1 flex flex-col lg:flex-row gap-6 min-w-0 w-full max-w-full overflow-x-hidden lg:overflow-visible">
+          <div className={`builder-content flex-1 min-w-0 w-full overflow-hidden ${isMulti && wizardStep === 1 ? "max-w-none" : "max-w-none lg:max-w-2xl"}`}>
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="builder-header flex items-center justify-between mb-4 gap-2 min-w-0">
               <div className="flex-1 min-w-0">
-                <h1 className="text-lg sm:text-xl font-heading font-bold truncate">{funnel.title || "New Funnel"}</h1>
+                <h1 className="builder-header-title text-lg sm:text-xl font-heading font-bold truncate">{funnel.title || "New Funnel"}</h1>
                 {lastSavedAt && <p className="text-xs text-muted-foreground">Auto-saved {lastSavedAt.toLocaleTimeString()}</p>}
               </div>
               {modeChosen && (
-                <Button variant="hero" size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !funnel.title} className="shrink-0 ml-2">
+                <Button variant="hero" size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !funnel.title} className="builder-header-save-btn shrink-0 ml-2">
                   {saveMutation.isPending ? "Saving..." : "Save"}
                 </Button>
               )}
@@ -1306,19 +1306,21 @@ const FunnelEditor = () => {
 
             {/* Mobile compact step selector */}
             {modeChosen && (
-              <div className="lg:hidden grid grid-cols-4 sm:grid-cols-5 gap-1.5 pb-3 mb-3">
+              <div className="builder-step-tabs lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide pb-3 mb-3 overscroll-x-contain">
+                <div className="flex gap-1.5 w-max">
                 {visibleSteps.map((s, i) => (
-                  <button key={i} onClick={() => setWizardStep(i)}
-                    className={`flex flex-col items-center gap-1 px-1.5 py-2 rounded-lg text-[10px] font-semibold transition-all ${
+                  <button key={i} onClick={(e) => { setWizardStep(i); (e.currentTarget as HTMLElement).scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); }}
+                    className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-semibold transition-all shrink-0 w-[72px] ${
                       wizardStep === i
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted/60 text-muted-foreground"
                     }`}
                   >
                     <s.icon size={14} />
-                    <span className="truncate w-full text-center leading-tight">{s.label.split(' ').slice(-1)[0]}</span>
+                    <span className="truncate w-full text-center leading-tight">{s.label}</span>
                   </button>
                 ))}
+                </div>
               </div>
             )}
 
@@ -1332,12 +1334,12 @@ const FunnelEditor = () => {
             )}
 
             {/* Content card */}
-            <div className="glass-card p-4 sm:p-6 space-y-4">
+            <div className="glass-card builder-step-content p-4 sm:p-6 space-y-4 overflow-hidden break-words max-w-full">
               {renderWizardContent()}
             </div>
 
             {/* Navigation */}
-            <div className="flex gap-3 mt-4">
+            <div className="builder-nav-buttons flex gap-3 mt-4">
               {(modeChosen && wizardStep > 0) && <Button variant="outline" size="sm" onClick={() => setWizardStep(wizardStep - 1)}>Previous</Button>}
               <div className="flex-1" />
               {!modeChosen ? null : wizardStep < lastStepIdx ? (
