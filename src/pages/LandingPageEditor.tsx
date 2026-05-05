@@ -1042,7 +1042,7 @@ const LandingPageEditor = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex gap-6 min-h-[calc(100vh-8rem)]">
+      <div className="flex gap-6 min-h-[calc(100vh-8rem)] w-full min-w-0">
         {/* Sidebar nav — desktop only, sticky */}
         <div className="hidden lg:flex flex-col gap-1 w-48 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
           {WIZARD_STEPS.map((s, i) => (
@@ -1066,16 +1066,16 @@ const LandingPageEditor = () => {
         {/* Main editor area */}
         <div className="flex-1 min-w-0 flex gap-6">
           {/* Editor column */}
-          <div className="flex-1 max-w-2xl min-w-0">
+          <div className="flex-1 max-w-2xl min-w-0 w-full">
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
                 <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate("/landing-pages")}>
                   <ArrowLeft size={18} />
                 </Button>
-                <h1 className="text-lg sm:text-xl font-heading font-bold truncate">{form.title || (isEdit ? "Edit Landing Page" : "New Landing Page")}</h1>
+                <h1 className="text-base sm:text-xl font-heading font-bold truncate">{form.title || (isEdit ? "Edit Landing Page" : "New Landing Page")}</h1>
               </div>
-              <div className="flex items-center gap-2 shrink-0 ml-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {isMobile && (
                   <Button variant="outline" size="sm" onClick={() => setPreviewMode(true)}>
                     <Eye size={14} className="mr-1.5" /> Preview
@@ -1087,20 +1087,22 @@ const LandingPageEditor = () => {
               </div>
             </div>
 
-            {/* Mobile compact step selector — 3-column grid */}
-            <div className="lg:hidden grid grid-cols-3 sm:grid-cols-4 gap-1.5 pb-3 mb-3">
-              {WIZARD_STEPS.map((s, i) => (
-                <button key={i} onClick={() => setWizardStep(i)}
-                  className={`flex flex-col items-center gap-1 px-1 py-2 rounded-lg text-[10px] font-semibold transition-all min-w-0 ${
-                    wizardStep === i
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted/60 text-muted-foreground"
-                  }`}
-                >
-                  <s.icon size={14} />
-                  <span className="truncate w-full text-center leading-tight">{s.label}</span>
-                </button>
-              ))}
+            {/* Mobile compact step selector — horizontal scroll for full visibility */}
+            <div className="lg:hidden -mx-1 px-1 overflow-x-auto scrollbar-none pb-3 mb-3">
+              <div className="flex gap-1.5 w-max">
+                {WIZARD_STEPS.map((s, i) => (
+                  <button key={i} onClick={() => setWizardStep(i)}
+                    className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-semibold transition-all shrink-0 w-[68px] ${
+                      wizardStep === i
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted/60 text-muted-foreground"
+                    }`}
+                  >
+                    <s.icon size={14} />
+                    <span className="truncate w-full text-center leading-tight">{s.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Progress bar */}
@@ -1111,7 +1113,7 @@ const LandingPageEditor = () => {
             </div>
 
             {/* Content card */}
-            <div className="glass-card p-4 sm:p-6 space-y-4">
+            <div className="glass-card p-4 sm:p-6 space-y-4 overflow-hidden">
               {renderWizardContent()}
             </div>
 
