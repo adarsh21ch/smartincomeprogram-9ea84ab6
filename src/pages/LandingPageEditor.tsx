@@ -1114,7 +1114,7 @@ const LandingPageEditor = () => {
             </div>
 
             {/* Content card */}
-            <div className="glass-card p-4 sm:p-6 space-y-4 overflow-hidden">
+            <div className="glass-card p-4 sm:p-6 space-y-4 overflow-hidden break-words max-w-full">
               {renderWizardContent()}
             </div>
 
