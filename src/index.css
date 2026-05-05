@@ -259,6 +259,77 @@
   display: none;
 }
 
+@media (max-width: 767px) {
+  .builder-shell,
+  .builder-content,
+  .builder-step-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  .builder-step-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .builder-header-title {
+    max-width: calc(100vw - 132px);
+  }
+
+  .builder-step-content input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  .builder-step-content textarea,
+  .builder-step-content select,
+  .builder-content input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  .builder-content textarea,
+  .builder-content select {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    font-size: 16px !important;
+    box-sizing: border-box;
+  }
+
+  .builder-step-content .grid,
+  .builder-content .grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .builder-step-content .flex,
+  .builder-content .flex {
+    min-width: 0;
+  }
+
+  .builder-step-content p,
+  .builder-step-content span,
+  .builder-step-content label,
+  .builder-content p,
+  .builder-content span,
+  .builder-content label {
+    overflow-wrap: anywhere;
+  }
+
+  .builder-nav-buttons {
+    position: sticky;
+    bottom: 4.5rem;
+    z-index: 30;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding: 0.75rem 1rem;
+    background: hsl(var(--background) / 0.96);
+    border-top: 1px solid hsl(var(--border));
+    backdrop-filter: blur(12px);
+  }
+
+  .builder-nav-buttons > button {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+}
+
 /* Safe area insets for PWA / mobile notch devices */
 html {
   padding-top: env(safe-area-inset-top);

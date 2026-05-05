@@ -266,7 +266,7 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
-        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="builder-content w-[calc(100vw-1rem)] max-w-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto p-4 sm:p-6"
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
@@ -485,7 +485,7 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
                     ))}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <Label className="text-xs">From (start)</Label>
                     <Input type="time" value={s.firstSlotTime} onChange={(e) => upd("firstSlotTime", e.target.value)} className="mt-1" />
@@ -515,7 +515,7 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
             {s.repeatType === "custom" && (
               <div className="p-3 bg-muted/40 rounded-xl space-y-2">
                 {s.customSlots.map((slot, i) => (
-                  <div key={i} className="flex gap-2 items-end">
+                  <div key={i} className="flex flex-col sm:flex-row gap-2 sm:items-end">
                     <div className="flex-1">
                       <Label className="text-[10px]">Session {i + 1}</Label>
                       <Popover>
@@ -534,7 +534,7 @@ export const LiveSessionWizard = ({ open, onClose, editing }: Props) => {
                     </div>
                     <Input type="time" value={slot.time} onChange={(e) => {
                       const next = [...s.customSlots]; next[i] = { ...next[i], time: e.target.value }; upd("customSlots", next);
-                    }} className="w-28" />
+                    }} className="w-full sm:w-28" />
                     <Button variant="ghost" size="icon" onClick={() => upd("customSlots", s.customSlots.filter((_, j) => j !== i))} className="h-9 w-9">
                       <Trash2 size={14} />
                     </Button>
