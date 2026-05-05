@@ -79,7 +79,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex w-full max-w-full overflow-x-hidden">
       {/* Desktop sidebar */}
       <aside className={cn("hidden md:flex flex-col border-r border-border bg-sidebar transition-all duration-200 sticky top-0 h-screen", collapsed ? "w-16" : "w-60")}>
         <div className="flex items-center justify-between h-16 px-4 border-b border-border shrink-0">
@@ -117,7 +117,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col min-h-screen">
+      <main className="flex-1 min-w-0 w-full max-w-full flex flex-col min-h-screen overflow-x-hidden">
         {/* Mobile top header */}
         <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-40">
           <Logo size="sm" />
@@ -156,7 +156,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
           </div>
         </div>
 
-        <div className="flex-1 p-4 md:p-8 pb-20 md:pb-8 overflow-x-hidden overflow-y-auto">{children}</div>
+        <div className="flex-1 w-full max-w-full min-w-0 p-4 md:p-8 pb-20 md:pb-8 overflow-x-hidden overflow-y-auto">{children}</div>
       </main>
 
       {/* Mobile bottom tab bar */}
