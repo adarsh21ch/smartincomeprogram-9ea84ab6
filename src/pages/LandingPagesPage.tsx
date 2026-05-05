@@ -109,8 +109,8 @@ const LandingPagesPage = () => {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input placeholder="Search landing pages..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
-          <Tabs value={filter} onValueChange={setFilter}>
-            <TabsList>
+          <Tabs value={filter} onValueChange={setFilter} className="w-full sm:w-auto">
+            <TabsList className="w-full sm:w-auto overflow-x-auto scrollbar-hide flex-nowrap justify-start">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="published">Published</TabsTrigger>
               <TabsTrigger value="draft">Draft</TabsTrigger>
