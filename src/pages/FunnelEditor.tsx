@@ -1368,6 +1368,39 @@ const FunnelEditor = () => {
           )}
         </div>
       </div>
+
+      {modeChosen && (
+        <>
+          <Button
+            variant="hero"
+            size="icon"
+            onClick={() => setPreviewOpen(true)}
+            className="lg:hidden fixed right-4 bottom-24 z-40 h-12 w-12 rounded-full shadow-2xl"
+            aria-label="Preview funnel"
+          >
+            <Eye size={20} />
+          </Button>
+          {previewOpen && (
+            <div className="lg:hidden fixed inset-0 z-[80] bg-background flex flex-col">
+              <div className="flex items-center justify-between gap-2 border-b border-border bg-card px-4 py-3 shrink-0">
+                <h2 className="text-base font-heading font-bold truncate">Live Preview</h2>
+                <Button variant="ghost" size="icon" onClick={() => setPreviewOpen(false)} aria-label="Close preview">
+                  <X size={18} />
+                </Button>
+              </div>
+              <div className="flex-1 overflow-y-auto bg-card p-4">
+                <FunnelLivePreview
+                  funnel={funnel}
+                  selectedVideo={selectedVideo}
+                  flowSteps={flowSteps}
+                  leadForm={leadForm}
+                  previewStepIndex={editingStepIdx}
+                />
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </DashboardLayout>
   );
 };
