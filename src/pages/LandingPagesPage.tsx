@@ -99,7 +99,7 @@ const LandingPagesPage = () => {
             </div>
             {limitBadge}
           </div>
-          <Button onClick={handleCreate} className="bg-primary">
+          <Button onClick={handleCreate} className="bg-primary w-full sm:w-auto">
             <Plus size={16} className="mr-2" /> Create Landing Page
           </Button>
         </div>
