@@ -393,7 +393,7 @@ const PublicLandingPage = () => {
             )}
 
             {/* Speaker — compact row, bio in expandable popup */}
-            {(page.speaker_name || page.speaker_photo_url) && (
+            {page.speaker_enabled !== false && (page.speaker_name || page.speaker_photo_url) && (
               <div
                 className="flex items-center gap-3 px-1 cursor-pointer group"
                 onClick={() => page.speaker_bio && setShowSpeakerBio((v: boolean) => !v)}
