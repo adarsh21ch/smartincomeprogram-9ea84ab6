@@ -1397,6 +1397,7 @@ export type Database = {
           sender_display_name: string | null
           slug: string
           speaker_bio: string | null
+          speaker_enabled: boolean
           speaker_name: string | null
           speaker_photo_url: string | null
           speaker_role: string | null
@@ -1465,6 +1466,7 @@ export type Database = {
           sender_display_name?: string | null
           slug: string
           speaker_bio?: string | null
+          speaker_enabled?: boolean
           speaker_name?: string | null
           speaker_photo_url?: string | null
           speaker_role?: string | null
@@ -1533,6 +1535,7 @@ export type Database = {
           sender_display_name?: string | null
           slug?: string
           speaker_bio?: string | null
+          speaker_enabled?: boolean
           speaker_name?: string | null
           speaker_photo_url?: string | null
           speaker_role?: string | null

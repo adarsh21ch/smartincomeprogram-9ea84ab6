@@ -393,7 +393,7 @@ const PublicLandingPage = () => {
             )}
 
             {/* Speaker — compact row, bio in expandable popup */}
-            {(page.speaker_name || page.speaker_photo_url) && (
+            {page.speaker_enabled !== false && (page.speaker_name || page.speaker_photo_url) && (
               <div
                 className="flex items-center gap-3 px-1 cursor-pointer group"
                 onClick={() => page.speaker_bio && setShowSpeakerBio((v: boolean) => !v)}
@@ -457,7 +457,7 @@ const PublicLandingPage = () => {
                 )}
               </div>
 
-              {(page.speaker_name || page.speaker_photo_url) && (
+              {page.speaker_enabled !== false && (page.speaker_name || page.speaker_photo_url) && (
                 <div className="sip-card p-4 flex flex-col sm:flex-row gap-3 items-center">
                   {page.speaker_photo_url && (
                     <img src={page.speaker_photo_url} alt={page.speaker_name} className="w-20 h-20 rounded-full object-cover shrink-0" style={{ border: '2px solid rgba(197,147,14,0.3)' }} />
@@ -582,7 +582,7 @@ const PublicLandingPage = () => {
                     </div>
                   )}
 
-                  {(page.speaker_name || page.speaker_photo_url) && (
+                  {page.speaker_enabled !== false && (page.speaker_name || page.speaker_photo_url) && (
                     <div className="sip-card p-6 flex gap-5 items-start">
                       {page.speaker_photo_url && (
                         <img src={page.speaker_photo_url} alt={page.speaker_name} className="w-20 h-20 rounded-full object-cover shrink-0" style={{ border: '2px solid rgba(197,147,14,0.3)' }} />
