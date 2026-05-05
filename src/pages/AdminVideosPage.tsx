@@ -149,8 +149,8 @@ const AdminVideosPage = () => {
           )}
         </div>
 
-        {/* Video list */}
-        <div className="glass-card overflow-hidden">
+        {/* Video list - Desktop table */}
+        <div className="glass-card overflow-hidden hidden md:block">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -221,6 +221,60 @@ const AdminVideosPage = () => {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Video list - Mobile cards */}
+        <div className="md:hidden space-y-3">
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="glass-card p-4">
+                <div className="h-4 bg-muted rounded w-3/4 animate-pulse mb-2" />
+                <div className="h-3 bg-muted rounded w-1/2 animate-pulse" />
+              </div>
+            ))
+          ) : videos.length === 0 ? (
+            <div className="glass-card p-8 text-center text-muted-foreground text-sm">No videos uploaded yet</div>
+          ) : (
+            videos.map((v) => (
+              <div key={v.id} className="glass-card p-4 space-y-3 max-w-full overflow-hidden">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-12 h-8 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                    {v.thumbnail_url ? <img src={v.thumbnail_url} className="w-full h-full object-cover rounded" /> : <Video size={14} className="text-muted-foreground" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm truncate">{v.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{v.original_filename}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  <span className={`px-2 py-0.5 rounded-full ${v.status === "ready" ? "bg-success/10 text-success" : v.status === "failed" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`}>
+                    {v.status}
+                  </span>
+                  <span>•</span>
+                  <span>{formatSize(v.file_size_bytes)}</span>
+                  <span>•</span>
+                  <span>{v.view_count || 0} views</span>
+                </div>
+                <div className="flex gap-2 pt-2 border-t border-border">
+                  <Button variant="ghost" size="sm" className="flex-1 h-9" onClick={() => setRenameVideo({ id: v.id, title: v.title })} title="Rename">
+                    <Pencil size={14} />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="flex-1 h-9" onClick={() => setShareVideo({ id: v.id, title: v.title })} title="Share">
+                    <Share2 size={14} />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="flex-1 h-9" onClick={() => copyLink(v.id)} title="Copy Link">
+                    <Link2 size={14} />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="flex-1 h-9" onClick={() => useInFunnel(v.id)} title="Use in Funnel">
+                    <Rocket size={14} />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="flex-1 h-9 text-destructive bg-destructive/10 hover:bg-destructive/20" onClick={() => { if (confirm("Delete this video?")) deleteMutation.mutate(v.id); }}>
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
