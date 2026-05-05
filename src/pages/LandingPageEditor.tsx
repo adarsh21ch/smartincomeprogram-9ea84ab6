@@ -1092,7 +1092,7 @@ const LandingPageEditor = () => {
             <div className="lg:hidden -mx-1 px-1 overflow-x-auto scrollbar-none pb-3 mb-3">
               <div className="flex gap-1.5 w-max">
                 {WIZARD_STEPS.map((s, i) => (
-                  <button key={i} onClick={() => setWizardStep(i)}
+                  <button key={i} onClick={(e) => { setWizardStep(i); (e.currentTarget as HTMLElement).scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); }}
                     className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-semibold transition-all shrink-0 w-[68px] ${
                       wizardStep === i
                         ? "bg-primary text-primary-foreground"
