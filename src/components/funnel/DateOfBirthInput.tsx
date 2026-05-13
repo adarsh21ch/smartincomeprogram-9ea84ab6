@@ -163,6 +163,7 @@ export const DateOfBirthInput = ({ value, onChange, required, hasError, size = "
           value={parts.mo}
           onChange={(e) => handleChange("mo", e.target.value)}
           onKeyDown={(e) => handleKeyDown("mo", e)}
+          onBlur={() => handleBlur("mo")}
           required={required}
           className={`${baseCls} ${monthBorder} flex-1 min-w-0`}
         />
