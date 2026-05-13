@@ -538,6 +538,7 @@ const AuthPage = () => {
                     <div className="relative">
                       <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                       <Input type="email" placeholder="you@example.com" className="pl-9 bg-muted border-border" required
+                        autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false}
                         value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                     </div>
                   </div>
@@ -547,12 +548,18 @@ const AuthPage = () => {
                       <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                       <Input type={showPassword ? "text" : "password"} placeholder="Min 6 characters"
                         className="pl-9 pr-10 bg-muted border-border" required
+                        autoComplete="new-password"
+                        onKeyUp={(e) => setCapsLockOn(e.getModifierState && e.getModifierState("CapsLock"))}
+                        onKeyDown={(e) => setCapsLockOn(e.getModifierState && e.getModifierState("CapsLock"))}
                         value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
                       <button type="button" onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
+                    {capsLockOn && (
+                      <p className="text-[11px] text-amber-500">⚠ Caps Lock is on</p>
+                    )}
                   </div>
                   <Button variant="hero" className="w-full" size="lg" disabled={submitting}>
                     {submitting ? "Creating account..." : "Create Account →"}
