@@ -10,6 +10,10 @@ import {
   Loader2, MessageCircle, Phone as PhoneIcon, BadgeCheck, Info, Sparkles,
   Timer, Trophy, SkipForward
 } from "lucide-react";
+import {
+  normalizeIndianPhone, isValidIndianPhone, isValidEmail,
+  cleanText, cleanEmail, phoneInputProps, emailInputProps, nameInputProps,
+} from "@/lib/formInputs";
 
 interface FunnelStep {
   id: string;
