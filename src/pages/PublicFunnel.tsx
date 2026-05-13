@@ -600,18 +600,27 @@ const PublicFunnel = () => {
   const submitLead = useMutation({
     mutationFn: async () => {
       if (leadForm.website) return;
+      const name = cleanText(leadForm.name);
+      const email = leadForm.email ? cleanEmail(leadForm.email) : "";
+      const phone = leadForm.phone || "";
+      if (formConfig?.show_phone && phone && !isValidIndianPhone(phone)) {
+        throw new Error("Enter a valid 10-digit Indian mobile number");
+      }
+      if (formConfig?.show_email && email && !isValidEmail(email)) {
+        throw new Error("Enter a valid email address");
+      }
       await supabase.from("funnel_leads").insert({
         funnel_id: funnel!.id,
-        name: leadForm.name || null, phone: leadForm.phone || null,
-        email: leadForm.email || null, city: leadForm.city || null,
-        custom_value: leadForm.custom_value || null,
+        name: name || null, phone: phone || null,
+        email: email || null, city: cleanText(leadForm.city) || null,
+        custom_value: cleanText(leadForm.custom_value) || null,
         watch_progress_at_submit: watchSeconds,
         device_type: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop",
         user_agent: navigator.userAgent,
       });
     },
     onSuccess: () => { setLeadSubmitted(true); toast.success("Thank you! Your details have been submitted."); },
-    onError: () => toast.error("Something went wrong. Please try again."),
+    onError: (err: any) => toast.error(err?.message || "Something went wrong. Please try again."),
   });
 
   const submitPayment = useMutation({
