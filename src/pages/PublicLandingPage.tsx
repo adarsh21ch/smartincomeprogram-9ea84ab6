@@ -127,6 +127,34 @@ const PublicLandingPage = () => {
       ? `You must be ${minAge} or older to register.`
       : null;
 
+  // Per-key normalization so phone/email/name behave premium
+  const handleFieldChange = (key: string, raw: string) => {
+    let val = raw;
+    if (key === "phone" || key === "whatsapp") val = normalizeIndianPhone(raw);
+    else if (key === "email") val = raw.replace(/\s/g, "");
+    setFormData((prev) => ({ ...prev, [key]: val }));
+  };
+
+  const handleFieldBlur = (key: string) => {
+    setFormData((prev) => {
+      const cur = prev[key] || "";
+      let next = cur;
+      if (key === "email") next = cleanEmail(cur);
+      else if (key === "name" || key === "city" || key === "occupation") next = cleanText(cur);
+      return next === cur ? prev : { ...prev, [key]: next };
+    });
+  };
+
+  // Inline field-level errors
+  const phoneError =
+    formData.phone && formData.phone.length > 0 && !isValidIndianPhone(formData.phone)
+      ? "Enter a valid 10-digit Indian mobile number"
+      : null;
+  const emailError =
+    formData.email && formData.email.length > 0 && !isValidEmail(formData.email)
+      ? "Enter a valid email address"
+      : null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!page || submitting) return;
