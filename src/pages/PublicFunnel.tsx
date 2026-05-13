@@ -13,6 +13,10 @@ import {
 } from "lucide-react";
 import logoImg from "@/assets/sip-logo.png";
 import { MultiStepViewer } from "@/components/funnel/MultiStepViewer";
+import {
+  normalizeIndianPhone, isValidIndianPhone, isValidEmail,
+  cleanText, cleanEmail, phoneInputProps, emailInputProps, nameInputProps,
+} from "@/lib/formInputs";
 import { CodeGateScreen } from "@/components/funnel/CodeGateScreen";
 import { PrivateLeadForm } from "@/components/funnel/PrivateLeadForm";
 import PublicFooterBranding from "@/components/PublicFooterBranding";
