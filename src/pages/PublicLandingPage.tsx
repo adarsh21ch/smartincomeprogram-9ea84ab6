@@ -18,6 +18,10 @@ import { toast } from "sonner";
 import { TestimonialsViewer } from "@/components/funnel/TestimonialsViewer";
 import { DateOfBirthInput } from "@/components/funnel/DateOfBirthInput";
 import PublicFooterBranding from "@/components/PublicFooterBranding";
+import {
+  normalizeIndianPhone, isValidIndianPhone, isValidEmail,
+  cleanText, cleanEmail, phoneInputProps, emailInputProps, nameInputProps,
+} from "@/lib/formInputs";
 
 const INDIAN_STATES = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Andaman & Nicobar Islands","Chandigarh","Dadra & Nagar Haveli and Daman & Diu","Delhi","Jammu & Kashmir","Ladakh","Lakshadweep","Puducherry"
@@ -123,6 +127,34 @@ const PublicLandingPage = () => {
       ? `You must be ${minAge} or older to register.`
       : null;
 
+  // Per-key normalization so phone/email/name behave premium
+  const handleFieldChange = (key: string, raw: string) => {
+    let val = raw;
+    if (key === "phone" || key === "whatsapp") val = normalizeIndianPhone(raw);
+    else if (key === "email") val = raw.replace(/\s/g, "");
+    setFormData((prev) => ({ ...prev, [key]: val }));
+  };
+
+  const handleFieldBlur = (key: string) => {
+    setFormData((prev) => {
+      const cur = prev[key] || "";
+      let next = cur;
+      if (key === "email") next = cleanEmail(cur);
+      else if (key === "name" || key === "city" || key === "occupation") next = cleanText(cur);
+      return next === cur ? prev : { ...prev, [key]: next };
+    });
+  };
+
+  // Inline field-level errors
+  const phoneError =
+    formData.phone && formData.phone.length > 0 && !isValidIndianPhone(formData.phone)
+      ? "Enter a valid 10-digit Indian mobile number"
+      : null;
+  const emailError =
+    formData.email && formData.email.length > 0 && !isValidEmail(formData.email)
+      ? "Enter a valid email address"
+      : null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!page || submitting) return;
@@ -133,6 +165,8 @@ const PublicLandingPage = () => {
       toast.error(ageError);
       return;
     }
+    if (phoneError) { toast.error(phoneError); return; }
+    if (emailError) { toast.error(emailError); return; }
     setSubmitting(true);
     try {
       // Per-browser stable id so different browsers / incognito sessions
@@ -540,15 +574,37 @@ const PublicLandingPage = () => {
                             </p>
                           )}
                         </>
+                      ) : f.key === "phone" ? (
+                        <>
+                          <div className="flex gap-2">
+                            <div className="flex items-center px-3 rounded-md text-sm shrink-0 h-10 bg-[#181818] border border-[rgba(197,147,14,0.2)] text-[#999]">+91</div>
+                            <Input
+                              {...phoneInputProps}
+                              placeholder="9876543210"
+                              value={formData[f.key] || ""}
+                              onChange={(e) => handleFieldChange(f.key, e.target.value)}
+                              onBlur={() => handleFieldBlur(f.key)}
+                              required={f.required}
+                              aria-invalid={!!phoneError}
+                              className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555] h-10 flex-1"
+                            />
+                          </div>
+                          {phoneError && <p className="text-xs text-red-400 mt-1">{phoneError}</p>}
+                        </>
                       ) : (
-                        <Input
-                          type={(f as any).type || "text"}
-                          placeholder={(f as any).prefix ? `${(f as any).prefix} ` : ""}
-                          value={formData[f.key] || ""}
-                          onChange={(e) => setFormData((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                          required={f.required}
-                          className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555] h-10"
-                        />
+                        <>
+                          <Input
+                            {...(f.key === "email" ? emailInputProps : f.key === "name" ? nameInputProps : { type: (f as any).type || "text" })}
+                            placeholder={(f as any).prefix ? `${(f as any).prefix} ` : ""}
+                            value={formData[f.key] || ""}
+                            onChange={(e) => handleFieldChange(f.key, e.target.value)}
+                            onBlur={() => handleFieldBlur(f.key)}
+                            required={f.required}
+                            aria-invalid={f.key === "email" ? !!emailError : undefined}
+                            className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555] h-10"
+                          />
+                          {f.key === "email" && emailError && <p className="text-xs text-red-400 mt-1">{emailError}</p>}
+                        </>
                       )}
                     </div>
                   ))}
@@ -660,15 +716,37 @@ const PublicLandingPage = () => {
                                 </p>
                               )}
                             </>
+                          ) : f.key === "phone" ? (
+                            <>
+                              <div className="flex gap-2">
+                                <div className="flex items-center px-3 rounded-md text-sm shrink-0 h-12 bg-[#181818] border border-[rgba(197,147,14,0.2)] text-[#999]">+91</div>
+                                <Input
+                                  {...phoneInputProps}
+                                  placeholder="9876543210"
+                                  value={formData[f.key] || ""}
+                                  onChange={(e) => handleFieldChange(f.key, e.target.value)}
+                                  onBlur={() => handleFieldBlur(f.key)}
+                                  required={f.required}
+                                  aria-invalid={!!phoneError}
+                                  className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555] h-12 flex-1"
+                                />
+                              </div>
+                              {phoneError && <p className="text-xs text-red-400 mt-1">{phoneError}</p>}
+                            </>
                           ) : (
-                            <Input
-                              type={(f as any).type || "text"}
-                              placeholder={(f as any).prefix ? `${(f as any).prefix} ` : ""}
-                              value={formData[f.key] || ""}
-                              onChange={(e) => setFormData((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                              required={f.required}
-                              className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555] h-12"
-                            />
+                            <>
+                              <Input
+                                {...(f.key === "email" ? emailInputProps : f.key === "name" ? nameInputProps : { type: (f as any).type || "text" })}
+                                placeholder={(f as any).prefix ? `${(f as any).prefix} ` : ""}
+                                value={formData[f.key] || ""}
+                                onChange={(e) => handleFieldChange(f.key, e.target.value)}
+                                onBlur={() => handleFieldBlur(f.key)}
+                                required={f.required}
+                                aria-invalid={f.key === "email" ? !!emailError : undefined}
+                                className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555] h-12"
+                              />
+                              {f.key === "email" && emailError && <p className="text-xs text-red-400 mt-1">{emailError}</p>}
+                            </>
                           )}
                         </div>
                       ))}

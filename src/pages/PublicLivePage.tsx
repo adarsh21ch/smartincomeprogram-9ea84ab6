@@ -12,6 +12,10 @@ import {
   Volume2, VolumeX, Maximize, Minimize, Users, Radio, AlertCircle, RefreshCw, Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
+import {
+  normalizeIndianPhone, isValidIndianPhone, isValidEmail,
+  cleanText, cleanEmail, phoneInputProps, emailInputProps, nameInputProps,
+} from "@/lib/formInputs";
 
 type SessionState =
   | "waiting" | "live" | "ended" | "replay"
@@ -188,21 +192,27 @@ const PublicLivePage = () => {
   if (needsReg && state.state !== "cancelled" && state.state !== "ended") {
     const fields = state.session_data?.registration_fields ?? { name: true, email: true, phone: false };
     const handleRegister = async () => {
-      if (fields.name && !regForm.name.trim()) return toast.error("Name is required");
-      if (fields.email && !regForm.email.trim()) return toast.error("Email is required");
-      if (fields.phone && !regForm.phone.trim()) return toast.error("Phone is required");
+      if (submitting) return;
+      const name = cleanText(regForm.name);
+      const email = cleanEmail(regForm.email);
+      const phone = regForm.phone;
+      if (fields.name && !name) return toast.error("Name is required");
+      if (fields.email && !email) return toast.error("Email is required");
+      if (fields.email && email && !isValidEmail(email)) return toast.error("Enter a valid email");
+      if (fields.phone && !phone) return toast.error("Phone is required");
+      if (fields.phone && phone && !isValidIndianPhone(phone)) return toast.error("Enter a valid 10-digit phone");
       setSubmitting(true);
       const { data: insRow, error } = await supabase.from("live_session_registrations").insert({
         session_id: sessionId!,
-        name: regForm.name || null,
-        email: regForm.email || null,
-        phone: regForm.phone || null,
+        name: name || null,
+        email: email || null,
+        phone: phone || null,
       }).select("id").single();
       setSubmitting(false);
       if (error) { toast.error("Registration failed"); return; }
       localStorage.setItem(`lsr-registered-${sessionId}`, "1");
       // fire-and-forget confirmation email
-      if (insRow?.id && regForm.email) {
+      if (insRow?.id && email) {
         supabase.functions.invoke("send-live-session-email", {
           body: { registration_id: insRow.id, type: "confirmation" },
         }).catch(() => {});
@@ -211,6 +221,11 @@ const PublicLivePage = () => {
       setNeedsReg(false);
       fetchState();
     };
+
+    const livePhoneError = fields.phone && regForm.phone.length > 0 && !isValidIndianPhone(regForm.phone)
+      ? "Enter a valid 10-digit Indian mobile number" : null;
+    const liveEmailError = fields.email && regForm.email.length > 0 && !isValidEmail(regForm.email)
+      ? "Enter a valid email address" : null;
 
     return (
       <PageShell title={state.session_data?.title}>
@@ -222,19 +237,35 @@ const PublicLivePage = () => {
           <div className="space-y-3">
             {fields.name && (
               <div><Label className="text-xs">Full Name</Label>
-                <Input value={regForm.name} onChange={(e) => setRegForm({ ...regForm, name: e.target.value })} className="mt-1" /></div>
+                <Input {...nameInputProps} value={regForm.name}
+                  onChange={(e) => setRegForm({ ...regForm, name: e.target.value })}
+                  onBlur={() => setRegForm((p) => ({ ...p, name: cleanText(p.name) }))}
+                  className="mt-1" /></div>
             )}
             {fields.email && (
               <div><Label className="text-xs">Email</Label>
-                <Input type="email" value={regForm.email} onChange={(e) => setRegForm({ ...regForm, email: e.target.value })} className="mt-1" /></div>
+                <Input {...emailInputProps} value={regForm.email}
+                  onChange={(e) => setRegForm({ ...regForm, email: e.target.value.replace(/\s/g, "") })}
+                  onBlur={() => setRegForm((p) => ({ ...p, email: cleanEmail(p.email) }))}
+                  aria-invalid={!!liveEmailError} className="mt-1" />
+                {liveEmailError && <p className="text-xs text-red-400 mt-1">{liveEmailError}</p>}
+              </div>
             )}
             {fields.phone && (
               <div><Label className="text-xs">Phone</Label>
-                <Input value={regForm.phone} onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })} className="mt-1" placeholder="+91" /></div>
+                <div className="flex gap-2 mt-1">
+                  <div className="flex items-center px-3 rounded-md text-sm shrink-0 h-10 bg-muted border border-border text-muted-foreground">+91</div>
+                  <Input {...phoneInputProps} value={regForm.phone}
+                    onChange={(e) => setRegForm({ ...regForm, phone: normalizeIndianPhone(e.target.value) })}
+                    aria-invalid={!!livePhoneError}
+                    placeholder="9876543210" className="flex-1" />
+                </div>
+                {livePhoneError && <p className="text-xs text-red-400 mt-1">{livePhoneError}</p>}
+              </div>
             )}
           </div>
           <Button variant="hero" className="w-full" onClick={handleRegister} disabled={submitting}>
-            {submitting ? "Registering…" : "Register Now"}
+            {submitting ? <><Loader2 size={14} className="animate-spin mr-2" /> Registering…</> : "Register Now"}
           </Button>
         </Card>
       </PageShell>
@@ -442,11 +473,18 @@ const BetweenSlotsState = ({ state, now }: { state: StateResponse; now: number }
 const EndedState = ({ state, sessionId }: { state: StateResponse; sessionId: string }) => {
   const [form, setForm] = useState({ name: "", email: "" });
   const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
   const submit = async () => {
-    if (!form.name || !form.email) return toast.error("Name & email required");
+    if (busy) return;
+    const name = cleanText(form.name);
+    const email = cleanEmail(form.email);
+    if (!name || !email) return toast.error("Name & email required");
+    if (!isValidEmail(email)) return toast.error("Enter a valid email");
+    setBusy(true);
     const { error } = await supabase.from("live_session_registrations").insert({
-      session_id: sessionId, name: form.name, email: form.email,
+      session_id: sessionId, name, email,
     });
+    setBusy(false);
     if (error) return toast.error("Could not save");
     setDone(true);
     toast.success("We'll notify you about future sessions!");
@@ -464,9 +502,11 @@ const EndedState = ({ state, sessionId }: { state: StateResponse; sessionId: str
         {!done ? (
           <Card className="p-5 space-y-3 text-left">
             <p className="text-sm font-semibold text-center">Get notified about future sessions</p>
-            <Input placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <Input type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            <Button variant="hero" className="w-full" onClick={submit}>Notify me</Button>
+            <Input {...nameInputProps} placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Input {...emailInputProps} placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value.replace(/\s/g, "") })} />
+            <Button variant="hero" className="w-full" onClick={submit} disabled={busy}>
+              {busy ? <><Loader2 size={14} className="animate-spin mr-2" /> Saving…</> : "Notify me"}
+            </Button>
           </Card>
         ) : (
           <p className="text-sm text-primary">✓ You're on the list.</p>

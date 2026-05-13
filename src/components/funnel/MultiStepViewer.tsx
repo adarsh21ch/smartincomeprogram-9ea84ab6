@@ -10,6 +10,10 @@ import {
   Loader2, MessageCircle, Phone as PhoneIcon, BadgeCheck, Info, Sparkles,
   Timer, Trophy, SkipForward
 } from "lucide-react";
+import {
+  normalizeIndianPhone, isValidIndianPhone, isValidEmail,
+  cleanText, cleanEmail, phoneInputProps, emailInputProps, nameInputProps,
+} from "@/lib/formInputs";
 
 interface FunnelStep {
   id: string;
@@ -793,9 +797,20 @@ export const MultiStepViewer = ({
 
   const handleLeadSubmit = async (stepIndex: number) => {
     if (leadForm.website) return;
+    const name = cleanText(leadForm.name);
+    const email = leadForm.email ? cleanEmail(leadForm.email) : "";
+    const phone = leadForm.phone || "";
+    if (formConfig?.show_phone && phone && !isValidIndianPhone(phone)) {
+      toast.error("Enter a valid 10-digit Indian mobile number");
+      return;
+    }
+    if (formConfig?.show_email && email && !isValidEmail(email)) {
+      toast.error("Enter a valid email address");
+      return;
+    }
     await supabase.from("funnel_leads").insert({
-      funnel_id: funnel.id, name: leadForm.name || null, phone: leadForm.phone || null,
-      email: leadForm.email || null, city: leadForm.city || null, custom_value: leadForm.custom_value || null,
+      funnel_id: funnel.id, name: name || null, phone: phone || null,
+      email: email || null, city: cleanText(leadForm.city) || null, custom_value: cleanText(leadForm.custom_value) || null,
       device_type: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop", user_agent: navigator.userAgent,
     });
     setLeadSubmitted(true);
@@ -1362,15 +1377,15 @@ export const MultiStepViewer = ({
                           <h3 className="text-lg font-heading font-bold mb-4" style={{ color: sc.text }}>Fill in your details</h3>
                           <form onSubmit={(e) => { e.preventDefault(); handleLeadSubmit(activeStepIndex); }} className="space-y-3">
                             <input type="text" name="website" value={leadForm.website} onChange={(e) => setLeadForm({ ...leadForm, website: e.target.value })} style={{ position: "absolute", left: "-9999px" }} tabIndex={-1} autoComplete="off" />
-                            {formConfig?.show_name && <Input placeholder="Full Name" value={leadForm.name} onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })} required={formConfig.name_required} style={{ background: sc.inputBg, borderColor: sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />}
+                            {formConfig?.show_name && <Input {...nameInputProps} placeholder="Full Name" value={leadForm.name} onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })} onBlur={() => setLeadForm((p) => ({ ...p, name: cleanText(p.name) }))} required={formConfig.name_required} style={{ background: sc.inputBg, borderColor: sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />}
                             {formConfig?.show_phone && (
                               <div className="flex gap-2">
                                 <div className="flex items-center px-3 rounded-xl text-sm shrink-0 h-12" style={{ background: sc.inputBg, border: `1px solid ${sc.cardBorder}`, color: sc.textMuted }}>+91</div>
-                                <Input placeholder="Phone number" value={leadForm.phone} onChange={(e) => setLeadForm({ ...leadForm, phone: e.target.value })} required={formConfig.phone_required} style={{ background: sc.inputBg, borderColor: sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />
+                                <Input {...phoneInputProps} placeholder="9876543210" value={leadForm.phone} onChange={(e) => setLeadForm({ ...leadForm, phone: normalizeIndianPhone(e.target.value) })} required={formConfig.phone_required} style={{ background: sc.inputBg, borderColor: sc.cardBorder, color: sc.text }} className="h-12 rounded-xl flex-1" />
                               </div>
                             )}
-                            {formConfig?.show_email && <Input type="email" placeholder="Email" value={leadForm.email} onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })} required={formConfig.email_required} style={{ background: sc.inputBg, borderColor: sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />}
-                            {formConfig?.show_city && <Input placeholder="City" value={leadForm.city} onChange={(e) => setLeadForm({ ...leadForm, city: e.target.value })} required={formConfig.city_required} style={{ background: sc.inputBg, borderColor: sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />}
+                            {formConfig?.show_email && <Input {...emailInputProps} placeholder="Email" value={leadForm.email} onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value.replace(/\s/g, "") })} onBlur={() => setLeadForm((p) => ({ ...p, email: cleanEmail(p.email) }))} required={formConfig.email_required} style={{ background: sc.inputBg, borderColor: sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />}
+                            {formConfig?.show_city && <Input autoCapitalize="words" placeholder="City" value={leadForm.city} onChange={(e) => setLeadForm({ ...leadForm, city: e.target.value })} onBlur={() => setLeadForm((p) => ({ ...p, city: cleanText(p.city) }))} required={formConfig.city_required} style={{ background: sc.inputBg, borderColor: sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />}
                             <Button type="submit" className="w-full h-14 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">Submit →</Button>
                           </form>
                         </>
