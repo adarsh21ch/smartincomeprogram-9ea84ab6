@@ -797,9 +797,20 @@ export const MultiStepViewer = ({
 
   const handleLeadSubmit = async (stepIndex: number) => {
     if (leadForm.website) return;
+    const name = cleanText(leadForm.name);
+    const email = leadForm.email ? cleanEmail(leadForm.email) : "";
+    const phone = leadForm.phone || "";
+    if (formConfig?.show_phone && phone && !isValidIndianPhone(phone)) {
+      toast.error("Enter a valid 10-digit Indian mobile number");
+      return;
+    }
+    if (formConfig?.show_email && email && !isValidEmail(email)) {
+      toast.error("Enter a valid email address");
+      return;
+    }
     await supabase.from("funnel_leads").insert({
-      funnel_id: funnel.id, name: leadForm.name || null, phone: leadForm.phone || null,
-      email: leadForm.email || null, city: leadForm.city || null, custom_value: leadForm.custom_value || null,
+      funnel_id: funnel.id, name: name || null, phone: phone || null,
+      email: email || null, city: cleanText(leadForm.city) || null, custom_value: cleanText(leadForm.custom_value) || null,
       device_type: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop", user_agent: navigator.userAgent,
     });
     setLeadSubmitted(true);
