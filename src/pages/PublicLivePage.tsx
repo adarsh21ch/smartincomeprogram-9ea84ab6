@@ -473,11 +473,18 @@ const BetweenSlotsState = ({ state, now }: { state: StateResponse; now: number }
 const EndedState = ({ state, sessionId }: { state: StateResponse; sessionId: string }) => {
   const [form, setForm] = useState({ name: "", email: "" });
   const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
   const submit = async () => {
-    if (!form.name || !form.email) return toast.error("Name & email required");
+    if (busy) return;
+    const name = cleanText(form.name);
+    const email = cleanEmail(form.email);
+    if (!name || !email) return toast.error("Name & email required");
+    if (!isValidEmail(email)) return toast.error("Enter a valid email");
+    setBusy(true);
     const { error } = await supabase.from("live_session_registrations").insert({
-      session_id: sessionId, name: form.name, email: form.email,
+      session_id: sessionId, name, email,
     });
+    setBusy(false);
     if (error) return toast.error("Could not save");
     setDone(true);
     toast.success("We'll notify you about future sessions!");
@@ -495,9 +502,11 @@ const EndedState = ({ state, sessionId }: { state: StateResponse; sessionId: str
         {!done ? (
           <Card className="p-5 space-y-3 text-left">
             <p className="text-sm font-semibold text-center">Get notified about future sessions</p>
-            <Input placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <Input type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            <Button variant="hero" className="w-full" onClick={submit}>Notify me</Button>
+            <Input {...nameInputProps} placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Input {...emailInputProps} placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value.replace(/\s/g, "") })} />
+            <Button variant="hero" className="w-full" onClick={submit} disabled={busy}>
+              {busy ? <><Loader2 size={14} className="animate-spin mr-2" /> Saving…</> : "Notify me"}
+            </Button>
           </Card>
         ) : (
           <p className="text-sm text-primary">✓ You're on the list.</p>
