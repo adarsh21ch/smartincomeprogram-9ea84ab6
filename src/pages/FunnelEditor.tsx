@@ -28,6 +28,8 @@ import { PerStepSpeakerAssignment } from "@/components/funnel/PerStepSpeakerAssi
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { usePlan } from "@/hooks/usePlan";
 import { Crown } from "lucide-react";
+import { SaveIndicator } from "@/components/ui/save-indicator";
+import { CharCount } from "@/components/ui/char-count";
 
 interface FlowStep {
   id?: string;
