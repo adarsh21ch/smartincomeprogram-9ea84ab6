@@ -450,12 +450,18 @@ const AuthPage = () => {
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••"
                     className="pl-9 pr-10 bg-muted border-border" required
+                    autoComplete="current-password"
+                    onKeyUp={(e) => setCapsLockOn(e.getModifierState && e.getModifierState("CapsLock"))}
+                    onKeyDown={(e) => setCapsLockOn(e.getModifierState && e.getModifierState("CapsLock"))}
                     value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                {capsLockOn && (
+                  <p className="text-[11px] text-amber-500 flex items-center gap-1">⚠ Caps Lock is on</p>
+                )}
               </div>
               <Button variant="hero" className="w-full" size="lg" disabled={submitting}>
                 {submitting ? "Signing in..." : "Sign In →"}
