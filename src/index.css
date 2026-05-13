@@ -351,3 +351,13 @@ img, video, iframe {
 .safe-area-pb {
   padding-bottom: max(6px, env(safe-area-inset-bottom));
 }
+
+/* Global premium focus ring on form fields — subtle gold halo */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="combobox"]:focus-visible {
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.18);
+  transition: box-shadow 0.15s ease;
+}
+
