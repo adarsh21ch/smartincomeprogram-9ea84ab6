@@ -12,6 +12,10 @@ import {
   Volume2, VolumeX, Maximize, Minimize, Users, Radio, AlertCircle, RefreshCw, Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
+import {
+  normalizeIndianPhone, isValidIndianPhone, isValidEmail,
+  cleanText, cleanEmail, phoneInputProps, emailInputProps, nameInputProps,
+} from "@/lib/formInputs";
 
 type SessionState =
   | "waiting" | "live" | "ended" | "replay"
