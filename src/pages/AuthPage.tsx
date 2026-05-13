@@ -112,6 +112,15 @@ const AuthPage = () => {
   const [forgotEmail, setForgotEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [capsLockOn, setCapsLockOn] = useState(false);
+
+  // Auto-submit OTP when 6 digits are entered
+  useEffect(() => {
+    if (step === "otp" && otpCode.replace(/\s/g, "").length === 6 && !submitting && Date.now() >= otpLockUntil) {
+      handleVerifyOtp();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otpCode, step]);
 
   // Check invite code requirement
   useEffect(() => {
