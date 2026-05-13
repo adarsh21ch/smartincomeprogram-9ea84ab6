@@ -144,8 +144,10 @@ export const PrivateLeadForm = ({
             <div>
               <Label className="text-xs font-medium" style={{ color: textMuted }}>Full Name *</Label>
               <Input
+                {...nameInputProps}
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onBlur={() => setForm((p) => ({ ...p, name: cleanText(p.name) }))}
                 placeholder="Your full name"
                 required
                 className="mt-1 h-11"
@@ -158,27 +160,33 @@ export const PrivateLeadForm = ({
               <div className="flex gap-2 mt-1">
                 <div className="flex items-center px-3 rounded-md text-sm shrink-0 h-11" style={{ background: inputBg, border: `1px solid ${border}`, color: textMuted }}>+91</div>
                 <Input
+                  {...phoneInputProps}
                   value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  onChange={(e) => updatePhone(e.target.value)}
                   placeholder="9876543210"
                   required
+                  aria-invalid={!!phoneError}
                   className="h-11"
                   style={{ background: inputBg, borderColor: border, color: text }}
                 />
               </div>
+              {phoneError && <p className="text-xs text-red-400 mt-1">{phoneError}</p>}
             </div>
 
             {requiredFields.email && (
               <div>
                 <Label className="text-xs font-medium" style={{ color: textMuted }}>Email Address</Label>
                 <Input
-                  type="email"
+                  {...emailInputProps}
                   value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  onChange={(e) => setForm({ ...form, email: e.target.value.replace(/\s/g, "") })}
+                  onBlur={() => setForm((p) => ({ ...p, email: cleanEmail(p.email) }))}
                   placeholder="your@email.com"
+                  aria-invalid={!!emailError}
                   className="mt-1 h-11"
                   style={{ background: inputBg, borderColor: border, color: text }}
                 />
+                {emailError && <p className="text-xs text-red-400 mt-1">{emailError}</p>}
               </div>
             )}
 
@@ -186,8 +194,10 @@ export const PrivateLeadForm = ({
               <div>
                 <Label className="text-xs font-medium" style={{ color: textMuted }}>City</Label>
                 <Input
+                  autoCapitalize="words"
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  onBlur={() => setForm((p) => ({ ...p, city: cleanText(p.city) }))}
                   placeholder="Your city"
                   className="mt-1 h-11"
                   style={{ background: inputBg, borderColor: border, color: text }}
@@ -199,8 +209,10 @@ export const PrivateLeadForm = ({
               <div>
                 <Label className="text-xs font-medium" style={{ color: textMuted }}>State</Label>
                 <Input
+                  autoCapitalize="words"
                   value={form.state}
                   onChange={(e) => setForm({ ...form, state: e.target.value })}
+                  onBlur={() => setForm((p) => ({ ...p, state: cleanText(p.state) }))}
                   placeholder="Your state"
                   className="mt-1 h-11"
                   style={{ background: inputBg, borderColor: border, color: text }}
@@ -211,13 +223,32 @@ export const PrivateLeadForm = ({
             {requiredFields.whatsapp && (
               <div>
                 <Label className="text-xs font-medium" style={{ color: textMuted }}>WhatsApp Number</Label>
-                <Input
-                  value={form.whatsapp}
-                  onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
-                  placeholder="WhatsApp number"
-                  className="mt-1 h-11"
-                  style={{ background: inputBg, borderColor: border, color: text }}
-                />
+                <label className="flex items-center gap-2 text-xs mt-1 mb-1.5 cursor-pointer select-none" style={{ color: textMuted }}>
+                  <input
+                    type="checkbox"
+                    checked={whatsappSameAsPhone}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setWhatsappSameAsPhone(checked);
+                      if (checked) setForm((p) => ({ ...p, whatsapp: p.phone }));
+                    }}
+                    className="accent-primary"
+                  />
+                  Same as phone number
+                </label>
+                {!whatsappSameAsPhone && (
+                  <div className="flex gap-2">
+                    <div className="flex items-center px-3 rounded-md text-sm shrink-0 h-11" style={{ background: inputBg, border: `1px solid ${border}`, color: textMuted }}>+91</div>
+                    <Input
+                      {...phoneInputProps}
+                      value={form.whatsapp}
+                      onChange={(e) => setForm({ ...form, whatsapp: normalizeIndianPhone(e.target.value) })}
+                      placeholder="WhatsApp number"
+                      className="h-11"
+                      style={{ background: inputBg, borderColor: border, color: text }}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
