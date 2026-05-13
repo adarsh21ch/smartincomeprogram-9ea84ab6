@@ -715,7 +715,7 @@ const PublicFunnel = () => {
       <form onSubmit={(e) => { e.preventDefault(); submitLead.mutate(); }} className="space-y-3">
         <input type="text" name="website" value={leadForm.website} onChange={(e) => setLeadForm({ ...leadForm, website: e.target.value })} style={{ position: "absolute", left: "-9999px" }} tabIndex={-1} autoComplete="off" />
         {formConfig?.show_name && (
-          <Input placeholder="Full Name" value={leadForm.name} onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })} required={formConfig.name_required || false} style={{ background: tc.inputBg, borderColor: tc.inputBorder, color: tc.inputText }} className="h-12 rounded-xl" />
+          <Input {...nameInputProps} placeholder="Full Name" value={leadForm.name} onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })} onBlur={() => setLeadForm((p) => ({ ...p, name: cleanText(p.name) }))} required={formConfig.name_required || false} style={{ background: tc.inputBg, borderColor: tc.inputBorder, color: tc.inputText }} className="h-12 rounded-xl" />
         )}
         {formConfig?.show_phone && (
           <div className="flex gap-2">
