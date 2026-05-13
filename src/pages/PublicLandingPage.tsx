@@ -165,6 +165,8 @@ const PublicLandingPage = () => {
       toast.error(ageError);
       return;
     }
+    if (phoneError) { toast.error(phoneError); return; }
+    if (emailError) { toast.error(emailError); return; }
     setSubmitting(true);
     try {
       // Per-browser stable id so different browsers / incognito sessions
