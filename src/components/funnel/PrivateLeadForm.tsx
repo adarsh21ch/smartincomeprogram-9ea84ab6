@@ -31,27 +31,45 @@ export const PrivateLeadForm = ({
   });
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [whatsappSameAsPhone, setWhatsappSameAsPhone] = useState(true);
+
+  const phoneError = form.phone.length > 0 && !isValidIndianPhone(form.phone)
+    ? "Enter a valid 10-digit Indian mobile number" : null;
+  const emailError = form.email.length > 0 && !isValidEmail(form.email)
+    ? "Enter a valid email address" : null;
+
+  const updatePhone = (raw: string) => {
+    const v = normalizeIndianPhone(raw);
+    setForm((p) => ({ ...p, phone: v, whatsapp: whatsappSameAsPhone ? v : p.whatsapp }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.phone.trim()) {
+    if (loading) return;
+    const name = cleanText(form.name);
+    if (!name || !form.phone) {
       toast.error("Name and phone are required");
       return;
     }
-    if (form.phone.replace(/\D/g, "").length < 10) {
-      toast.error("Please enter a valid phone number");
+    if (!isValidIndianPhone(form.phone)) {
+      toast.error("Please enter a valid 10-digit phone number");
+      return;
+    }
+    if (form.email && !isValidEmail(form.email)) {
+      toast.error("Please enter a valid email");
       return;
     }
 
     setLoading(true);
     try {
+      const finalWhatsapp = whatsappSameAsPhone ? form.phone : form.whatsapp;
       const { error } = await supabase.from("funnel_leads").insert({
         funnel_id: funnelId,
-        name: form.name,
+        name,
         phone: form.phone,
-        email: form.email || null,
-        city: form.city || null,
-        custom_value: JSON.stringify({ state: form.state, whatsapp: form.whatsapp }),
+        email: form.email ? cleanEmail(form.email) : null,
+        city: cleanText(form.city) || null,
+        custom_value: JSON.stringify({ state: form.state, whatsapp: finalWhatsapp }),
         device_type: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop",
         user_agent: navigator.userAgent,
         status: "new",
@@ -61,7 +79,7 @@ export const PrivateLeadForm = ({
 
       localStorage.setItem(
         `nf_lead_${funnelId}`,
-        JSON.stringify({ name: form.name, phone: form.phone, submittedAt: Date.now() })
+        JSON.stringify({ name, phone: form.phone, submittedAt: Date.now() })
       );
 
       setShowSuccess(true);
