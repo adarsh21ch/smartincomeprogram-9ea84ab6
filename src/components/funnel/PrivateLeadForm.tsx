@@ -6,6 +6,10 @@ import { Loader2, Check, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logoImg from "@/assets/logo.png";
+import {
+  normalizeIndianPhone, isValidIndianPhone, isValidEmail,
+  cleanText, cleanEmail, phoneInputProps, emailInputProps, nameInputProps,
+} from "@/lib/formInputs";
 
 interface PrivateLeadFormProps {
   funnelId: string;
