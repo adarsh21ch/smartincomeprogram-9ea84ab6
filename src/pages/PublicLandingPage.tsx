@@ -574,15 +574,37 @@ const PublicLandingPage = () => {
                             </p>
                           )}
                         </>
+                      ) : f.key === "phone" ? (
+                        <>
+                          <div className="flex gap-2">
+                            <div className="flex items-center px-3 rounded-md text-sm shrink-0 h-10 bg-[#181818] border border-[rgba(197,147,14,0.2)] text-[#999]">+91</div>
+                            <Input
+                              {...phoneInputProps}
+                              placeholder="9876543210"
+                              value={formData[f.key] || ""}
+                              onChange={(e) => handleFieldChange(f.key, e.target.value)}
+                              onBlur={() => handleFieldBlur(f.key)}
+                              required={f.required}
+                              aria-invalid={!!phoneError}
+                              className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555] h-10 flex-1"
+                            />
+                          </div>
+                          {phoneError && <p className="text-xs text-red-400 mt-1">{phoneError}</p>}
+                        </>
                       ) : (
-                        <Input
-                          type={(f as any).type || "text"}
-                          placeholder={(f as any).prefix ? `${(f as any).prefix} ` : ""}
-                          value={formData[f.key] || ""}
-                          onChange={(e) => setFormData((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                          required={f.required}
-                          className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555] h-10"
-                        />
+                        <>
+                          <Input
+                            {...(f.key === "email" ? emailInputProps : f.key === "name" ? nameInputProps : { type: (f as any).type || "text" })}
+                            placeholder={(f as any).prefix ? `${(f as any).prefix} ` : ""}
+                            value={formData[f.key] || ""}
+                            onChange={(e) => handleFieldChange(f.key, e.target.value)}
+                            onBlur={() => handleFieldBlur(f.key)}
+                            required={f.required}
+                            aria-invalid={f.key === "email" ? !!emailError : undefined}
+                            className="bg-[#181818] border-[rgba(197,147,14,0.2)] text-white placeholder:text-[#555] h-10"
+                          />
+                          {f.key === "email" && emailError && <p className="text-xs text-red-400 mt-1">{emailError}</p>}
+                        </>
                       )}
                     </div>
                   ))}
