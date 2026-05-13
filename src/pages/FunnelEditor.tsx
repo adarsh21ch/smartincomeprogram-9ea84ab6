@@ -499,12 +499,23 @@ const FunnelEditor = () => {
       <p className="text-sm text-muted-foreground">Give your funnel a name and description.</p>
       <div className="space-y-4 mt-4">
         <div>
-          <Label>Funnel Name *</Label>
-          <Input value={funnel.title} onChange={(e) => { update("title", e.target.value); if (!isEdit) update("slug", generateSlug(e.target.value)); }} className="mt-1.5 bg-muted border-border" placeholder="e.g. Free Training Funnel" />
+          <div className="flex items-center justify-between">
+            <Label>Funnel Name *</Label>
+            <CharCount value={funnel.title} max={80} />
+          </div>
+          <Input value={funnel.title} maxLength={80} onChange={(e) => { update("title", e.target.value); if (!isEdit) update("slug", generateSlug(e.target.value)); }} className="mt-1.5 bg-muted border-border" placeholder="e.g. Free Training Funnel" />
+          {funnel.title && funnel.slug && (
+            <p className="text-[11px] text-muted-foreground mt-1.5 break-all">
+              URL: <span className="text-primary font-mono">/f/{funnel.slug}</span>
+            </p>
+          )}
         </div>
         <div>
-          <Label>Description <span className="text-muted-foreground font-normal">(optional)</span></Label>
-          <Textarea value={funnel.description} onChange={(e) => update("description", e.target.value)} className="mt-1.5 bg-muted border-border" rows={3} placeholder="What is this funnel about?" />
+          <div className="flex items-center justify-between">
+            <Label>Description <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <CharCount value={funnel.description || ""} max={300} />
+          </div>
+          <Textarea value={funnel.description} maxLength={300} onChange={(e) => update("description", e.target.value)} className="mt-1.5 bg-muted border-border" rows={3} placeholder="What is this funnel about?" />
         </div>
       </div>
     </>
