@@ -436,6 +436,7 @@ const AuthPage = () => {
                 <div className="relative">
                   <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input id="email" type="email" placeholder="you@example.com" className="pl-9 bg-muted border-border" required
+                    autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false}
                     value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                 </div>
               </div>
