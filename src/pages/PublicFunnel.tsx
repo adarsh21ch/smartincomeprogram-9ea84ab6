@@ -720,7 +720,7 @@ const PublicFunnel = () => {
         {formConfig?.show_phone && (
           <div className="flex gap-2">
             <div className="flex items-center px-3 rounded-xl text-sm shrink-0 h-12" style={{ background: tc.inputBg, border: `1px solid ${tc.inputBorder}`, color: tc.textDim }}>+91</div>
-            <Input placeholder="Phone number" value={leadForm.phone} onChange={(e) => setLeadForm({ ...leadForm, phone: e.target.value })} required={formConfig.phone_required || false} style={{ background: tc.inputBg, borderColor: tc.inputBorder, color: tc.inputText }} className="h-12 rounded-xl" />
+            <Input {...phoneInputProps} placeholder="9876543210" value={leadForm.phone} onChange={(e) => setLeadForm({ ...leadForm, phone: normalizeIndianPhone(e.target.value) })} required={formConfig.phone_required || false} style={{ background: tc.inputBg, borderColor: tc.inputBorder, color: tc.inputText }} className="h-12 rounded-xl" />
           </div>
         )}
         {formConfig?.show_email && (
