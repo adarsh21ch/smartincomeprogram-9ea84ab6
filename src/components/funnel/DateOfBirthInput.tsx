@@ -57,7 +57,8 @@ export const DateOfBirthInput = ({ value, onChange, required, hasError, size = "
     parts.y.length === 4 && (isNaN(yn) || yn < 1900 || yn > currentYear);
 
   // Real-calendar check (e.g. Feb 30) once all 3 fields complete
-  const allComplete = parts.d.length === 2 && parts.mo.length === 2 && parts.y.length === 4;
+  // Day/month accept 1 or 2 digits (e.g. "3" is treated as day 3).
+  const allComplete = parts.d.length >= 1 && parts.mo.length >= 1 && parts.y.length === 4;
   const calendarInvalid =
     allComplete && !dayInvalid && !monthInvalid && !yearInvalid && !isValidDate(dn, mn, yn);
 
