@@ -57,7 +57,8 @@ export const DateOfBirthInput = ({ value, onChange, required, hasError, size = "
     parts.y.length === 4 && (isNaN(yn) || yn < 1900 || yn > currentYear);
 
   // Real-calendar check (e.g. Feb 30) once all 3 fields complete
-  const allComplete = parts.d.length === 2 && parts.mo.length === 2 && parts.y.length === 4;
+  // Day/month accept 1 or 2 digits (e.g. "3" is treated as day 3).
+  const allComplete = parts.d.length >= 1 && parts.mo.length >= 1 && parts.y.length === 4;
   const calendarInvalid =
     allComplete && !dayInvalid && !monthInvalid && !yearInvalid && !isValidDate(dn, mn, yn);
 
@@ -67,12 +68,13 @@ export const DateOfBirthInput = ({ value, onChange, required, hasError, size = "
   else if (yearInvalid) errorMsg = `Please enter a valid year (1900–${currentYear}).`;
   else if (calendarInvalid) errorMsg = "This date doesn't exist. Please check.";
 
-  // Emit combined value when complete & valid; clear when incomplete
+  // Emit combined value when complete & valid; clear when incomplete.
+  // Day/month can be 1 or 2 digits — we pad to 2 only for the ISO output.
   const emit = (next: { d: string; mo: string; y: string }) => {
     const dnL = parseInt(next.d, 10);
     const mnL = parseInt(next.mo, 10);
     const ynL = parseInt(next.y, 10);
-    if (next.d.length === 2 && next.mo.length === 2 && next.y.length === 4 && isValidDate(dnL, mnL, ynL)) {
+    if (next.d.length >= 1 && next.mo.length >= 1 && next.y.length === 4 && isValidDate(dnL, mnL, ynL)) {
       onChange(`${pad(next.y, 4)}-${pad(next.mo, 2)}-${pad(next.d, 2)}`);
     } else {
       // Clear external value while incomplete or invalid so consumers don't act on bad dates
@@ -89,29 +91,23 @@ export const DateOfBirthInput = ({ value, onChange, required, hasError, size = "
     setParts(next);
     emit(next);
 
-    // Auto-advance focus when a field is filled AND its value is in valid range
-    if (trimmed.length === max) {
-      const num = parseInt(trimmed, 10);
-      const inRange =
-        key === "d" ? num >= 1 && num <= 31 :
-        key === "mo" ? num >= 1 && num <= 12 :
-        num >= 1900 && num <= currentYear;
-      if (inRange) {
-        if (key === "d") mRef.current?.focus();
-        else if (key === "mo") yRef.current?.focus();
-      }
+    // Auto-advance only when the field is unambiguously complete:
+    // - filled to its max length (2 for d/m, 4 for y), OR
+    // - day starts with 4-9 (can't be a 2-digit day), OR
+    // - month starts with 2-9 (can't be a 2-digit month).
+    // We never auto-pad while typing — user types "3" and presses Tab.
+    const num = parseInt(trimmed, 10);
+    const filled = trimmed.length === max;
+    const dayUnambiguous = key === "d" && trimmed.length === 1 && num >= 4;
+    const monthUnambiguous = key === "mo" && trimmed.length === 1 && num >= 2;
+    if (filled || dayUnambiguous || monthUnambiguous) {
+      if (key === "d") mRef.current?.focus();
+      else if (key === "mo") yRef.current?.focus();
     }
   };
 
-  const handleBlur = (key: "d" | "mo") => {
-    const val = parts[key];
-    if (val.length === 1) {
-      const padded = `0${val}`;
-      const next = { ...parts, [key]: padded };
-      setParts(next);
-      emit(next);
-    }
-  };
+  // No auto-padding on blur — "3" stays "3" in the box. The ISO emit pads internally.
+  const handleBlur = (_key: "d" | "mo") => {};
 
   const handleKeyDown = (key: "d" | "mo" | "y", e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace" && (e.target as HTMLInputElement).value === "") {
