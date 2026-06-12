@@ -109,12 +109,13 @@ const WIZARD_STEPS = [
   { icon: FileText, label: "Page Info", num: "1" },
   { icon: Palette, label: "Design", num: "2" },
   { icon: ClipboardList, label: "Form", num: "3" },
-  { icon: Mail, label: "Email", num: "4" },
-  { icon: Mic, label: "Speaker", num: "5" },
-  { icon: Video, label: "Video", num: "6" },
-  { icon: Star, label: "Testimonials", num: "7" },
-  { icon: LockIcon, label: "Privacy", num: "8" },
-  { icon: Rocket, label: "Publish", num: "9" },
+  { icon: IndianRupee, label: "Pricing", num: "4" },
+  { icon: Mail, label: "Email", num: "5" },
+  { icon: Mic, label: "Speaker", num: "6" },
+  { icon: Video, label: "Video", num: "7" },
+  { icon: Star, label: "Testimonials", num: "8" },
+  { icon: LockIcon, label: "Privacy", num: "9" },
+  { icon: Rocket, label: "Publish", num: "10" },
 ];
 
 const LandingPageEditor = () => {
