@@ -74,6 +74,9 @@ const PublicLandingPage = () => {
         .single();
       if (data) {
         setPage(data);
+        if (data.registration_paid_enabled) {
+          setCurrentPrice(Number(data.registration_price_inr || 0));
+        }
         // Check if private page needs code gate
         if (data.visibility === "private" && data.access_code_hash) {
           const codeOk = localStorage.getItem(`nf_lp_code_${data.id}`);
