@@ -95,6 +95,8 @@ const VideosPage = () => {
     } finally {
       setUploading(false);
       setUploadProgress(0);
+      setUploadSpeed(0);
+      setUploadEta(0);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
