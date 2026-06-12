@@ -1023,6 +1023,17 @@ const FunnelEditor = () => {
             )}
           </>
         )}
+
+        {/* Speaker materials — downloadable attachments for the whole funnel */}
+        {isEdit && id && (
+          <div className="pt-4 mt-2 border-t border-border">
+            <FunnelAttachmentsManager
+              funnelId={id}
+              title="Speaker Materials (Funnel-wide)"
+              description="Attach PDFs, slides, images or docs. Leads will see a download list on the funnel page."
+            />
+          </div>
+        )}
       </div>
     </>
   );
