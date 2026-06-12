@@ -17,9 +17,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   FileText, Palette, ClipboardList, Mail, Video, Link2, Rocket, Mic,
   Save, ArrowLeft, Check, X, Plus, Trash2, GripVertical, Eye, Star,
-  Globe, Lock as LockIcon, EyeOff,
+  Globe, Lock as LockIcon, EyeOff, IndianRupee,
 } from "lucide-react";
 import { TestimonialsBuilderStep } from "@/components/funnel/TestimonialsBuilderStep";
+import { CouponsManager } from "@/components/funnel/CouponsManager";
 import { toast } from "sonner";
 
 const generateSlug = (title: string) =>
