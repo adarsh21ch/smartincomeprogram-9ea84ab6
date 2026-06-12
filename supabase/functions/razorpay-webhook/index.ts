@@ -71,6 +71,22 @@ Deno.serve(async (req) => {
     // Handle specific events
     switch (eventType) {
       case "payment.captured": {
+        // Backup: mark landing-page registration_payments paid even if the
+        // client never called verify-registration-payment (e.g. user closed tab).
+        if (paymentEntity?.order_id) {
+          const { data: regPay } = await serviceClient
+            .from("registration_payments")
+            .select("id, status")
+            .eq("razorpay_order_id", paymentEntity.order_id)
+            .maybeSingle();
+          if (regPay && regPay.status !== "paid") {
+            await serviceClient
+              .from("registration_payments")
+              .update({ status: "paid", razorpay_payment_id: paymentEntity.id })
+              .eq("id", regPay.id);
+          }
+        }
+
         if (userId && paymentEntity) {
           // Payment captured - ensure subscription is active
           const { data: sub } = await serviceClient.from("user_subscriptions")
