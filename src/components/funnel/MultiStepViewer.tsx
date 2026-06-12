@@ -546,6 +546,7 @@ export const MultiStepViewer = ({
   priceOptions,
   VideoPlayer,
   isDark = true,
+  attachments = [],
 }: MultiStepViewerProps) => {
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [progressMap, setProgressMap] = useState<Record<string, StepProgress>>({});
