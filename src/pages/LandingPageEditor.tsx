@@ -989,17 +989,74 @@ const LandingPageEditor = () => {
     );
   };
 
+  const renderPricingStep = () => (
+    <>
+      <h2 className="text-lg font-heading font-semibold">Registration Pricing</h2>
+      <p className="text-sm text-muted-foreground">Charge a fee to register, with optional coupon codes.</p>
+      <div className="mt-4 space-y-4">
+        <div className="p-4 bg-muted/50 rounded-xl flex items-center justify-between gap-4">
+          <div>
+            <Label className="font-semibold">Paid registration</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              When on, visitors pay via Razorpay (or use a coupon to reduce/waive the fee).
+            </p>
+          </div>
+          <Switch
+            checked={!!form.registration_paid_enabled}
+            onCheckedChange={(v) => updateField("registration_paid_enabled", v)}
+          />
+        </div>
+
+        {form.registration_paid_enabled && (
+          <>
+            <div className="p-4 bg-muted/50 rounded-xl space-y-2">
+              <Label className="font-semibold">Registration price (₹)</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.registration_price_inr ?? 0}
+                  onChange={(e) => updateField("registration_price_inr", Math.max(0, parseInt(e.target.value || "0", 10)))}
+                  className="pl-7"
+                  placeholder="500"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The full price each visitor pays. Coupons can reduce this down to ₹0 (free).
+              </p>
+            </div>
+
+            {!isEdit ? (
+              <div className="p-4 bg-muted/30 rounded-xl text-sm text-muted-foreground">
+                💡 Save the landing page first, then come back here to add coupon codes.
+              </div>
+            ) : (
+              <div className="p-4 bg-muted/50 rounded-xl">
+                <CouponsManager
+                  landingPageId={id!}
+                  basePrice={Number(form.registration_price_inr || 0)}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </>
+  );
+
   const renderWizardContent = () => {
     switch (wizardStep) {
       case 0: return renderPageInfo();
       case 1: return renderDesign();
       case 2: return renderFormStep();
-      case 3: return renderEmailStep();
-      case 4: return renderSpeakerStep();
-      case 5: return renderVideoStep();
-      case 6: return renderTestimonialsStep();
-      case 7: return renderPrivacyStep();
-      case 8: return renderPublishStep();
+      case 3: return renderPricingStep();
+      case 4: return renderEmailStep();
+      case 5: return renderSpeakerStep();
+      case 6: return renderVideoStep();
+      case 7: return renderTestimonialsStep();
+      case 8: return renderPrivacyStep();
+      case 9: return renderPublishStep();
       default: return null;
     }
   };
