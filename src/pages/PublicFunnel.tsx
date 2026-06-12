@@ -20,6 +20,8 @@ import {
 import { CodeGateScreen } from "@/components/funnel/CodeGateScreen";
 import { PrivateLeadForm } from "@/components/funnel/PrivateLeadForm";
 import PublicFooterBranding from "@/components/PublicFooterBranding";
+import { ContentProtection, PROTECTED_VIDEO_PROPS } from "@/components/funnel/ContentProtection";
+import { AttachmentsList, type FunnelAttachment } from "@/components/funnel/AttachmentsList";
 /* ─── Speed Popover ─── */
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
 
