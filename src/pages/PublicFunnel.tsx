@@ -318,6 +318,7 @@ const CustomVideoPlayer = ({
         className="w-full h-full object-contain"
         playsInline
         preload="auto"
+        {...PROTECTED_VIDEO_PROPS}
         onTimeUpdate={handleTimeUpdate}
         onSeeking={handleSeeking}
         onLoadedMetadata={() => { if (videoRef.current) { setDuration(videoRef.current.duration); if (initialTime > 0) videoRef.current.currentTime = initialTime; } }}
