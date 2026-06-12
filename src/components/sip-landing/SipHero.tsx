@@ -1,16 +1,13 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useProgramSettings } from "@/hooks/useProgramSettings";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import sipLogo from "@/assets/sip-logo.png";
 
 interface Props {
   getText: (section: string, key: string, fallback?: string) => string;
+  registerUrl: string;
 }
 
-export const SipHero = ({ getText }: Props) => {
-  const { settings } = useProgramSettings();
+export const SipHero = ({ getText, registerUrl }: Props) => {
   const badge = getText("hero", "badge_text", "SMART INCOME PROGRAM");
   const line1 = getText("hero", "headline_line1", "Build Your Income.");
   const line2 = getText("hero", "headline_line2", "Build Your Future.");
@@ -22,9 +19,7 @@ export const SipHero = ({ getText }: Props) => {
   return (
     <section className="sip-hero-bg min-h-[calc(100vh-4rem)] flex items-center justify-center pt-16">
       <div className="container py-10 md:py-16 lg:py-20">
-        {/* Desktop: two-column | Mobile: single column centered */}
         <div className="flex flex-col md:flex-row items-center gap-4 md:gap-12 lg:gap-16">
-          {/* Left — Large Logo (desktop only visible large, mobile smaller) */}
           <motion.div
             className="flex-shrink-0 flex items-center justify-center"
             initial={{ opacity: 0, scale: 0.85 }}
@@ -41,7 +36,6 @@ export const SipHero = ({ getText }: Props) => {
             />
           </motion.div>
 
-          {/* Right — Content */}
           <motion.div
             className="flex-1 text-center md:text-left"
             initial={{ opacity: 0, y: 20 }}
@@ -67,7 +61,14 @@ export const SipHero = ({ getText }: Props) => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start mb-6 md:mb-8">
-              <RegisterButton settings={settings} />
+              <Link to={registerUrl}>
+                <button
+                  className="px-8 py-3.5 rounded-lg text-base font-semibold transition-all hover:brightness-110"
+                  style={{ background: "linear-gradient(135deg, #E8B830, #C99A18)", color: "#000" }}
+                >
+                  Register for Program →
+                </button>
+              </Link>
               <Link to="/auth">
                 <button
                   className="px-8 py-3.5 rounded-lg text-base font-medium transition-all hover:bg-white/5"
@@ -94,35 +95,3 @@ export const SipHero = ({ getText }: Props) => {
   );
 };
 
-const RegisterButton = ({ settings }: { settings: any }) => {
-  const { data: page } = useRegisterPage(settings?.active_register_landing_page_id);
-
-  const url = page?.slug ? `/l/${page.slug}` : "/auth?tab=signup";
-
-  return (
-    <Link to={url}>
-      <button
-        className="px-8 py-3.5 rounded-lg text-base font-semibold transition-all hover:brightness-110"
-        style={{ background: "linear-gradient(135deg, #E8B830, #C99A18)", color: "#000" }}
-      >
-        Register for Program →
-      </button>
-    </Link>
-  );
-};
-
-const useRegisterPage = (pageId: string | null | undefined) => {
-  return useQuery({
-    queryKey: ["register-page-slug", pageId],
-    queryFn: async () => {
-      if (!pageId) return null;
-      const { data } = await supabase
-        .from("landing_pages")
-        .select("slug")
-        .eq("id", pageId)
-        .single();
-      return data;
-    },
-    enabled: !!pageId,
-  });
-};

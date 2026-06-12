@@ -1,34 +1,14 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useProgramSettings } from "@/hooks/useProgramSettings";
 
 interface Props {
   getText: (section: string, key: string, fallback?: string) => string;
+  registerUrl: string;
 }
 
-export const SipCta = ({ getText }: Props) => {
-  const { settings } = useProgramSettings();
+export const SipCta = ({ getText, registerUrl }: Props) => {
   const heading = getText("cta", "heading", "Ready to Build Your Income?");
   const subtitle = getText("cta", "subtitle", "Join the Smart Income Program and start your journey today.");
-
-  const pageId = settings?.active_register_landing_page_id;
-  const { data: page } = useQuery({
-    queryKey: ["register-page-slug-cta", pageId],
-    queryFn: async () => {
-      if (!pageId) return null;
-      const { data } = await supabase
-        .from("landing_pages")
-        .select("slug")
-        .eq("id", pageId)
-        .single();
-      return data;
-    },
-    enabled: !!pageId,
-  });
-
-  const registerUrl = page?.slug ? `/l/${page.slug}` : "/auth?tab=signup";
 
   return (
     <section className="relative py-20 md:py-28 sip-gold-glow" style={{ background: "#050505" }}>

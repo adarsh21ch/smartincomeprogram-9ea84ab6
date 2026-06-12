@@ -13,7 +13,7 @@ import { SipFooter } from "@/components/sip-landing/SipFooter";
 import { InstallAppBanner } from "@/components/InstallAppBanner";
 
 const Index = () => {
-  const { getText, speakers, testimonials, journeySteps, faqItems, isLoading } = useSipLandingData();
+  const { getText, speakers, testimonials, journeySteps, faqItems, registerUrl, isLoading } = useSipLandingData();
 
   return (
     <div className="sip-landing min-h-screen">
@@ -24,14 +24,14 @@ const Index = () => {
         </div>
       ) : (
         <>
-          <SipHero getText={getText} />
+          <SipHero getText={getText} registerUrl={registerUrl} />
           <SipAbout getText={getText} />
           <SipSpeakers getText={getText} speakers={speakers} />
           <SipJourney getText={getText} steps={journeySteps} />
-          <SipCommunity getText={getText} />
+          <SipCommunity getText={getText} registerUrl={registerUrl} />
           <SipTestimonials getText={getText} testimonials={testimonials} />
           <SipFaq getText={getText} faqItems={faqItems} />
-          <SipCta getText={getText} />
+          <SipCta getText={getText} registerUrl={registerUrl} />
           <SipDisclaimer getText={getText} />
           <SipFooter getText={getText} />
         </>

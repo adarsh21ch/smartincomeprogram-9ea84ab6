@@ -1,35 +1,16 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useProgramSettings } from "@/hooks/useProgramSettings";
 
 interface Props {
   getText: (section: string, key: string, fallback?: string) => string;
+  registerUrl: string;
 }
 
-export const SipCommunity = ({ getText }: Props) => {
-  const { settings } = useProgramSettings();
+export const SipCommunity = ({ getText, registerUrl }: Props) => {
   const heading = getText("community", "heading", "A Private Community Built for Growth");
   const body = getText("community", "body", "");
   const ctaText = getText("community", "cta_text", "Register for Program →");
 
-  const pageId = settings?.active_register_landing_page_id;
-  const { data: page } = useQuery({
-    queryKey: ["register-page-slug-community", pageId],
-    queryFn: async () => {
-      if (!pageId) return null;
-      const { data } = await supabase
-        .from("landing_pages")
-        .select("slug")
-        .eq("id", pageId)
-        .single();
-      return data;
-    },
-    enabled: !!pageId,
-  });
-
-  const registerUrl = page?.slug ? `/l/${page.slug}` : "/auth?tab=signup";
 
   const features = [1, 2, 3].map((n) => ({
     icon: getText("community", `feature_${n}_icon`, ""),

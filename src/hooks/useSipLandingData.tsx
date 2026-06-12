@@ -120,6 +120,34 @@ export const useSipLandingData = () => {
     staleTime: 60000,
   });
 
+  // Resolve the public Register landing page URL once so CTAs never
+  // race-fall back to /auth.
+  const registerPageQuery = useQuery({
+    queryKey: ["sip-register-page-url"],
+    queryFn: async () => {
+      const { data: settings } = await supabase
+        .from("program_settings")
+        .select("active_register_landing_page_id")
+        .limit(1)
+        .maybeSingle();
+      const pageId = settings?.active_register_landing_page_id;
+      if (!pageId) return null;
+      const { data: page } = await supabase
+        .from("landing_pages")
+        .select("slug")
+        .eq("id", pageId)
+        .eq("status", "published")
+        .maybeSingle();
+      return page?.slug || null;
+    },
+    staleTime: 60000,
+  });
+
+  // Default to known published slug so registration is never gated by auth.
+  const registerUrl = registerPageQuery.data
+    ? `/l/${registerPageQuery.data}`
+    : "/l/smart-income-program";
+
   // Helper to get config value by section+key
   const getConfig = (section: string, key: string): SipConfig | undefined => {
     return configQuery.data?.find((c) => c.section === section && c.key === key);
@@ -142,6 +170,7 @@ export const useSipLandingData = () => {
     testimonials: testimonialsQuery.data || [],
     journeySteps: journeyQuery.data || [],
     faqItems: faqQuery.data || [],
+    registerUrl,
     getConfig,
     getText,
     isLoading,
