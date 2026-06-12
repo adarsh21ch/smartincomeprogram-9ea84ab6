@@ -536,6 +536,8 @@ const PublicFunnel = () => {
   const formConfig = bundle?.formConfig;
   const priceOptions: any[] = bundle?.priceOptions || [];
   const funnelSteps: any[] = bundle?.steps || [];
+  const allAttachments: FunnelAttachment[] = bundle?.attachments || [];
+  const funnelLevelAttachments = allAttachments.filter((a) => !a.step_id);
   const isMultiStep = funnel?.funnel_mode === "multi" && funnelSteps.length > 0;
 
   const isDraft = funnel && !funnel.is_published;
