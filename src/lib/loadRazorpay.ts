@@ -1,9 +1,5 @@
 // Loads Razorpay checkout.js once. Returns the global on resolve.
-declare global {
-  interface Window {
-    Razorpay?: any;
-  }
-}
+
 
 let loadingPromise: Promise<any> | null = null;
 
