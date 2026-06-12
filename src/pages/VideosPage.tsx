@@ -148,7 +148,11 @@ const VideosPage = () => {
           {uploading && (
             <div className="space-y-2">
               <Progress value={uploadProgress} className="h-2 bg-muted [&>div]:bg-primary" />
-              <p className="text-xs text-muted-foreground text-center">{uploadProgress}%</p>
+              <p className="text-xs text-muted-foreground text-center">
+                {uploadProgress}%
+                {uploadSpeed > 0 && ` • ${(uploadSpeed / (1024 * 1024)).toFixed(2)} MB/s`}
+                {uploadEta > 0 && ` • ${uploadEta > 60 ? `${Math.ceil(uploadEta / 60)} min` : `${Math.ceil(uploadEta)}s`} left`}
+              </p>
             </div>
           )}
         </div>
