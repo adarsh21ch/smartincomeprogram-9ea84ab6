@@ -582,11 +582,10 @@ export const MultiStepViewer = ({
 
   useEffect(() => {
     const loadProgress = async () => {
-      const { data } = await supabase
-        .from("funnel_step_progress")
-        .select("funnel_step_id, status, max_watched_seconds, watched_percentage, last_position_seconds, completed_at, condition_met_at, time_spent_seconds")
-        .eq("funnel_id", funnel.id)
-        .eq("session_id", sessionId.current);
+      const { data: resp } = await supabase.functions.invoke("get-funnel-step-progress", {
+        body: { funnel_id: funnel.id, session_id: sessionId.current },
+      });
+      const data = (resp as any)?.rows as any[] | undefined;
 
       const map: Record<string, StepProgress> = {};
       if (data) {
