@@ -43,6 +43,9 @@ const PublicLandingPage = () => {
   const [showUnmuteHint, setShowUnmuteHint] = useState(true);
   const [showSpeakerBio, setShowSpeakerBio] = useState(false);
   const [codeGateOpen, setCodeGateOpen] = useState(false);
+  // Paid-registration state. Source of truth is server, but we cache last known price for button label.
+  const [currentPrice, setCurrentPrice] = useState<number>(0);
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Auto-hide unmute hint after 5 seconds
