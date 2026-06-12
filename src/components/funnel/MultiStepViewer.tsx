@@ -14,6 +14,7 @@ import {
   normalizeIndianPhone, isValidIndianPhone, isValidEmail,
   cleanText, cleanEmail, phoneInputProps, emailInputProps, nameInputProps,
 } from "@/lib/formInputs";
+import { AttachmentsList } from "./AttachmentsList";
 
 interface FunnelStep {
   id: string;
