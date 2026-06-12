@@ -25,7 +25,6 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Fetch funnel — select only needed columns
     const { data: funnel, error: funnelErr } = await supabase
       .from("funnels")
       .select(
@@ -41,10 +40,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Parallel fetches for related data
     const promises: Promise<{ key: string; data: unknown }>[] = [];
 
-    // Video asset — only needed fields
     if (funnel.video_asset_id) {
       promises.push(
         supabase
@@ -58,7 +55,6 @@ Deno.serve(async (req) => {
       promises.push(Promise.resolve({ key: "video", data: null }));
     }
 
-    // Creator profile — only needed fields
     promises.push(
       supabase
         .from("profiles")
@@ -68,7 +64,6 @@ Deno.serve(async (req) => {
         .then((r) => ({ key: "creator", data: r.data }))
     );
 
-    // Form config
     promises.push(
       supabase
         .from("funnel_lead_form_config")
@@ -78,7 +73,6 @@ Deno.serve(async (req) => {
         .then((r) => ({ key: "formConfig", data: r.data }))
     );
 
-    // Price options
     promises.push(
       supabase
         .from("funnel_price_options")
@@ -88,7 +82,6 @@ Deno.serve(async (req) => {
         .then((r) => ({ key: "priceOptions", data: r.data || [] }))
     );
 
-    // Funnel steps (for multi-step mode) — include video asset resolution
     if (funnel.funnel_mode === "multi") {
       promises.push(
         (async () => {
@@ -101,7 +94,6 @@ Deno.serve(async (req) => {
 
           if (!steps || steps.length === 0) return { key: "steps", data: [] };
 
-          // Resolve video URLs for video steps
           const videoIds = steps
             .filter((s) => s.step_type === "video" && s.video_asset_id)
             .map((s) => s.video_asset_id!);
@@ -119,7 +111,6 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Enrich steps with video URLs
           const enrichedSteps = steps.map((s) => ({
             ...s,
             video_url: s.video_asset_id ? videoMap[s.video_asset_id]?.public_url || null : null,
@@ -133,7 +124,31 @@ Deno.serve(async (req) => {
       promises.push(Promise.resolve({ key: "steps", data: [] }));
     }
 
-    // Atomic view count increment — fire-and-forget, non-blocking
+    // Attachments — sign URLs for any with a stored path
+    promises.push(
+      (async () => {
+        const { data: rows } = await supabase
+          .from("funnel_attachments")
+          .select("id, funnel_id, step_id, name, file_url, file_path, file_type, file_size, position")
+          .eq("funnel_id", funnel.id)
+          .order("position");
+        if (!rows || rows.length === 0) return { key: "attachments", data: [] };
+
+        const signed = await Promise.all(
+          rows.map(async (r) => {
+            if (r.file_path) {
+              const { data: s } = await supabase.storage
+                .from("funnel-attachments")
+                .createSignedUrl(r.file_path, 60 * 60 * 6); // 6 hours
+              return { ...r, file_url: s?.signedUrl || r.file_url };
+            }
+            return r;
+          })
+        );
+        return { key: "attachments", data: signed };
+      })()
+    );
+
     supabase.rpc("increment_funnel_views", { _funnel_id: funnel.id }).then(() => {});
 
     const results = await Promise.all(promises);
@@ -149,6 +164,7 @@ Deno.serve(async (req) => {
       formConfig: resultMap.formConfig,
       priceOptions: resultMap.priceOptions,
       steps: resultMap.steps,
+      attachments: resultMap.attachments,
     };
 
     return new Response(JSON.stringify(payload), {

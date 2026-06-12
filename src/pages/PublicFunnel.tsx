@@ -20,6 +20,8 @@ import {
 import { CodeGateScreen } from "@/components/funnel/CodeGateScreen";
 import { PrivateLeadForm } from "@/components/funnel/PrivateLeadForm";
 import PublicFooterBranding from "@/components/PublicFooterBranding";
+import { ContentProtection, PROTECTED_VIDEO_PROPS } from "@/components/funnel/ContentProtection";
+import { AttachmentsList, type FunnelAttachment } from "@/components/funnel/AttachmentsList";
 /* ─── Speed Popover ─── */
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
 
@@ -316,6 +318,7 @@ const CustomVideoPlayer = ({
         className="w-full h-full object-contain"
         playsInline
         preload="auto"
+        {...PROTECTED_VIDEO_PROPS}
         onTimeUpdate={handleTimeUpdate}
         onSeeking={handleSeeking}
         onLoadedMetadata={() => { if (videoRef.current) { setDuration(videoRef.current.duration); if (initialTime > 0) videoRef.current.currentTime = initialTime; } }}
@@ -533,6 +536,8 @@ const PublicFunnel = () => {
   const formConfig = bundle?.formConfig;
   const priceOptions: any[] = bundle?.priceOptions || [];
   const funnelSteps: any[] = bundle?.steps || [];
+  const allAttachments: FunnelAttachment[] = bundle?.attachments || [];
+  const funnelLevelAttachments = allAttachments.filter((a) => !a.step_id);
   const isMultiStep = funnel?.funnel_mode === "multi" && funnelSteps.length > 0;
 
   const isDraft = funnel && !funnel.is_published;
@@ -743,7 +748,12 @@ const PublicFunnel = () => {
     </div>
   );
 
+  const watermarkId =
+    [leadForm.name, leadForm.phone, leadForm.email].filter(Boolean).join(" · ") ||
+    `${funnel.title} · smartincomeprogram.in`;
+
   return (
+    <ContentProtection watermark={watermarkId}>
     <div className="flex flex-col" style={{ background: tc.bg, minHeight: "100dvh" }}>
       {/* Header */}
       <div
@@ -786,6 +796,7 @@ const PublicFunnel = () => {
           priceOptions={priceOptions}
           VideoPlayer={CustomVideoPlayer}
           isDark={isDark}
+          attachments={allAttachments}
         />
       ) : (
       <div className="flex-1 flex flex-col max-w-6xl mx-auto px-4 py-8 w-full">
@@ -888,6 +899,11 @@ const PublicFunnel = () => {
                     ))}
                   </div>
                 </div>
+              )}
+
+              {/* Speaker Materials / Attachments */}
+              {funnelLevelAttachments.length > 0 && (
+                <AttachmentsList attachments={funnelLevelAttachments} isDark={isDark} />
               )}
 
               <div className={showLeadFormSidebar && !leadSubmitted ? "lg:hidden" : ""}>
@@ -1014,6 +1030,7 @@ const PublicFunnel = () => {
         }
       `}</style>
     </div>
+    </ContentProtection>
   );
 };
 

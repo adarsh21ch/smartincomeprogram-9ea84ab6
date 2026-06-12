@@ -14,6 +14,7 @@ import {
   normalizeIndianPhone, isValidIndianPhone, isValidEmail,
   cleanText, cleanEmail, phoneInputProps, emailInputProps, nameInputProps,
 } from "@/lib/formInputs";
+import { AttachmentsList } from "./AttachmentsList";
 
 interface FunnelStep {
   id: string;
@@ -69,6 +70,11 @@ interface MultiStepViewerProps {
   priceOptions: any[];
   VideoPlayer: React.ComponentType<any>;
   isDark?: boolean;
+  attachments?: Array<{
+    id: string; funnel_id: string; step_id: string | null;
+    name: string; file_url: string; file_type: string;
+    file_size: number | null; position: number;
+  }>;
 }
 
 const STEP_ICONS: Record<string, React.ComponentType<any>> = {
@@ -234,6 +240,22 @@ const StepVideoTopics = ({ funnel, step, isDark }: { funnel: any; step: FunnelSt
     </div>
   );
 };
+
+/* ─── Step Attachments (funnel-wide + step-specific) ─── */
+const StepAttachments = ({
+  attachments,
+  stepId,
+  isDark,
+}: {
+  attachments: Array<{ id: string; funnel_id: string; step_id: string | null; name: string; file_url: string; file_type: string; file_size: number | null; position: number }>;
+  stepId: string;
+  isDark: boolean;
+}) => {
+  const relevant = attachments.filter((a) => a.step_id === stepId || !a.step_id);
+  if (relevant.length === 0) return null;
+  return <AttachmentsList attachments={relevant} isDark={isDark} />;
+};
+
 
 /* ─── Up Next Section ─── */
 const UpNextSection = ({
@@ -541,6 +563,7 @@ export const MultiStepViewer = ({
   priceOptions,
   VideoPlayer,
   isDark = true,
+  attachments = [],
 }: MultiStepViewerProps) => {
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [progressMap, setProgressMap] = useState<Record<string, StepProgress>>({});
@@ -1351,6 +1374,8 @@ export const MultiStepViewer = ({
                       <StepSpeakerCard funnel={funnel} step={activeStep} creatorProfile={creatorProfile} isDark={isDark} />
                       {/* Per-step video topics */}
                       <StepVideoTopics funnel={funnel} step={activeStep} isDark={isDark} />
+                      {/* Per-step + funnel-wide attachments */}
+                      <StepAttachments attachments={attachments} stepId={activeStep.id} isDark={isDark} />
                     </div>
                   )}
 

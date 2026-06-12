@@ -25,6 +25,7 @@ import { PrivacySettings } from "@/components/funnel/PrivacySettings";
 import { FunnelLivePreview } from "@/components/funnel/FunnelLivePreview";
 import { SpeakerPhotoUpload } from "@/components/funnel/SpeakerPhotoUpload";
 import { PerStepSpeakerAssignment } from "@/components/funnel/PerStepSpeakerAssignment";
+import { FunnelAttachmentsManager } from "@/components/funnel/FunnelAttachmentsManager";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { usePlan } from "@/hooks/usePlan";
 import { Crown } from "lucide-react";
@@ -1022,6 +1023,17 @@ const FunnelEditor = () => {
               </div>
             )}
           </>
+        )}
+
+        {/* Speaker materials — downloadable attachments for the whole funnel */}
+        {isEdit && id && (
+          <div className="pt-4 mt-2 border-t border-border">
+            <FunnelAttachmentsManager
+              funnelId={id}
+              title="Speaker Materials (Funnel-wide)"
+              description="Attach PDFs, slides, images or docs. Leads will see a download list on the funnel page."
+            />
+          </div>
         )}
       </div>
     </>
