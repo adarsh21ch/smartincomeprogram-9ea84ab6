@@ -17,6 +17,8 @@ import { Loader2, Check, Lock, ChevronRight, ChevronDown, VolumeX } from "lucide
 import { toast } from "sonner";
 import { TestimonialsViewer } from "@/components/funnel/TestimonialsViewer";
 import { DateOfBirthInput } from "@/components/funnel/DateOfBirthInput";
+import { PriceCouponBox } from "@/components/funnel/PriceCouponBox";
+import { loadRazorpay } from "@/lib/loadRazorpay";
 import PublicFooterBranding from "@/components/PublicFooterBranding";
 import {
   normalizeIndianPhone, isValidIndianPhone, isValidEmail,
@@ -41,6 +43,9 @@ const PublicLandingPage = () => {
   const [showUnmuteHint, setShowUnmuteHint] = useState(true);
   const [showSpeakerBio, setShowSpeakerBio] = useState(false);
   const [codeGateOpen, setCodeGateOpen] = useState(false);
+  // Paid-registration state. Source of truth is server, but we cache last known price for button label.
+  const [currentPrice, setCurrentPrice] = useState<number>(0);
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Auto-hide unmute hint after 5 seconds
@@ -69,6 +74,9 @@ const PublicLandingPage = () => {
         .single();
       if (data) {
         setPage(data);
+        if (data.registration_paid_enabled) {
+          setCurrentPrice(Number(data.registration_price_inr || 0));
+        }
         // Check if private page needs code gate
         if (data.visibility === "private" && data.access_code_hash) {
           const codeOk = localStorage.getItem(`nf_lp_code_${data.id}`);
@@ -155,22 +163,24 @@ const PublicLandingPage = () => {
       ? "Enter a valid email address"
       : null;
 
+  const finishRegistration = () => {
+    localStorage.setItem(
+      `nf_registered_${page.id}`,
+      JSON.stringify({ name: formData.name, email: formData.email, submittedAt: Date.now() })
+    );
+    toast.success("🎉 You're registered! Check your email for confirmation.", { duration: 5000 });
+    setSubmitted(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!page || submitting) return;
     if (honeypot) { setSubmitted(true); return; }
-
-    // Age gate (client-side)
-    if (ageError) {
-      toast.error(ageError);
-      return;
-    }
+    if (ageError) { toast.error(ageError); return; }
     if (phoneError) { toast.error(phoneError); return; }
     if (emailError) { toast.error(emailError); return; }
     setSubmitting(true);
     try {
-      // Per-browser stable id so different browsers / incognito sessions
-      // on the same network are not treated as the same user.
       let clientId = localStorage.getItem("nf_client_id");
       if (!clientId) {
         clientId = (crypto as any).randomUUID
@@ -179,6 +189,99 @@ const PublicLandingPage = () => {
         localStorage.setItem("nf_client_id", clientId);
       }
 
+      // ===== PAID REGISTRATION FLOW =====
+      if (page.registration_paid_enabled) {
+        const regPayload = {
+          name: formData.name || "",
+          email: formData.email || "",
+          phone: formData.phone || "",
+          dob: formData.age || "",
+          city: formData.city || "",
+          state: formData.state || "",
+          occupation: formData.occupation || "",
+          custom_1_value: formData.custom_1_value || "",
+          custom_2_value: formData.custom_2_value || "",
+        };
+
+        const { data, error } = await supabase.functions.invoke("register-with-payment", {
+          body: {
+            landing_page_id: page.id,
+            ...regPayload,
+            coupon_code: appliedCoupon,
+            honeypot: "",
+            user_agent: navigator.userAgent,
+            client_id: clientId,
+          },
+        });
+        if (error) throw error;
+        if (data?.success === false) {
+          toast.error(data.message || "Registration could not be completed");
+          return;
+        }
+
+        // FREE (price came out to 0 server-side)
+        if (data.mode === "free") {
+          finishRegistration();
+          return;
+        }
+
+        // PAID — open Razorpay
+        if (data.mode === "paid") {
+          const Razorpay = await loadRazorpay();
+          await new Promise<void>((resolve) => {
+            const rzp = new Razorpay({
+              key: data.razorpay_key_id,
+              amount: data.amount,
+              currency: data.currency || "INR",
+              order_id: data.order_id,
+              name: page.title || "Registration",
+              description: page.form_title || "Session registration",
+              prefill: {
+                name: regPayload.name,
+                email: regPayload.email,
+                contact: regPayload.phone,
+              },
+              theme: { color: page.theme_color || "#E8B830" },
+              handler: async (resp: any) => {
+                try {
+                  const { data: vdata, error: verr } = await supabase.functions.invoke(
+                    "verify-registration-payment",
+                    {
+                      body: {
+                        payment_id: data.payment_id,
+                        razorpay_order_id: resp.razorpay_order_id,
+                        razorpay_payment_id: resp.razorpay_payment_id,
+                        razorpay_signature: resp.razorpay_signature,
+                        registration: regPayload,
+                        user_agent: navigator.userAgent,
+                      },
+                    }
+                  );
+                  if (verr || !vdata?.success) {
+                    toast.error(vdata?.message || "Payment verification failed");
+                  } else {
+                    finishRegistration();
+                  }
+                } catch (e: any) {
+                  toast.error(e?.message || "Payment verification failed");
+                } finally {
+                  resolve();
+                }
+              },
+              modal: {
+                ondismiss: () => {
+                  toast.info("Payment cancelled");
+                  resolve();
+                },
+              },
+            });
+            rzp.open();
+          });
+          return;
+        }
+      }
+
+      // ===== FREE / DEFAULT REGISTRATION (existing flow) =====
       const payload: any = {
         landing_page_id: page.id,
         honeypot: "",
@@ -193,27 +296,19 @@ const PublicLandingPage = () => {
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      // Soft business-rule rejections from server (underage, missing field, limit reached, cooldown, etc.)
       if (data && data.success === false) {
         toast.error(data.message || "Registration could not be completed");
         return;
       }
 
-      localStorage.setItem(`nf_registered_${page.id}`, JSON.stringify({
-        name: formData.name, email: formData.email, submittedAt: Date.now(),
-      }));
-
-      // Show toast and immediately reveal post-submit content
-      toast.success("🎉 You're registered! Check your email for confirmation.", {
-        duration: 5000,
-      });
-      setSubmitted(true);
+      finishRegistration();
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
     } finally {
       setSubmitting(false);
     }
   };
+
 
   if (loading) {
     return (
@@ -609,6 +704,18 @@ const PublicLandingPage = () => {
                     </div>
                   ))}
 
+                  {page.registration_paid_enabled && (
+                    <PriceCouponBox
+                      landingPageId={page.id}
+                      basePrice={Number(page.registration_price_inr || 0)}
+                      paidEnabled={!!page.registration_paid_enabled}
+                      onPriceChange={(price, code) => {
+                        setCurrentPrice(price);
+                        setAppliedCoupon(code);
+                      }}
+                    />
+                  )}
+
                   <button
                     type="submit"
                     disabled={submitting || !!ageError}
@@ -616,8 +723,13 @@ const PublicLandingPage = () => {
                     style={{ background: 'linear-gradient(135deg, #E8B830, #C99A18)', color: '#000' }}
                   >
                     {submitting ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-                    {page.form_button_text} →
+                    {page.registration_paid_enabled
+                      ? currentPrice === 0
+                        ? "Register Free →"
+                        : `Pay ₹${currentPrice} & Register →`
+                      : `${page.form_button_text} →`}
                   </button>
+
                 </form>
 
                 <p className="text-xs text-center flex items-center justify-center gap-1" style={{ color: '#888' }}>
@@ -753,6 +865,17 @@ const PublicLandingPage = () => {
                     </div>
 
                     <div className="mt-auto pt-6 space-y-4">
+                      {page.registration_paid_enabled && (
+                        <PriceCouponBox
+                          landingPageId={page.id}
+                          basePrice={Number(page.registration_price_inr || 0)}
+                          paidEnabled={!!page.registration_paid_enabled}
+                          onPriceChange={(price, code) => {
+                            setCurrentPrice(price);
+                            setAppliedCoupon(code);
+                          }}
+                        />
+                      )}
                       <button
                         type="submit"
                         disabled={submitting || !!ageError}
@@ -760,8 +883,13 @@ const PublicLandingPage = () => {
                         style={{ background: 'linear-gradient(135deg, #E8B830, #C99A18)', color: '#000' }}
                       >
                         {submitting ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-                        {page.form_button_text} →
+                        {page.registration_paid_enabled
+                          ? currentPrice === 0
+                            ? "Register Free →"
+                            : `Pay ₹${currentPrice} & Register →`
+                          : `${page.form_button_text} →`}
                       </button>
+
 
                       <p className="text-sm text-center flex items-center justify-center gap-1.5" style={{ color: '#888' }}>
                         <Lock size={14} /> Your information is safe with us

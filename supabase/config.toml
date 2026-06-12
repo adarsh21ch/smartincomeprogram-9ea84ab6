@@ -11,3 +11,7 @@ project_id = "cziyehculavszqdwcqcj"
     verify_jwt = false
   [functions.send-gmail-email]
     verify_jwt = false
+  [functions.register-with-payment]
+    verify_jwt = false
+  [functions.verify-registration-payment]
+    verify_jwt = false
