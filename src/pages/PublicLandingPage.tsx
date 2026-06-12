@@ -704,6 +704,18 @@ const PublicLandingPage = () => {
                     </div>
                   ))}
 
+                  {page.registration_paid_enabled && (
+                    <PriceCouponBox
+                      landingPageId={page.id}
+                      basePrice={Number(page.registration_price_inr || 0)}
+                      paidEnabled={!!page.registration_paid_enabled}
+                      onPriceChange={(price, code) => {
+                        setCurrentPrice(price);
+                        setAppliedCoupon(code);
+                      }}
+                    />
+                  )}
+
                   <button
                     type="submit"
                     disabled={submitting || !!ageError}
@@ -711,8 +723,13 @@ const PublicLandingPage = () => {
                     style={{ background: 'linear-gradient(135deg, #E8B830, #C99A18)', color: '#000' }}
                   >
                     {submitting ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-                    {page.form_button_text} →
+                    {page.registration_paid_enabled
+                      ? currentPrice === 0
+                        ? "Register Free →"
+                        : `Pay ₹${currentPrice} & Register →`
+                      : `${page.form_button_text} →`}
                   </button>
+
                 </form>
 
                 <p className="text-xs text-center flex items-center justify-center gap-1" style={{ color: '#888' }}>
