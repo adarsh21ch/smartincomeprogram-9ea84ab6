@@ -1392,6 +1392,8 @@ export type Database = {
           post_submit_video_asset_id: string | null
           post_submit_video_description: string | null
           post_submit_video_title: string | null
+          registration_paid_enabled: boolean
+          registration_price_inr: number
           sections: Json | null
           send_confirmation_email: boolean | null
           sender_display_name: string | null
@@ -1461,6 +1463,8 @@ export type Database = {
           post_submit_video_asset_id?: string | null
           post_submit_video_description?: string | null
           post_submit_video_title?: string | null
+          registration_paid_enabled?: boolean
+          registration_price_inr?: number
           sections?: Json | null
           send_confirmation_email?: boolean | null
           sender_display_name?: string | null
@@ -1530,6 +1534,8 @@ export type Database = {
           post_submit_video_asset_id?: string | null
           post_submit_video_description?: string | null
           post_submit_video_title?: string | null
+          registration_paid_enabled?: boolean
+          registration_price_inr?: number
           sections?: Json | null
           send_confirmation_email?: boolean | null
           sender_display_name?: string | null
@@ -2380,6 +2386,123 @@ export type Database = {
           },
         ]
       }
+      registration_coupons: {
+        Row: {
+          code: string
+          created_at: string
+          final_price_inr: number
+          id: string
+          is_active: boolean
+          landing_page_id: string
+          max_uses: number | null
+          updated_at: string
+          used_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          final_price_inr?: number
+          id?: string
+          is_active?: boolean
+          landing_page_id: string
+          max_uses?: number | null
+          updated_at?: string
+          used_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          final_price_inr?: number
+          id?: string
+          is_active?: boolean
+          landing_page_id?: string
+          max_uses?: number | null
+          updated_at?: string
+          used_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_coupons_landing_page_id_fkey"
+            columns: ["landing_page_id"]
+            isOneToOne: false
+            referencedRelation: "landing_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registration_payments: {
+        Row: {
+          amount_inr: number
+          coupon_code: string | null
+          coupon_id: string | null
+          created_at: string
+          id: string
+          landing_page_id: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          registrant_email: string | null
+          registrant_name: string | null
+          registrant_phone: string | null
+          registration_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_inr?: number
+          coupon_code?: string | null
+          coupon_id?: string | null
+          created_at?: string
+          id?: string
+          landing_page_id: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          registrant_email?: string | null
+          registrant_name?: string | null
+          registrant_phone?: string | null
+          registration_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_inr?: number
+          coupon_code?: string | null
+          coupon_id?: string | null
+          created_at?: string
+          id?: string
+          landing_page_id?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          registrant_email?: string | null
+          registrant_name?: string | null
+          registrant_phone?: string | null
+          registration_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_payments_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "registration_coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registration_payments_landing_page_id_fkey"
+            columns: ["landing_page_id"]
+            isOneToOne: false
+            referencedRelation: "landing_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registration_payments_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "landing_page_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sip_faq_items: {
         Row: {
           answer: string
@@ -3066,6 +3189,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_registration_coupon: {
+        Args: { p_coupon_id: string }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -3073,6 +3200,10 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      get_registration_price: {
+        Args: { p_code: string; p_landing_page_id: string }
+        Returns: Json
       }
       has_role: {
         Args: {
