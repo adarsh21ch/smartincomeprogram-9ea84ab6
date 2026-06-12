@@ -17,6 +17,8 @@ import { Loader2, Check, Lock, ChevronRight, ChevronDown, VolumeX } from "lucide
 import { toast } from "sonner";
 import { TestimonialsViewer } from "@/components/funnel/TestimonialsViewer";
 import { DateOfBirthInput } from "@/components/funnel/DateOfBirthInput";
+import { PriceCouponBox } from "@/components/funnel/PriceCouponBox";
+import { loadRazorpay } from "@/lib/loadRazorpay";
 import PublicFooterBranding from "@/components/PublicFooterBranding";
 import {
   normalizeIndianPhone, isValidIndianPhone, isValidEmail,
