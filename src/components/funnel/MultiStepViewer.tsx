@@ -241,6 +241,22 @@ const StepVideoTopics = ({ funnel, step, isDark }: { funnel: any; step: FunnelSt
   );
 };
 
+/* ─── Step Attachments (funnel-wide + step-specific) ─── */
+const StepAttachments = ({
+  attachments,
+  stepId,
+  isDark,
+}: {
+  attachments: Array<{ id: string; funnel_id: string; step_id: string | null; name: string; file_url: string; file_type: string; file_size: number | null; position: number }>;
+  stepId: string;
+  isDark: boolean;
+}) => {
+  const relevant = attachments.filter((a) => a.step_id === stepId || !a.step_id);
+  if (relevant.length === 0) return null;
+  return <AttachmentsList attachments={relevant} isDark={isDark} />;
+};
+
+
 /* ─── Up Next Section ─── */
 const UpNextSection = ({
   nextStep,
