@@ -53,13 +53,23 @@ const VideosPage = () => {
       videoId = data.videoId;
 
       const xhr = new XMLHttpRequest();
+      const startTime = Date.now();
       xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        if (!e.lengthComputable) return;
+        setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        const elapsed = (Date.now() - startTime) / 1000;
+        if (elapsed > 0.5) {
+          const speed = e.loaded / elapsed; // bytes/sec
+          setUploadSpeed(speed);
+          const remaining = (e.total - e.loaded) / speed;
+          setUploadEta(remaining);
+        }
       });
 
       await new Promise<void>((resolve, reject) => {
         xhr.open("PUT", data.uploadUrl);
         xhr.setRequestHeader("Content-Type", file.type);
+        xhr.timeout = 60 * 60 * 1000; // 1 hour for big files on slow links
         xhr.onload = () => (xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (HTTP ${xhr.status})`)));
         xhr.onerror = () => reject(new Error("Network error"));
         xhr.ontimeout = () => reject(new Error("Upload timed out"));
