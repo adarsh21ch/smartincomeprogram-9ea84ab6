@@ -25,6 +25,7 @@ import { PrivacySettings } from "@/components/funnel/PrivacySettings";
 import { FunnelLivePreview } from "@/components/funnel/FunnelLivePreview";
 import { SpeakerPhotoUpload } from "@/components/funnel/SpeakerPhotoUpload";
 import { PerStepSpeakerAssignment } from "@/components/funnel/PerStepSpeakerAssignment";
+import { FunnelAttachmentsManager } from "@/components/funnel/FunnelAttachmentsManager";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { usePlan } from "@/hooks/usePlan";
 import { Crown } from "lucide-react";
