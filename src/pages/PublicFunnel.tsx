@@ -748,7 +748,12 @@ const PublicFunnel = () => {
     </div>
   );
 
+  const watermarkId =
+    [leadForm.name, leadForm.phone, leadForm.email].filter(Boolean).join(" · ") ||
+    `${funnel.title} · smartincomeprogram.in`;
+
   return (
+    <ContentProtection watermark={watermarkId}>
     <div className="flex flex-col" style={{ background: tc.bg, minHeight: "100dvh" }}>
       {/* Header */}
       <div
