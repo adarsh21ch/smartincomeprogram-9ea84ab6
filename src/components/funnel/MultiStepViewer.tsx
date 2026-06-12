@@ -1357,6 +1357,8 @@ export const MultiStepViewer = ({
                       <StepSpeakerCard funnel={funnel} step={activeStep} creatorProfile={creatorProfile} isDark={isDark} />
                       {/* Per-step video topics */}
                       <StepVideoTopics funnel={funnel} step={activeStep} isDark={isDark} />
+                      {/* Per-step + funnel-wide attachments */}
+                      <StepAttachments attachments={attachments} stepId={activeStep.id} isDark={isDark} />
                     </div>
                   )}
 
