@@ -199,6 +199,7 @@ Deno.serve(async (req) => {
         currency: "INR",
         receipt: `lpreg_${landing_page_id.slice(0, 8)}_${Date.now()}`,
         notes: {
+          app: "smart-income-program",
           kind: "landing_page_registration",
           landing_page_id,
           coupon_id: couponId || "",

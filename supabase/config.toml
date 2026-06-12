@@ -15,3 +15,5 @@ project_id = "cziyehculavszqdwcqcj"
     verify_jwt = false
   [functions.verify-registration-payment]
     verify_jwt = false
+  [functions.razorpay-webhook]
+    verify_jwt = false
