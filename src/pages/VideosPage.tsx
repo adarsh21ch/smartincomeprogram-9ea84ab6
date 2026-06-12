@@ -24,6 +24,8 @@ const VideosPage = () => {
   const [renameVideo, setRenameVideo] = useState<{ id: string; title: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadSpeed, setUploadSpeed] = useState(0); // bytes/sec
+  const [uploadEta, setUploadEta] = useState(0); // seconds
   const [title, setTitle] = useState("");
 
   const { data: videos = [], isLoading } = useQuery({
