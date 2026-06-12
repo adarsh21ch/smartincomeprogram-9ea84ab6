@@ -1,75 +1,36 @@
+## Problem
 
-# Plan: Stronger Duplicate-Registration Protection + Fix Build Errors
+Clicking "Register for Program" sometimes opens `/auth` (Login/Signup) instead of the public registration landing page (`/l/smart-income-program`).
 
-## Part 1 — Answer to your question (no code, just clarity)
+Root cause: each Register button (in `SipHero`, `SipCta`, `SipCommunity`) independently fires an async query to fetch the landing page slug from `program_settings.active_register_landing_page_id`. While that query is pending — or if it returns no data — the `<Link to={…}>` falls back to `"/auth?tab=signup"`. If the user clicks before the query resolves, or the query returns null for any reason, they land on the auth page.
 
-**The "already registered" message you saw is NOT a bug.** It's the system correctly remembering that your normal browser already submitted once. Incognito = fresh browser ID = treated as new user. So registration itself works perfectly.
+A registration landing page does exist and is public:
+- `program_settings.active_register_landing_page_id` → `smart-income-program` (status `published`)
+- Public viewer route `/l/:slug` (`PublicLandingPage`) does NOT require login.
 
-**Safety comparison:**
+## Fix
 
-| Approach | Stops same person? | Blocks innocent users? |
-|---|---|---|
-| Old (IP + UA) | Weak — same person on diff WiFi gets through | ❌ Blocks family/office on shared WiFi |
-| Current (client_id only) | Weak — incognito / cleared cookies bypass | ✅ Doesn't block innocents |
-| **Hybrid (proposed)** | **Strong — email/phone always identifies them** | ✅ Doesn't block innocents |
+1. **Centralize the register URL** in `useSipLandingData` (the hook already used by `Index.tsx`). It will:
+   - Read `program_settings.active_register_landing_page_id`.
+   - Fetch the matching `landing_pages.slug` (status = `published`).
+   - Expose `registerUrl` (string) + `registerReady` (boolean).
+   - If unresolved, default `registerUrl` to the known published slug `/l/smart-income-program` instead of `/auth?tab=signup`, so registration is never gated behind login.
 
-→ **Hybrid is the safest and most production-ready.**
+2. **Pass `registerUrl` down as a prop** from `Index.tsx` to `SipHero`, `SipCta`, `SipCommunity`. Remove their local `useQuery` lookups and the local `RegisterButton` component in `SipHero`. All three buttons render a stable `<Link to={registerUrl}>` from first paint.
 
----
+3. **Keep the standalone "Login / Sign Up"** button (Hero) and Navbar "Login" link pointing to `/auth` — only the Register CTAs change.
 
-## Part 2 — What I'll change
+4. No backend, schema, or RLS changes. `landing_pages` and `program_settings` already allow public read for the published row, so this is purely a frontend wiring fix.
 
-### A. Strengthen duplicate detection in `submit-landing-page-registration` edge function
+## Files touched
 
-Block a new submission if **ANY** of these match a prior registration for the same landing page:
+- `src/hooks/useSipLandingData.tsx` — add `registerUrl` resolution + export.
+- `src/pages/Index.tsx` — pass `registerUrl` into the three section components.
+- `src/components/sip-landing/SipHero.tsx` — accept `registerUrl` prop, drop local query/`RegisterButton`.
+- `src/components/sip-landing/SipCta.tsx` — accept `registerUrl` prop, drop local query.
+- `src/components/sip-landing/SipCommunity.tsx` — accept `registerUrl` prop, drop local query.
 
-1. **Same email** (case-insensitive, trimmed) — strongest signal
-2. **Same phone** (digits-only normalized) — if phone field is enabled
-3. **Same `client_id` fingerprint** — catches same browser even without email match
+## Verification
 
-Logic:
-- Run 3 parallel checks against `landing_page_registrations` for the given `landing_page_id`
-- If any match exists AND `max_submissions_per_user` is reached, return the friendly `limit_reached` message (200 OK, `success:false`) — same UX you have today
-- Cooldown logic stays the same but now keyed on whichever match was found
-
-This means:
-- ✅ Family on same WiFi with different emails → all can register
-- ✅ Same person trying incognito with same email → blocked
-- ✅ Same person clearing cookies + new browser, same phone → blocked
-- ⚠️ Only bypass = use a completely new email AND phone (acceptable friction; this is industry standard)
-
-### B. Frontend toast clarity (`PublicLandingPage.tsx`)
-
-The current "You have already registered for this session" message is good. I'll keep it but make sure it shows clearly when duplicate is detected by email/phone too (not just by client_id).
-
-### C. Fix the build errors in `supabase/functions/process-email-queue/index.ts`
-
-These are TypeScript strict-typing errors from the Supabase SDK (unrelated to DOB work, but blocking deploys). Two small fixes:
-
-1. **Line 81** — `supabase.from('email_send_log').insert(...)` needs the payload typed as `any` (the table isn't in the generated types for edge functions).
-2. **Line 88** — `supabase.rpc('move_to_dlq', {...})` needs `as any` cast on the args object (custom RPC not in generated types).
-3. **Lines 210, 216, 276** — `moveToDlq(supabase, ...)` — the `supabase` parameter type signature in the helper is too strict; widen it to `any` or `SupabaseClient<any, any, any>`.
-
-These are pure type-cast fixes — no runtime behavior changes.
-
----
-
-## Files to edit
-
-1. `supabase/functions/submit-landing-page-registration/index.ts` — hybrid duplicate check
-2. `supabase/functions/process-email-queue/index.ts` — fix 5 TS errors (type casts only)
-3. `src/pages/PublicLandingPage.tsx` — minor: ensure toast shows server's specific reason for email/phone duplicates
-
-## What stays the same
-
-- DOB validation, age gating, calendar checks — untouched
-- Honeypot, rate limiting (10/hr per IP), confirmation email — untouched
-- `max_submissions_per_user` and `submission_cooldown_hours` settings — untouched, just better enforced
-
-## Verification after deploy
-
-- Submit with email A in normal browser → success
-- Submit again same browser → blocked ("already registered") ✅
-- Open incognito, submit with **same email A** → blocked (NEW behavior) ✅
-- Open incognito, submit with **different email B** → success ✅
-- Build passes (no more TS errors in edge functions) ✅
+- Load `/` as a logged-out visitor; click each "Register for Program" CTA (hero, mid-page community, bottom CTA) → all navigate to `/l/smart-income-program`, which renders the public registration form with no auth wall.
+- Navbar "Login" still goes to `/auth`.
