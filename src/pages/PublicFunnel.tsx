@@ -895,6 +895,11 @@ const PublicFunnel = () => {
                 </div>
               )}
 
+              {/* Speaker Materials / Attachments */}
+              {funnelLevelAttachments.length > 0 && (
+                <AttachmentsList attachments={funnelLevelAttachments} isDark={isDark} />
+              )}
+
               <div className={showLeadFormSidebar && !leadSubmitted ? "lg:hidden" : ""}>
                 {ctaEnabled && showCta && (
                   <Button
