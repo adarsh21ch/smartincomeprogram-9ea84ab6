@@ -24,6 +24,8 @@ const VideosPage = () => {
   const [renameVideo, setRenameVideo] = useState<{ id: string; title: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadSpeed, setUploadSpeed] = useState(0); // bytes/sec
+  const [uploadEta, setUploadEta] = useState(0); // seconds
   const [title, setTitle] = useState("");
 
   const { data: videos = [], isLoading } = useQuery({
@@ -51,13 +53,23 @@ const VideosPage = () => {
       videoId = data.videoId;
 
       const xhr = new XMLHttpRequest();
+      const startTime = Date.now();
       xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        if (!e.lengthComputable) return;
+        setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        const elapsed = (Date.now() - startTime) / 1000;
+        if (elapsed > 0.5) {
+          const speed = e.loaded / elapsed; // bytes/sec
+          setUploadSpeed(speed);
+          const remaining = (e.total - e.loaded) / speed;
+          setUploadEta(remaining);
+        }
       });
 
       await new Promise<void>((resolve, reject) => {
         xhr.open("PUT", data.uploadUrl);
         xhr.setRequestHeader("Content-Type", file.type);
+        xhr.timeout = 60 * 60 * 1000; // 1 hour for big files on slow links
         xhr.onload = () => (xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (HTTP ${xhr.status})`)));
         xhr.onerror = () => reject(new Error("Network error"));
         xhr.ontimeout = () => reject(new Error("Upload timed out"));
@@ -83,6 +95,8 @@ const VideosPage = () => {
     } finally {
       setUploading(false);
       setUploadProgress(0);
+      setUploadSpeed(0);
+      setUploadEta(0);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -134,7 +148,11 @@ const VideosPage = () => {
           {uploading && (
             <div className="space-y-2">
               <Progress value={uploadProgress} className="h-2 bg-muted [&>div]:bg-primary" />
-              <p className="text-xs text-muted-foreground text-center">{uploadProgress}%</p>
+              <p className="text-xs text-muted-foreground text-center">
+                {uploadProgress}%
+                {uploadSpeed > 0 && ` • ${(uploadSpeed / (1024 * 1024)).toFixed(2)} MB/s`}
+                {uploadEta > 0 && ` • ${uploadEta > 60 ? `${Math.ceil(uploadEta / 60)} min` : `${Math.ceil(uploadEta)}s`} left`}
+              </p>
             </div>
           )}
         </div>
