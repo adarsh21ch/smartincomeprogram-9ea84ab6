@@ -69,6 +69,11 @@ interface MultiStepViewerProps {
   priceOptions: any[];
   VideoPlayer: React.ComponentType<any>;
   isDark?: boolean;
+  attachments?: Array<{
+    id: string; funnel_id: string; step_id: string | null;
+    name: string; file_url: string; file_type: string;
+    file_size: number | null; position: number;
+  }>;
 }
 
 const STEP_ICONS: Record<string, React.ComponentType<any>> = {
