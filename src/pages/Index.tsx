@@ -13,7 +13,7 @@ import { SipFooter } from "@/components/sip-landing/SipFooter";
 import { InstallAppBanner } from "@/components/InstallAppBanner";
 
 const Index = () => {
-  const { getText, speakers, testimonials, journeySteps, faqItems, isLoading } = useSipLandingData();
+  const { getText, speakers, testimonials, journeySteps, faqItems, registerUrl, isLoading } = useSipLandingData();
 
   return (
     <div className="sip-landing min-h-screen">
