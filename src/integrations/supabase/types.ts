@@ -240,6 +240,66 @@ export type Database = {
           },
         ]
       }
+      funnel_attachments: {
+        Row: {
+          created_at: string
+          file_path: string | null
+          file_size: number | null
+          file_type: string
+          file_url: string
+          funnel_id: string
+          id: string
+          name: string
+          owner_id: string
+          position: number
+          step_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string
+          file_url: string
+          funnel_id: string
+          id?: string
+          name: string
+          owner_id: string
+          position?: number
+          step_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          funnel_id?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          position?: number
+          step_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_attachments_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_attachments_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_lead_form_config: {
         Row: {
           capture_enabled: boolean | null
