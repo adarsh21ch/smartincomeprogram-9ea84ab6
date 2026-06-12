@@ -791,6 +791,7 @@ const PublicFunnel = () => {
           priceOptions={priceOptions}
           VideoPlayer={CustomVideoPlayer}
           isDark={isDark}
+          attachments={allAttachments}
         />
       ) : (
       <div className="flex-1 flex flex-col max-w-6xl mx-auto px-4 py-8 w-full">
