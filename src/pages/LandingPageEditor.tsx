@@ -82,6 +82,8 @@ We look forward to having you there.`,
   testimonials_display_position: "post_registration",
   visibility: "public",
   access_code_hash: null as string | null,
+  registration_paid_enabled: false,
+  registration_price_inr: 0,
 };
 
 const sectionTypes = [
