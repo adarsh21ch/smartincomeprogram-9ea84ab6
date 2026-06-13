@@ -404,7 +404,7 @@ const AuthPage = () => {
     <div className="min-h-screen flex items-center justify-center p-4 gradient-bg-subtle">
       <div className="absolute inset-0 animate-grid opacity-30" />
       <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-8">
+        <div className="text-center mb-5 sm:mb-8">
           <Link to="/" className="inline-block"><Logo size="lg" /></Link>
           <p className="text-sm text-muted-foreground mt-3">
             {step === "login" && "Welcome back! Sign in to your account."}
@@ -414,7 +414,7 @@ const AuthPage = () => {
           </p>
         </div>
 
-        <div className="glass-card p-8">
+        <div className="glass-card p-5 sm:p-8">
           {/* Login / Register Toggle */}
           {(step === "login" || step === "register") && (
             <div className="flex gap-1 p-1 bg-muted rounded-lg mb-6">
@@ -709,7 +709,7 @@ const RegisterWizard = ({
         ))}
       </div>
 
-      <div className="relative min-h-[170px] overflow-hidden">
+      <div className="relative overflow-hidden">
         <AnimatePresence mode="wait" custom={direction} initial={false}>
           <motion.div
             key={current}
