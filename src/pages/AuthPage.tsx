@@ -414,7 +414,7 @@ const AuthPage = () => {
           </p>
         </div>
 
-        <div className="glass-card p-8">
+        <div className="glass-card p-5 sm:p-8">
           {/* Login / Register Toggle */}
           {(step === "login" || step === "register") && (
             <div className="flex gap-1 p-1 bg-muted rounded-lg mb-6">
