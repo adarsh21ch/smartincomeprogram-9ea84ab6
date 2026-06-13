@@ -194,39 +194,47 @@ const AuthPage = () => {
       const { error } = await signUp(form.email, form.password, form.name, form.phone);
       if (error) {
         if (error.message?.includes("already")) {
-          toast.error("An account with this email already exists. Login instead.");
+          toast.error("An account with this email already exists. Please log in.");
+          setStep("login");
         } else {
           toast.error(error.message);
         }
         return;
       }
 
-      // Auto-confirm is enabled, sign in directly
-      const { error: signInError } = await signIn(form.email, form.password);
-      if (signInError) {
-        toast.error("Account created! Please sign in.");
-        setStep("login");
-        return;
+      // With auto-confirm on, signUp returns an active session immediately —
+      // the AuthProvider listener picks it up and the <Navigate /> at the top
+      // of this page redirects automatically. We just need to make sure the
+      // session is established before doing role-based navigation.
+      let { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // Fallback: explicit sign in (rare path if auto-confirm is temporarily off)
+        const { error: signInError } = await signIn(form.email, form.password);
+        if (signInError) {
+          toast.success("Account created! Please log in.");
+          setStep("login");
+          return;
+        }
+        ({ data: { session } } = await supabase.auth.getSession());
       }
 
-      // Mark invite code as used
-      if (inviteCodeId) {
-        try {
-          const uid = (await supabase.auth.getUser()).data.user?.id;
-          await supabase.functions.invoke("verify-invite-code", {
-            body: { code: inviteCode.trim().toUpperCase(), action: "use", user_email: form.email, user_id: uid },
-          });
-        } catch {}
+      const uid = session?.user?.id;
+
+      // Mark invite code as used (non-blocking — don't slow the user down)
+      if (inviteCodeId && uid) {
+        supabase.functions.invoke("verify-invite-code", {
+          body: { code: inviteCode.trim().toUpperCase(), action: "use", user_email: form.email, user_id: uid },
+        }).catch(() => {});
       }
 
-      const uid = (await supabase.auth.getUser()).data.user?.id;
+      toast.success(`Welcome, ${form.name.split(" ")[0]}! 🎉`);
+
       if (uid) {
         const { data: roleData } = await supabase.rpc("has_role", { _user_id: uid, _role: "admin" });
-        navigate(roleData ? "/admin/dashboard" : "/home");
+        navigate(roleData ? "/admin/dashboard" : "/home", { replace: true });
       } else {
-        navigate("/home");
+        navigate("/home", { replace: true });
       }
-      toast.success("Welcome! Your account is ready.");
     } finally {
       setSubmitting(false);
     }
