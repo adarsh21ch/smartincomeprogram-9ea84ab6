@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, Link, useNavigate, Navigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/landing/Logo";
-import { Eye, EyeOff, Mail, Lock, User, Phone, CheckCircle2, XCircle, Ticket } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Phone, CheckCircle2, XCircle, Ticket, ArrowLeft, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { lovable } from "@/integrations/lovable/index";
