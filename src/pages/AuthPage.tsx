@@ -404,7 +404,7 @@ const AuthPage = () => {
     <div className="min-h-screen flex items-center justify-center p-4 gradient-bg-subtle">
       <div className="absolute inset-0 animate-grid opacity-30" />
       <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-8">
+        <div className="text-center mb-5 sm:mb-8">
           <Link to="/" className="inline-block"><Logo size="lg" /></Link>
           <p className="text-sm text-muted-foreground mt-3">
             {step === "login" && "Welcome back! Sign in to your account."}
