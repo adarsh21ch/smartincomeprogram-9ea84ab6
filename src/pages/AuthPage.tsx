@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, Link, useNavigate, Navigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/landing/Logo";
-import { Eye, EyeOff, Mail, Lock, User, Phone, CheckCircle2, XCircle, Ticket } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Phone, CheckCircle2, XCircle, Ticket, ArrowLeft, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { lovable } from "@/integrations/lovable/index";
@@ -470,105 +471,26 @@ const AuthPage = () => {
             </form>
           )}
 
-          {/* REGISTER */}
+          {/* REGISTER (one-question-at-a-time wizard) */}
           {step === "register" && (
-            <form onSubmit={handleRegister} className="space-y-4">
-              {inviteRequired && !inviteCodeVerified && (
-                <div className="space-y-3 pb-4 mb-4 border-b border-border">
-                  <div className="space-y-2">
-                    <Label className="text-sm">Invite Code <span className="text-destructive">*</span></Label>
-                    <div className="relative">
-                      <Ticket size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input placeholder="Enter invite code" className="pl-9 bg-muted border-border uppercase"
-                        value={inviteCode} onChange={(e) => { setInviteCode(e.target.value); setCodeError(""); }}
-                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleVerifyInviteCode(); } }} />
-                    </div>
-                    {codeError && (
-                      <div className="flex items-center gap-2 text-destructive text-sm">
-                        <XCircle size={14} /><span>{codeError}</span>
-                      </div>
-                    )}
-                  </div>
-                  <Button type="button" variant="hero" className="w-full" size="lg"
-                    disabled={verifyingCode} onClick={handleVerifyInviteCode}>
-                    {verifyingCode ? "Verifying..." : "Verify Code →"}
-                  </Button>
-                </div>
-              )}
-
-              {inviteCodeVerified && (
-                <div className="flex items-center gap-2 text-sm text-primary bg-primary/10 rounded-lg px-3 py-2 mb-2">
-                  <CheckCircle2 size={16} />
-                  <span>Valid invite code!</span>
-                </div>
-              )}
-
-              {(!inviteRequired || inviteCodeVerified) && (
-                <>
-                  {/* Optional invite code field when not required */}
-                  {!inviteRequired && (
-                    <div className="space-y-2">
-                      <Label className="text-sm">Invite Code <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                      <div className="relative">
-                        <Ticket size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input placeholder="Enter invite code" className="pl-9 bg-muted border-border uppercase"
-                          value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label className="text-sm">Full Name <span className="text-destructive">*</span></Label>
-                    <div className="relative">
-                      <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input placeholder="Your full name" className="pl-9 bg-muted border-border"
-                        value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm">Phone <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                    <div className="relative">
-                      <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input placeholder="+91 9876543210" className="pl-9 bg-muted border-border"
-                        value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm">Email <span className="text-destructive">*</span></Label>
-                    <div className="relative">
-                      <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input type="email" placeholder="you@example.com" className="pl-9 bg-muted border-border" required
-                        autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false}
-                        value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm">Password <span className="text-destructive">*</span></Label>
-                    <div className="relative">
-                      <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input type={showPassword ? "text" : "password"} placeholder="Min 6 characters"
-                        className="pl-9 pr-10 bg-muted border-border" required
-                        autoComplete="new-password"
-                        onKeyUp={(e) => setCapsLockOn(e.getModifierState && e.getModifierState("CapsLock"))}
-                        onKeyDown={(e) => setCapsLockOn(e.getModifierState && e.getModifierState("CapsLock"))}
-                        value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                    {capsLockOn && (
-                      <p className="text-[11px] text-amber-500">⚠ Caps Lock is on</p>
-                    )}
-                  </div>
-                  <Button variant="hero" className="w-full" size="lg" disabled={submitting}>
-                    {submitting ? "Creating account..." : "Create Account →"}
-                  </Button>
-                  {renderSocialButtons()}
-                </>
-              )}
-            </form>
+            <RegisterWizard
+              form={form}
+              setForm={setForm}
+              inviteRequired={inviteRequired}
+              inviteCode={inviteCode}
+              setInviteCode={setInviteCode}
+              inviteCodeVerified={inviteCodeVerified}
+              verifyingCode={verifyingCode}
+              codeError={codeError}
+              handleVerifyInviteCode={handleVerifyInviteCode}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+              submitting={submitting}
+              onSubmit={handleRegister}
+              renderSocialButtons={renderSocialButtons}
+            />
           )}
+
 
           {/* OTP VERIFICATION */}
           {step === "otp" && (
@@ -652,6 +574,277 @@ const AuthPage = () => {
         <PublicFooterBranding variant="dark" />
       </div>
     </div>
+  );
+};
+
+// ---------- One-question-at-a-time register wizard ----------
+type RegisterWizardProps = {
+  form: { name: string; email: string; phone: string; password: string };
+  setForm: React.Dispatch<React.SetStateAction<{ name: string; email: string; phone: string; password: string }>>;
+  inviteRequired: boolean;
+  inviteCode: string;
+  setInviteCode: (v: string) => void;
+  inviteCodeVerified: boolean;
+  verifyingCode: boolean;
+  codeError: string;
+  handleVerifyInviteCode: () => Promise<void> | void;
+  showPassword: boolean;
+  setShowPassword: (v: boolean) => void;
+  submitting: boolean;
+  onSubmit: (e: React.FormEvent) => Promise<void> | void;
+  renderSocialButtons: () => JSX.Element;
+};
+
+const RegisterWizard = ({
+  form, setForm, inviteRequired, inviteCode, setInviteCode, inviteCodeVerified,
+  verifyingCode, codeError, handleVerifyInviteCode, showPassword, setShowPassword,
+  submitting, onSubmit, renderSocialButtons,
+}: RegisterWizardProps) => {
+  type Field = "invite" | "name" | "phone" | "email" | "password";
+  const fields: Field[] = useMemo(() => {
+    const f: Field[] = [];
+    if (inviteRequired && !inviteCodeVerified) f.push("invite");
+    f.push("name", "phone", "email", "password");
+    return f;
+  }, [inviteRequired, inviteCodeVerified]);
+
+  const [idx, setIdx] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Reset when fields list changes (e.g. invite verified)
+  useEffect(() => { setIdx(0); }, [fields.length]);
+
+  // Autofocus current field
+  useEffect(() => {
+    const t = setTimeout(() => inputRef.current?.focus(), 60);
+    return () => clearTimeout(t);
+  }, [idx, fields]);
+
+  const current = fields[idx];
+  const isLast = idx === fields.length - 1;
+
+  const validateCurrent = (): string | null => {
+    if (current === "invite") {
+      if (!inviteCode.trim()) return "Please enter your invite code";
+      return null;
+    }
+    if (current === "name") {
+      if (!form.name.trim()) return "Please enter your name";
+      return null;
+    }
+    if (current === "phone") return null; // optional
+    if (current === "email") {
+      if (!form.email.trim()) return "Please enter your email";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return "Please enter a valid email";
+      return null;
+    }
+    if (current === "password") {
+      if (form.password.length < 6) return "Password must be at least 6 characters";
+      return null;
+    }
+    return null;
+  };
+
+  const goNext = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const err = validateCurrent();
+    if (err) { toast.error(err); return; }
+
+    if (current === "invite") {
+      await handleVerifyInviteCode();
+      return; // fields list will rebuild and idx resets to 0 (name)
+    }
+
+    if (isLast) {
+      await onSubmit(e as React.FormEvent);
+      return;
+    }
+    setDirection(1);
+    setIdx((i) => i + 1);
+  };
+
+  const goBack = () => {
+    if (idx === 0) return;
+    setDirection(-1);
+    setIdx((i) => i - 1);
+  };
+
+  const labelMap: Record<Field, { label: string; hint: string }> = {
+    invite: { label: "Enter your invite code", hint: "We sent this to you over WhatsApp or email." },
+    name: { label: "What's your full name?", hint: "This is how we'll address you." },
+    phone: { label: "Your phone number", hint: "Optional — for important updates only." },
+    email: { label: "Your email address", hint: "You'll sign in with this." },
+    password: { label: "Create a password", hint: "Just 6 characters minimum. Anything you'll remember." },
+  };
+  const { label, hint } = labelMap[current];
+
+  const variants = {
+    enter: (dir: number) => ({ opacity: 0, x: dir > 0 ? 24 : -24 }),
+    center: { opacity: 1, x: 0 },
+    exit: (dir: number) => ({ opacity: 0, x: dir > 0 ? -24 : 24 }),
+  };
+
+  const totalDots = fields.length;
+
+  return (
+    <form onSubmit={goNext} className="space-y-5">
+      {/* Progress dots */}
+      <div className="flex items-center justify-center gap-1.5">
+        {Array.from({ length: totalDots }).map((_, i) => (
+          <span
+            key={i}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              i === idx ? "w-6 bg-primary" : i < idx ? "w-1.5 bg-primary/60" : "w-1.5 bg-muted-foreground/30"
+            }`}
+          />
+        ))}
+      </div>
+
+      <div className="relative min-h-[170px] overflow-hidden">
+        <AnimatePresence mode="wait" custom={direction} initial={false}>
+          <motion.div
+            key={current}
+            custom={direction}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+            className="space-y-3"
+          >
+            <div className="space-y-1">
+              <h2 className="text-lg font-heading font-bold text-foreground">{label}</h2>
+              <p className="text-xs text-muted-foreground">{hint}</p>
+            </div>
+
+            {current === "invite" && (
+              <>
+                <div className="relative">
+                  <Ticket size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    ref={inputRef}
+                    placeholder="ENTER CODE"
+                    className="pl-9 bg-muted border-border uppercase h-12 text-base"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                  />
+                </div>
+                {codeError && (
+                  <div className="flex items-center gap-2 text-destructive text-xs">
+                    <XCircle size={14} /><span>{codeError}</span>
+                  </div>
+                )}
+              </>
+            )}
+
+            {current === "name" && (
+              <div className="relative">
+                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  ref={inputRef}
+                  placeholder="e.g. Rahul Sharma"
+                  autoComplete="name"
+                  autoCapitalize="words"
+                  className="pl-9 bg-muted border-border h-12 text-base"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
+            )}
+
+            {current === "phone" && (
+              <div className="relative">
+                <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  ref={inputRef}
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  placeholder="+91 9876543210"
+                  className="pl-9 bg-muted border-border h-12 text-base"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                />
+              </div>
+            )}
+
+            {current === "email" && (
+              <div className="relative">
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  ref={inputRef}
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  placeholder="you@example.com"
+                  className="pl-9 bg-muted border-border h-12 text-base"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+            )}
+
+            {current === "password" && (
+              <>
+                <div className="relative">
+                  <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    ref={inputRef}
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="At least 6 characters"
+                    className="pl-9 pr-10 bg-muted border-border h-12 text-base"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Any 6+ characters work — e.g. <span className="font-mono">888888</span>
+                </p>
+              </>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <div className="flex items-center gap-2">
+        {idx > 0 && (
+          <Button type="button" variant="outline" size="lg" className="px-3" onClick={goBack} disabled={submitting || verifyingCode}>
+            <ArrowLeft size={18} />
+          </Button>
+        )}
+        <Button
+          type="submit"
+          variant="hero"
+          size="lg"
+          className="flex-1"
+          disabled={submitting || verifyingCode}
+        >
+          {current === "invite"
+            ? (verifyingCode ? "Verifying..." : "Verify Code")
+            : isLast
+              ? (submitting ? "Creating account..." : "Create Account")
+              : "Continue"}
+          <ArrowRight size={18} className="ml-1" />
+        </Button>
+      </div>
+
+      {/* Social options only on the first non-invite step to keep things clean */}
+      {current === "name" && (
+        <div className="pt-1">{renderSocialButtons()}</div>
+      )}
+    </form>
   );
 };
 
