@@ -709,7 +709,7 @@ const RegisterWizard = ({
         ))}
       </div>
 
-      <div className="relative min-h-[170px] overflow-hidden">
+      <div className="relative overflow-hidden">
         <AnimatePresence mode="wait" custom={direction} initial={false}>
           <motion.div
             key={current}
