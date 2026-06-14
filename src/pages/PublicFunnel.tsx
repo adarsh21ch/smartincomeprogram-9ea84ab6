@@ -20,7 +20,6 @@ import {
 import { CodeGateScreen } from "@/components/funnel/CodeGateScreen";
 import { PrivateLeadForm } from "@/components/funnel/PrivateLeadForm";
 import PublicFooterBranding from "@/components/PublicFooterBranding";
-import { ContentProtection, PROTECTED_VIDEO_PROPS } from "@/components/funnel/ContentProtection";
 import { AttachmentsList, type FunnelAttachment } from "@/components/funnel/AttachmentsList";
 /* ─── Speed Popover ─── */
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
@@ -318,7 +317,6 @@ const CustomVideoPlayer = ({
         className="w-full h-full object-contain"
         playsInline
         preload="auto"
-        {...PROTECTED_VIDEO_PROPS}
         onTimeUpdate={handleTimeUpdate}
         onSeeking={handleSeeking}
         onLoadedMetadata={() => { if (videoRef.current) { setDuration(videoRef.current.duration); if (initialTime > 0) videoRef.current.currentTime = initialTime; } }}
@@ -748,12 +746,7 @@ const PublicFunnel = () => {
     </div>
   );
 
-  const watermarkId =
-    [leadForm.name, leadForm.phone, leadForm.email].filter(Boolean).join(" · ") ||
-    `${funnel.title} · smartincomeprogram.in`;
-
   return (
-    <ContentProtection watermark={watermarkId}>
     <div className="flex flex-col" style={{ background: tc.bg, minHeight: "100dvh" }}>
       {/* Header */}
       <div
@@ -1030,7 +1023,6 @@ const PublicFunnel = () => {
         }
       `}</style>
     </div>
-    </ContentProtection>
   );
 };
 
