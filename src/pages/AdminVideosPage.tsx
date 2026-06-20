@@ -49,9 +49,9 @@ const AdminVideosPage = () => {
       toast.success("Video uploaded successfully");
       setTitle("");
       queryClient.invalidateQueries({ queryKey: ["admin-all-videos"] });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Upload error:", err);
-      toast.error(err.message || "Upload failed");
+      toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -72,10 +72,6 @@ const AdminVideosPage = () => {
   const copyLink = (id: string) => {
     navigator.clipboard.writeText(`${window.location.origin}/video/${id}`);
     toast.success("Video link copied!");
-  };
-
-  const useInFunnel = (videoId: string) => {
-    navigate(`/funnels/create?videoId=${videoId}`);
   };
 
   const formatSize = (bytes: number | null) => {
@@ -175,7 +171,7 @@ const AdminVideosPage = () => {
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyLink(v.id)} title="Copy Link">
                             <Link2 size={14} />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => useInFunnel(v.id)} title="Use in Funnel">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/funnels/create?videoId=${v.id}`)} title="Use in Funnel">
                             <Rocket size={14} />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { if (confirm("Delete this video?")) deleteMutation.mutate(v.id); }}>
@@ -233,7 +229,7 @@ const AdminVideosPage = () => {
                   <Button variant="ghost" size="sm" className="flex-1 h-9" onClick={() => copyLink(v.id)} title="Copy Link">
                     <Link2 size={14} />
                   </Button>
-                  <Button variant="ghost" size="sm" className="flex-1 h-9" onClick={() => useInFunnel(v.id)} title="Use in Funnel">
+                  <Button variant="ghost" size="sm" className="flex-1 h-9" onClick={() => navigate(`/funnels/create?videoId=${v.id}`)} title="Use in Funnel">
                     <Rocket size={14} />
                   </Button>
                   <Button variant="ghost" size="sm" className="flex-1 h-9 text-destructive bg-destructive/10 hover:bg-destructive/20" onClick={() => { if (confirm("Delete this video?")) deleteMutation.mutate(v.id); }}>
