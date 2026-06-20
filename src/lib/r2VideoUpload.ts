@@ -5,7 +5,7 @@ interface UploadVideoToR2Options {
   title?: string;
   timeoutMs?: number;
   concurrency?: number;
-  onProgress?: (progress: number) => void;
+  onProgress?: (progress: number, uploadedBytes?: number) => void;
 }
 
 interface UploadVideoToR2Result {
@@ -116,7 +116,7 @@ export const uploadVideoToR2 = async ({
 
       const publishProgress = () => {
         const loaded = partProgress.reduce((sum, value) => sum + value, 0);
-        onProgress?.(Math.min(99, Math.floor((loaded / file.size) * 100)));
+        onProgress?.(Math.min(99, Math.floor((loaded / file.size) * 100)), loaded);
       };
 
       const uploadPart = async (partIndex: number) => {
@@ -164,16 +164,16 @@ export const uploadVideoToR2 = async ({
       });
 
       if (completeError || !completeData?.success) throw new Error(completeData?.error || completeError?.message || "Could not finish video upload");
-      onProgress?.(100);
+      onProgress?.(100, file.size);
     } else {
       await uploadBlobWithProgress({
         url: data.uploadUrl,
         body: file,
         contentType: file.type,
         timeoutMs,
-        onProgress: (loaded) => onProgress?.(Math.round((loaded / file.size) * 100)),
+        onProgress: (loaded) => onProgress?.(Math.round((loaded / file.size) * 100), loaded),
       });
-      onProgress?.(100);
+      onProgress?.(100, file.size);
     }
 
     const { data: confirmData, error: confirmError } = await supabase.functions.invoke("confirm-r2-upload", {
