@@ -251,7 +251,7 @@ export const uploadVideoToR2 = async ({
             timeoutMs,
             stallTimeoutMs,
             onProgress: (loaded) => {
-              partProgress[partIndex] = loaded;
+              partProgress[partIndex] = Math.max(partProgress[partIndex], loaded);
               publishProgress();
             },
           });
