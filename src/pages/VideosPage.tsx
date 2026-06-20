@@ -12,6 +12,7 @@ import { VideoRenameModal } from "@/components/VideoRenameModal";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { uploadVideoToR2 } from "@/lib/r2VideoUpload";
 
 const VideosPage = () => {
   const { user } = useAuth();
@@ -43,55 +44,32 @@ const VideosPage = () => {
     if (!user) return;
     setUploading(true);
     setUploadProgress(0);
-    let videoId: string | null = null;
+    setUploadSpeed(0);
+    setUploadEta(0);
+    const startTime = Date.now();
 
     try {
-      const { data, error } = await supabase.functions.invoke("get-r2-upload-url", {
-        body: { filename: file.name, contentType: file.type, title: title || file.name },
-      });
-      if (error || !data?.uploadUrl) throw new Error(data?.error || "Failed to get upload URL");
-      videoId = data.videoId;
-
-      const xhr = new XMLHttpRequest();
-      const startTime = Date.now();
-      xhr.upload.addEventListener("progress", (e) => {
-        if (!e.lengthComputable) return;
-        setUploadProgress(Math.round((e.loaded / e.total) * 100));
-        const elapsed = (Date.now() - startTime) / 1000;
-        if (elapsed > 0.5) {
-          const speed = e.loaded / elapsed; // bytes/sec
-          setUploadSpeed(speed);
-          const remaining = (e.total - e.loaded) / speed;
-          setUploadEta(remaining);
-        }
+      await uploadVideoToR2({
+        file,
+        title: title || file.name,
+        timeoutMs: 60 * 60 * 1000,
+        onProgress: (progress, uploadedBytes = 0) => {
+          setUploadProgress(progress);
+          const elapsed = (Date.now() - startTime) / 1000;
+          if (elapsed > 0.5 && uploadedBytes > 0) {
+            const speed = uploadedBytes / elapsed;
+            setUploadSpeed(speed);
+            setUploadEta((file.size - uploadedBytes) / Math.max(speed, 1));
+          }
+        },
       });
 
-      await new Promise<void>((resolve, reject) => {
-        xhr.open("PUT", data.uploadUrl);
-        xhr.setRequestHeader("Content-Type", file.type);
-        xhr.timeout = 60 * 60 * 1000; // 1 hour for big files on slow links
-        xhr.onload = () => (xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (HTTP ${xhr.status})`)));
-        xhr.onerror = () => reject(new Error("Network error"));
-        xhr.ontimeout = () => reject(new Error("Upload timed out"));
-        xhr.send(file);
-      });
-
-      const { error: confirmErr } = await supabase.functions.invoke("confirm-r2-upload", {
-        body: { videoId: data.videoId, fileSizeBytes: file.size },
-      });
-      if (confirmErr) throw new Error("Upload succeeded but confirmation failed");
-
-      toast.success("Video uploaded successfully!");
+      toast.success("Video uploaded successfully");
       setTitle("");
       queryClient.invalidateQueries({ queryKey: ["videos"] });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Upload error:", err);
-      toast.error(err.message || "Upload failed");
-      if (videoId) {
-        try {
-          await supabase.functions.invoke("confirm-r2-upload", { body: { videoId, failed: true, errorMessage: err.message } });
-        } catch (_) {}
-      }
+      toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -117,8 +95,6 @@ const VideosPage = () => {
     if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
   };
-
-  const useInFunnel = (videoId: string) => navigate(`/funnels/create?videoId=${videoId}`);
 
   return (
     <DashboardLayout>
@@ -200,7 +176,7 @@ const VideosPage = () => {
                   <Button variant="ghost" size="sm" className="h-7 text-xs flex-1" onClick={() => setShareVideo({ id: v.id, title: v.title })}>
                     <Share2 size={12} className="mr-1" /> Share
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs flex-1" onClick={() => useInFunnel(v.id)}>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs flex-1" onClick={() => navigate(`/funnels/create?videoId=${v.id}`)}>
                     <Rocket size={12} className="mr-1" /> Funnel
                   </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { if (confirm("Delete this video?")) deleteMutation.mutate(v.id); }}>
