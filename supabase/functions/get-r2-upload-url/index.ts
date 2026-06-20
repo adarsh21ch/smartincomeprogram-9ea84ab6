@@ -66,11 +66,10 @@ function json(body: unknown, status = 200) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-    const normalizedR2Endpoint = normalizeR2Endpoint(R2_ENDPOINT, R2_BUCKET_NAME);
-    console.log("R2 endpoint ready for signing", { bucket: R2_BUCKET_NAME, endpoint: normalizedR2Endpoint });
+  const normalizedR2Endpoint = normalizeR2Endpoint(R2_ENDPOINT, R2_BUCKET_NAME);
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return new Response(JSON.stringify({ error: "No auth" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!authHeader) return json({ error: "No auth" }, 401);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -79,15 +78,64 @@ Deno.serve(async (req) => {
     );
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!user) return json({ error: "Unauthorized" }, 401);
 
-    const { filename, contentType, title } = await req.json();
-    if (!filename || !contentType) return new Response(JSON.stringify({ error: "Missing filename/contentType" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const body = await req.json();
+    const { filename, contentType, title, fileSizeBytes, multipart, action, videoId, r2Key, uploadId, partNumber, parts } = body;
 
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    const s3 = new S3Client({
+      region: "auto",
+      endpoint: normalizedR2Endpoint,
+      forcePathStyle: true,
+      credentials: {
+        accessKeyId: R2_ACCESS_KEY_ID,
+        secretAccessKey: R2_SECRET_ACCESS_KEY,
+      },
+    });
+
+    if (action) {
+      if (!videoId || !r2Key) return json({ error: "Missing upload identifiers" }, 400);
+
+      const { data: video } = await serviceClient.from("video_assets").select("owner_id,r2_key").eq("id", videoId).single();
+      if (!video || video.owner_id !== user.id || video.r2_key !== r2Key) return json({ error: "Forbidden" }, 403);
+
+      if (action === "sign-part") {
+        if (!uploadId || !Number.isInteger(partNumber) || partNumber < 1) return json({ error: "Missing part details" }, 400);
+        const uploadUrl = await getSignedUrl(s3, new UploadPartCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId, PartNumber: partNumber }), { expiresIn: 3600 });
+        return json({ uploadUrl });
+      }
+
+      if (action === "complete") {
+        if (!uploadId || !Array.isArray(parts) || parts.length === 0) return json({ error: "Missing completed parts" }, 400);
+        const completedParts = parts
+          .map((part: { partNumber?: number; etag?: string }) => ({ PartNumber: part.partNumber, ETag: part.etag }))
+          .filter((part: { PartNumber?: number; ETag?: string }) => Number.isInteger(part.PartNumber) && typeof part.ETag === "string")
+          .sort((a, b) => a.PartNumber! - b.PartNumber!);
+
+        await s3.send(new CompleteMultipartUploadCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId, MultipartUpload: { Parts: completedParts } }));
+        return json({ success: true });
+      }
+
+      if (action === "abort") {
+        if (uploadId) await s3.send(new AbortMultipartUploadCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId })).catch(() => null);
+        return json({ success: true });
+      }
+
+      if (action === "list-parts") {
+        if (!uploadId) return json({ error: "Missing uploadId" }, 400);
+        const listed = await s3.send(new ListPartsCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId }));
+        return json({ parts: (listed.Parts || []).map((part) => ({ partNumber: part.PartNumber, etag: part.ETag, size: part.Size })) });
+      }
+
+      return json({ error: "Unknown upload action" }, 400);
+    }
+
+    if (!filename || !contentType) return json({ error: "Missing filename/contentType" }, 400);
 
     const safeFilename = sanitizeFilename(filename);
 
@@ -104,16 +152,11 @@ Deno.serve(async (req) => {
 
     const r2Key = `videos/${video.id}/${safeFilename}`;
 
-    // Use official AWS SDK presigner
-    const s3 = new S3Client({
-      region: "auto",
-      endpoint: normalizedR2Endpoint,
-      forcePathStyle: true,
-      credentials: {
-        accessKeyId: R2_ACCESS_KEY_ID,
-        secretAccessKey: R2_SECRET_ACCESS_KEY,
-      },
-    });
+    if (multipart || (Number(fileSizeBytes) || 0) >= 512 * 1024 * 1024) {
+      const created = await s3.send(new CreateMultipartUploadCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, ContentType: contentType }));
+      const partSize = getPartSize(Number(fileSizeBytes));
+      return json({ videoId: video.id, r2Key, uploadId: created.UploadId, partSize, multipart: true });
+    }
 
     const command = new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,
@@ -125,13 +168,14 @@ Deno.serve(async (req) => {
 
     await serviceClient.from("video_assets").update({ r2_key: r2Key }).eq("id", video.id);
 
-    return new Response(JSON.stringify({
+    return json({
       uploadUrl,
       videoId: video.id,
       r2Key,
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      multipart: false,
+    });
   } catch (err: any) {
     console.error("get-r2-upload-url error:", err);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return json({ error: err.message }, 500);
   }
 });
