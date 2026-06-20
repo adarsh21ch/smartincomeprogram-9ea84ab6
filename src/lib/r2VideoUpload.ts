@@ -66,16 +66,41 @@ const uploadBlobWithProgress = ({
   body,
   contentType,
   timeoutMs,
+  stallTimeoutMs,
   onProgress,
 }: {
   url: string;
   body: Blob;
   contentType: string;
   timeoutMs: number;
+  stallTimeoutMs: number;
   onProgress?: (loaded: number) => void;
 }) =>
   new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    let settled = false;
+    let stallTimer: number | undefined;
+
+    const clearStallTimer = () => {
+      if (stallTimer) window.clearTimeout(stallTimer);
+      stallTimer = undefined;
+    };
+
+    const settle = (callback: (value?: unknown) => void, value?: unknown) => {
+      if (settled) return;
+      settled = true;
+      clearStallTimer();
+      callback(value);
+    };
+
+    const resetStallTimer = () => {
+      clearStallTimer();
+      if (stallTimeoutMs <= 0) return;
+      stallTimer = window.setTimeout(() => {
+        settle(reject, new Error("Upload stalled because the network stopped sending data. Retrying this video chunk..."));
+        xhr.abort();
+      }, stallTimeoutMs);
+    };
 
     xhr.open("PUT", url);
     xhr.timeout = timeoutMs;
@@ -83,25 +108,28 @@ const uploadBlobWithProgress = ({
 
     xhr.upload.addEventListener("progress", (event) => {
       if (!event.lengthComputable) return;
+      resetStallTimer();
       onProgress?.(event.loaded);
     });
 
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         onProgress?.(body.size);
-        resolve();
+        settle(resolve);
         return;
       }
 
-      reject(new Error(`Upload failed (HTTP ${xhr.status})`));
+      settle(reject, new Error(`Upload failed (HTTP ${xhr.status})`));
     };
 
-    xhr.onerror = () => reject(new Error("Network error while uploading video"));
-    xhr.ontimeout = () => reject(new Error("Upload timed out. Keep this page open and use a stronger connection for large videos."));
+    xhr.onerror = () => settle(reject, new Error("Network error while uploading video"));
+    xhr.onabort = () => settle(reject, new Error("Upload was interrupted"));
+    xhr.ontimeout = () => settle(reject, new Error("Upload timed out. Keep this page open and use a stronger connection for large videos."));
+    resetStallTimer();
     xhr.send(body);
   });
 
-const withRetry = async (task: () => Promise<void>, attempts = 3) => {
+const withRetry = async (task: () => Promise<void>, attempts = 5) => {
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -110,7 +138,7 @@ const withRetry = async (task: () => Promise<void>, attempts = 3) => {
       return;
     } catch (error) {
       lastError = error;
-      if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, attempt * 1200));
+      if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, Math.min(12000, attempt * attempt * 1000)));
     }
   }
 
