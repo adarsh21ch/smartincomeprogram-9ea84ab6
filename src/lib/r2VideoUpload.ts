@@ -28,8 +28,8 @@ const getErrorMessage = (error: unknown) => {
 };
 
 // supabase.functions.invoke hides the response body on non-2xx; unwrap it so users see the real reason.
-const invokeUploadFn = async <T = any>(body: Record<string, unknown>): Promise<T> => {
-  const { data, error } = await supabase.functions.invoke("get-r2-upload-url", { body });
+const invokeFunction = async <T = any>(functionName: string, body: Record<string, unknown>): Promise<T> => {
+  const { data, error } = await supabase.functions.invoke(functionName, { body });
   if (error) {
     let detail = "";
     try {
@@ -49,6 +49,9 @@ const invokeUploadFn = async <T = any>(body: Record<string, unknown>): Promise<T
   return data as T;
 };
 
+const invokeUploadFn = async <T = any>(body: Record<string, unknown>): Promise<T> =>
+  invokeFunction<T>("get-r2-upload-url", body);
+
 const isRecoverableUploadError = (error: unknown) => {
   const message = getErrorMessage(error).toLowerCase();
   return ["network", "stalled", "timed out", "interrupted", "failed to fetch", "load failed", "nosuchupload", "expired", "upload service error", "could not be verified"].some((term) => message.includes(term));
@@ -56,6 +59,7 @@ const isRecoverableUploadError = (error: unknown) => {
 
 const MULTIPART_THRESHOLD_BYTES = 256 * 1024 * 1024;
 const DEFAULT_STALL_TIMEOUT_MS = 2 * 60 * 1000;
+const SIGNED_PART_BATCH_SIZE = 10;
 
 const getResumeStorageKey = (file: File) =>
   `r2-video-upload:${file.name}:${file.size}:${file.lastModified}`;
@@ -88,6 +92,8 @@ const clearResumeState = (file: File) => {
   }
 };
 
+const normalizeEtag = (etag: string | null) => etag?.trim() || "";
+
 const uploadBlobWithProgress = ({
   url,
   body,
@@ -103,7 +109,7 @@ const uploadBlobWithProgress = ({
   stallTimeoutMs: number;
   onProgress?: (loaded: number) => void;
 }) =>
-  new Promise<void>((resolve, reject) => {
+  new Promise<string>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     let settled = false;
     let stallTimer: number | undefined;
@@ -113,11 +119,11 @@ const uploadBlobWithProgress = ({
       stallTimer = undefined;
     };
 
-    const settleSuccess = () => {
+    const settleSuccess = (etag: string) => {
       if (settled) return;
       settled = true;
       clearStallTimer();
-      resolve();
+      resolve(etag);
     };
 
     const settleFailure = (error: Error) => {
@@ -149,7 +155,7 @@ const uploadBlobWithProgress = ({
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         onProgress?.(body.size);
-        settleSuccess();
+        settleSuccess(normalizeEtag(xhr.getResponseHeader("ETag")));
         return;
       }
 
@@ -163,13 +169,12 @@ const uploadBlobWithProgress = ({
     xhr.send(body);
   });
 
-const withRetry = async (task: () => Promise<void>, attempts = 5) => {
+const withRetry = async <T>(task: () => Promise<T>, attempts = 5): Promise<T> => {
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      await task();
-      return;
+      return await task();
     } catch (error) {
       lastError = error;
       if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, Math.min(12000, attempt * attempt * 1000)));
@@ -213,10 +218,11 @@ export const uploadVideoToR2 = async ({
 
     if (data.multipart) {
       multipartUploadId = data.uploadId;
-      const partSize = Number(data.partSize || 16 * 1024 * 1024);
+      const partSize = Number(data.partSize || 64 * 1024 * 1024);
       const totalParts = Math.ceil(file.size / partSize);
       const partProgress = new Array(totalParts).fill(0);
-      const completedParts: Array<{ partNumber: number }> = [];
+      const completedParts: Array<{ partNumber: number; etag: string }> = [];
+      const signedPartUrls = new Map<number, string>();
       let nextPartIndex = 0;
       keepMultipartForResume = true;
 
@@ -236,9 +242,11 @@ export const uploadVideoToR2 = async ({
         const uploadedParts = Array.isArray(listedParts?.parts) ? listedParts.parts : [];
         for (const part of uploadedParts) {
           const partNumber = Number(part.partNumber);
+          const etag = normalizeEtag(part.etag || null);
           if (!Number.isInteger(partNumber) || partNumber < 1 || partNumber > totalParts) continue;
+          if (!etag) continue;
           partProgress[partNumber - 1] = Number(part.size) || partSize;
-          completedParts.push({ partNumber });
+          completedParts.push({ partNumber, etag });
         }
       } catch (listErr) {
         // Stale resume state (e.g. NoSuchUpload). Restart from scratch.
@@ -251,6 +259,33 @@ export const uploadVideoToR2 = async ({
       }
       publishProgress();
 
+      const getSignedPartUrl = async (partNumber: number) => {
+        const existingUrl = signedPartUrls.get(partNumber);
+        if (existingUrl) return existingUrl;
+
+        const fromPart = partNumber;
+        const toPart = Math.min(totalParts, fromPart + SIGNED_PART_BATCH_SIZE - 1);
+
+        const partNumbers = Array.from({ length: toPart - fromPart + 1 }, (_, index) => fromPart + index)
+          .filter((candidate) => !completedParts.some((part) => part.partNumber === candidate));
+
+        if (partNumbers.length === 0) return signedPartUrls.get(partNumber) || "";
+
+        const signedParts: any = await invokeUploadFn({
+          action: "sign-parts", videoId, r2Key, uploadId: multipartUploadId, partNumbers,
+        });
+
+        const parts = Array.isArray(signedParts?.parts) ? signedParts.parts : [];
+        for (const part of parts) {
+          const signedPartNumber = Number(part.partNumber);
+          if (Number.isInteger(signedPartNumber) && part.uploadUrl) signedPartUrls.set(signedPartNumber, part.uploadUrl);
+        }
+
+        const uploadUrl = signedPartUrls.get(partNumber);
+        if (!uploadUrl) throw new Error(`Failed to prepare part ${partNumber}`);
+        return uploadUrl;
+      };
+
       const uploadPart = async (partIndex: number) => {
         const partNumber = partIndex + 1;
         if (completedParts.some((part) => part.partNumber === partNumber)) return;
@@ -258,28 +293,36 @@ export const uploadVideoToR2 = async ({
         const end = Math.min(start + partSize, file.size);
         const blob = file.slice(start, end);
 
-        await withRetry(async () => {
-          const partData: any = await invokeUploadFn({
-            action: "sign-part", videoId, r2Key, uploadId: multipartUploadId, partNumber,
-          });
-          if (!partData?.uploadUrl) throw new Error(partData?.error || `Failed to prepare part ${partNumber}`);
+        const etag = await withRetry(async () => {
+          try {
+            const uploadUrl = await getSignedPartUrl(partNumber);
 
-          await uploadBlobWithProgress({
-            url: partData.uploadUrl,
-            body: blob,
-            contentType: file.type,
-            timeoutMs,
-            stallTimeoutMs,
-            onProgress: (loaded) => {
-              partProgress[partIndex] = Math.max(partProgress[partIndex], loaded);
-              publishProgress();
-            },
-          });
+            const uploadedEtag = await uploadBlobWithProgress({
+              url: uploadUrl,
+              body: blob,
+              contentType: file.type,
+              timeoutMs,
+              stallTimeoutMs,
+              onProgress: (loaded) => {
+                partProgress[partIndex] = Math.max(partProgress[partIndex], loaded);
+                publishProgress();
+              },
+            });
+
+            if (!uploadedEtag) {
+              throw new Error("R2 upload completed but the ETag header was not readable. Update the R2 bucket CORS policy to expose the ETag header, then retry.");
+            }
+
+            return uploadedEtag;
+          } catch (error) {
+            signedPartUrls.delete(partNumber);
+            throw error;
+          }
         });
 
         partProgress[partIndex] = blob.size;
         if (!completedParts.some((part) => part.partNumber === partNumber)) {
-          completedParts.push({ partNumber });
+          completedParts.push({ partNumber, etag });
         }
         publishProgress();
       };
@@ -298,6 +341,10 @@ export const uploadVideoToR2 = async ({
       const uniqueCompletedParts = Array.from(
         new Map(completedParts.map((p) => [p.partNumber, p])).values(),
       ).sort((a, b) => a.partNumber - b.partNumber);
+
+      if (uniqueCompletedParts.length !== totalParts) {
+        throw new Error("Upload did not finish every video chunk. Please retry; completed chunks will resume automatically.");
+      }
 
       let completeData: any;
       try {
@@ -329,16 +376,12 @@ export const uploadVideoToR2 = async ({
       onProgress?.(100, file.size);
     }
 
-    const { data: confirmData, error: confirmError } = await supabase.functions.invoke("confirm-r2-upload", {
-      body: {
-        videoId,
-        fileSizeBytes: file.size,
-      },
+    const confirmData: any = await invokeFunction("confirm-r2-upload", {
+      videoId,
+      fileSizeBytes: file.size,
     });
 
-    if (confirmError || !confirmData?.publicUrl) {
-      throw new Error(confirmData?.error || confirmError?.message || "Upload finished but confirmation failed");
-    }
+    if (!confirmData?.publicUrl) throw new Error(confirmData?.error || "Upload finished but confirmation failed");
 
     return {
       videoId,
@@ -358,12 +401,10 @@ export const uploadVideoToR2 = async ({
 
     if (videoId && !canResumeAfterError) {
       try {
-        await supabase.functions.invoke("confirm-r2-upload", {
-          body: {
-            videoId,
-            failed: true,
-            errorMessage: getErrorMessage(error),
-          },
+        await invokeFunction("confirm-r2-upload", {
+          videoId,
+          failed: true,
+          errorMessage: getErrorMessage(error),
         });
       } catch {
         // best effort cleanup

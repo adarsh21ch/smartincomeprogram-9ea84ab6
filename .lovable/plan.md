@@ -1,36 +1,48 @@
-## Problem
+## Root cause found
 
-Clicking "Register for Program" sometimes opens `/auth` (Login/Signup) instead of the public registration landing page (`/l/smart-income-program`).
+Your upload is not failing because of normal app page CORS. The edge functions already return CORS headers.
 
-Root cause: each Register button (in `SipHero`, `SipCta`, `SipCommunity`) independently fires an async query to fetch the landing page slug from `program_settings.active_register_landing_page_id`. While that query is pending — or if it returns no data — the `<Link to={…}>` falls back to `"/auth?tab=signup"`. If the user clicks before the query resolves, or the query returns null for any reason, they land on the auth page.
+**Do I know what the issue is?** Yes: the current large-video upload path is fragile because it calls the backend edge function once per video chunk, then at the end asks the backend to rediscover uploaded chunks using `ListParts` before completing the upload. That makes uploads slow, causes stalls around mid-progress like 19%, and can fail with a generic edge-function error when any signing/listing/completion call times out or returns non-2xx.
 
-A registration landing page does exist and is public:
-- `program_settings.active_register_landing_page_id` → `smart-income-program` (status `published`)
-- Public viewer route `/l/:slug` (`PublicLandingPage`) does NOT require login.
+The exact risky spots are:
+- `src/lib/r2VideoUpload.ts`: uploads large files in many 16MB chunks and calls `get-r2-upload-url` separately for every part.
+- `supabase/functions/get-r2-upload-url/index.ts`: `complete` action depends on `ListPartsCommand` and retry sleeps before completing, instead of using the exact part ETags from upload responses.
+- `confirm-r2-upload` errors are still shown generically in some cases, so the real backend reason is hidden.
 
-## Fix
+## Fix plan
 
-1. **Centralize the register URL** in `useSipLandingData` (the hook already used by `Index.tsx`). It will:
-   - Read `program_settings.active_register_landing_page_id`.
-   - Fetch the matching `landing_pages.slug` (status = `published`).
-   - Expose `registerUrl` (string) + `registerReady` (boolean).
-   - If unresolved, default `registerUrl` to the known published slug `/l/smart-income-program` instead of `/auth?tab=signup`, so registration is never gated behind login.
+1. **Make multipart completion deterministic**
+   - Update browser upload code to capture each part’s `ETag` from the direct R2 upload response.
+   - Send `{ partNumber, etag }` to the backend complete action.
+   - Stop relying on `ListParts` as the normal completion path.
 
-2. **Pass `registerUrl` down as a prop** from `Index.tsx` to `SipHero`, `SipCta`, `SipCommunity`. Remove their local `useQuery` lookups and the local `RegisterButton` component in `SipHero`. All three buttons render a stable `<Link to={registerUrl}>` from first paint.
+2. **Reduce edge-function pressure**
+   - Increase part size from 16MB to 64MB for large videos.
+   - Add a backend `sign-parts` batch action so the browser signs multiple chunks per function call instead of hitting the edge function for every single part.
+   - Keep retries, but with cleaner backoff and clearer messages.
 
-3. **Keep the standalone "Login / Sign Up"** button (Hero) and Navbar "Login" link pointing to `/auth` — only the Register CTAs change.
+3. **Keep resume safe, but not blocking**
+   - Use `list-parts` only when resuming a previously interrupted upload.
+   - Add pagination for `list-parts` so resume works for very large files.
+   - If resume state is stale, clear it and restart cleanly instead of hanging.
 
-4. No backend, schema, or RLS changes. `landing_pages` and `program_settings` already allow public read for the published row, so this is purely a frontend wiring fix.
+4. **Improve the final confirmation error**
+   - Use the same response-body unwrapping for `confirm-r2-upload` that was added for `get-r2-upload-url`.
+   - If the backend says a required setting or object is missing, show that exact reason instead of “Edge Function returned a non-2xx status code”.
 
-## Files touched
+5. **CORS check**
+   - Edge-function CORS is already present.
+   - For R2/direct upload CORS, the bucket must allow `PUT` and expose `ETag`. If code cannot read `ETag`, completion will fail. I’ll code the uploader to require and surface this clearly.
 
-- `src/hooks/useSipLandingData.tsx` — add `registerUrl` resolution + export.
-- `src/pages/Index.tsx` — pass `registerUrl` into the three section components.
-- `src/components/sip-landing/SipHero.tsx` — accept `registerUrl` prop, drop local query/`RegisterButton`.
-- `src/components/sip-landing/SipCta.tsx` — accept `registerUrl` prop, drop local query.
-- `src/components/sip-landing/SipCommunity.tsx` — accept `registerUrl` prop, drop local query.
+6. **Validate after implementation**
+   - Test the deployed edge function preflight and protected POST path.
+   - Confirm upload records no longer stay permanently in `uploading` after a failed attempt.
+   - Check recent edge logs for actual errors after the new deployment.
 
-## Verification
+<presentation-actions>
+  <presentation-open-history>View History</presentation-open-history>
+</presentation-actions>
 
-- Load `/` as a logged-out visitor; click each "Register for Program" CTA (hero, mid-page community, bottom CTA) → all navigate to `/l/smart-income-program`, which renders the public registration form with no auth wall.
-- Navbar "Login" still goes to `/auth`.
+<presentation-actions>
+<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
+</presentation-actions>
