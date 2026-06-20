@@ -155,6 +155,7 @@ Deno.serve(async (req) => {
     if (dbErr) throw dbErr;
 
     const r2Key = `videos/${video.id}/${safeFilename}`;
+    await serviceClient.from("video_assets").update({ r2_key: r2Key }).eq("id", video.id);
 
     if (multipart || (Number(fileSizeBytes) || 0) >= 512 * 1024 * 1024) {
       const created = await s3.send(new CreateMultipartUploadCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, ContentType: contentType }));
@@ -169,8 +170,6 @@ Deno.serve(async (req) => {
     });
 
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
-
-    await serviceClient.from("video_assets").update({ r2_key: r2Key }).eq("id", video.id);
 
     return json({
       uploadUrl,
