@@ -124,20 +124,34 @@ Deno.serve(async (req) => {
         return json({ uploadUrl });
       }
 
+      if (action === "sign-parts") {
+        if (!uploadId || !Array.isArray(partNumbers) || partNumbers.length === 0) return json({ error: "Missing part details" }, 400);
+        if (partNumbers.length > 25) return json({ error: "Too many parts requested at once" }, 400);
+
+        const validPartNumbers = partNumbers
+          .map((value: unknown) => Number(value))
+          .filter((value: number) => Number.isInteger(value) && value >= 1);
+
+        if (validPartNumbers.length !== partNumbers.length) return json({ error: "Invalid part number" }, 400);
+
+        const signedParts = await Promise.all(validPartNumbers.map(async (validPartNumber: number) => ({
+          partNumber: validPartNumber,
+          uploadUrl: await getSignedUrl(s3, new UploadPartCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId, PartNumber: validPartNumber }), { expiresIn: SIGNED_URL_TTL_SECONDS }),
+        })));
+
+        return json({ parts: signedParts });
+      }
+
       if (action === "complete") {
         if (!uploadId || !Array.isArray(parts) || parts.length === 0) return json({ error: "Missing completed parts" }, 400);
-        let listed = await s3.send(new ListPartsCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId }));
-        for (let attempt = 1; (listed.Parts || []).length < parts.length && attempt <= 5; attempt += 1) {
-          await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
-          listed = await s3.send(new ListPartsCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId }));
-        }
-        const etagsByPart = new Map((listed.Parts || []).map((part) => [part.PartNumber, part.ETag]));
         const completedParts = parts
-          .map((part: { partNumber?: number; etag?: string }) => ({ PartNumber: part.partNumber, ETag: part.etag || etagsByPart.get(part.partNumber) }))
+          .map((part: { partNumber?: number; etag?: string }) => ({ PartNumber: Number(part.partNumber), ETag: typeof part.etag === "string" ? part.etag.trim() : "" }))
           .filter((part: { PartNumber?: number; ETag?: string }) => Number.isInteger(part.PartNumber) && typeof part.ETag === "string")
           .sort((a, b) => a.PartNumber! - b.PartNumber!);
 
-        if (completedParts.length !== parts.length) return json({ error: "Some uploaded parts could not be verified" }, 400);
+        if (completedParts.length !== parts.length || completedParts.some((part) => !part.ETag)) {
+          return json({ error: "Missing uploaded part ETag. Ensure the R2 bucket CORS policy exposes the ETag header." }, 400);
+        }
 
         await s3.send(new CompleteMultipartUploadCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId, MultipartUpload: { Parts: completedParts } }));
         return json({ success: true });
@@ -150,8 +164,8 @@ Deno.serve(async (req) => {
 
       if (action === "list-parts") {
         if (!uploadId) return json({ error: "Missing uploadId" }, 400);
-        const listed = await s3.send(new ListPartsCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId }));
-        return json({ parts: (listed.Parts || []).map((part) => ({ partNumber: part.PartNumber, etag: part.ETag, size: part.Size })) });
+        const listedParts = await listAllParts(s3, { Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId });
+        return json({ parts: listedParts.map((part) => ({ partNumber: part.PartNumber, etag: part.ETag, size: part.Size })) });
       }
 
       return json({ error: "Unknown upload action" }, 400);
