@@ -19,7 +19,7 @@ const R2_ENDPOINT = Deno.env.get("R2_ENDPOINT") || "";
 const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID") || "";
 const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY") || "";
 const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME") || "";
-const MIN_PART_SIZE = 16 * 1024 * 1024;
+const MIN_PART_SIZE = 64 * 1024 * 1024;
 const MAX_SAFE_PARTS = 9000;
 const SIGNED_URL_TTL_SECONDS = 6 * 60 * 60;
 
@@ -64,6 +64,19 @@ function json(body: unknown, status = 200) {
   });
 }
 
+async function listAllParts(s3: S3Client, params: { Bucket: string; Key: string; UploadId: string }) {
+  const parts = [];
+  let partNumberMarker: number | undefined;
+
+  do {
+    const listed = await s3.send(new ListPartsCommand({ ...params, PartNumberMarker: partNumberMarker }));
+    parts.push(...(listed.Parts || []));
+    partNumberMarker = listed.IsTruncated ? listed.NextPartNumberMarker : undefined;
+  } while (partNumberMarker);
+
+  return parts;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -82,7 +95,7 @@ Deno.serve(async (req) => {
     if (!user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
-    const { filename, contentType, title, fileSizeBytes, multipart, action, videoId, r2Key, uploadId, partNumber, parts } = body;
+    const { filename, contentType, title, fileSizeBytes, multipart, action, videoId, r2Key, uploadId, partNumber, partNumbers, parts } = body;
 
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
