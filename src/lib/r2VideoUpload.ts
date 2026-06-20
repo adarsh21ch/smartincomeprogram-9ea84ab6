@@ -339,6 +339,10 @@ export const uploadVideoToR2 = async ({
         new Map(completedParts.map((p) => [p.partNumber, p])).values(),
       ).sort((a, b) => a.partNumber - b.partNumber);
 
+      if (uniqueCompletedParts.length !== totalParts) {
+        throw new Error("Upload did not finish every video chunk. Please retry; completed chunks will resume automatically.");
+      }
+
       let completeData: any;
       try {
         completeData = await invokeUploadFn({
@@ -369,16 +373,12 @@ export const uploadVideoToR2 = async ({
       onProgress?.(100, file.size);
     }
 
-    const { data: confirmData, error: confirmError } = await supabase.functions.invoke("confirm-r2-upload", {
-      body: {
-        videoId,
-        fileSizeBytes: file.size,
-      },
+    const confirmData: any = await invokeFunction("confirm-r2-upload", {
+      videoId,
+      fileSizeBytes: file.size,
     });
 
-    if (confirmError || !confirmData?.publicUrl) {
-      throw new Error(confirmData?.error || confirmError?.message || "Upload finished but confirmation failed");
-    }
+    if (!confirmData?.publicUrl) throw new Error(confirmData?.error || "Upload finished but confirmation failed");
 
     return {
       videoId,
@@ -398,12 +398,10 @@ export const uploadVideoToR2 = async ({
 
     if (videoId && !canResumeAfterError) {
       try {
-        await supabase.functions.invoke("confirm-r2-upload", {
-          body: {
-            videoId,
-            failed: true,
-            errorMessage: getErrorMessage(error),
-          },
+        await invokeFunction("confirm-r2-upload", {
+          videoId,
+          failed: true,
+          errorMessage: getErrorMessage(error),
         });
       } catch {
         // best effort cleanup
