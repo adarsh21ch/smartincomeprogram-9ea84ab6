@@ -178,7 +178,7 @@ const VideosPage = () => {
                   <Button variant="ghost" size="sm" className="h-7 text-xs flex-1" onClick={() => setShareVideo({ id: v.id, title: v.title })}>
                     <Share2 size={12} className="mr-1" /> Share
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs flex-1" onClick={() => useInFunnel(v.id)}>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs flex-1" onClick={() => navigate(`/funnels/create?videoId=${v.id}`)}>
                     <Rocket size={12} className="mr-1" /> Funnel
                   </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { if (confirm("Delete this video?")) deleteMutation.mutate(v.id); }}>
