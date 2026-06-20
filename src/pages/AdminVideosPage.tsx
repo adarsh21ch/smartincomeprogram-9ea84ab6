@@ -21,6 +21,8 @@ const AdminVideosPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadSpeed, setUploadSpeed] = useState(0);
+  const [uploadEta, setUploadEta] = useState(0);
   const [title, setTitle] = useState("");
   const [shareVideo, setShareVideo] = useState<{ id: string; title: string } | null>(null);
   const [renameVideo, setRenameVideo] = useState<{ id: string; title: string } | null>(null);
@@ -37,13 +39,24 @@ const AdminVideosPage = () => {
     if (!user) return;
     setUploading(true);
     setUploadProgress(0);
+    setUploadSpeed(0);
+    setUploadEta(0);
+    const startTime = Date.now();
 
     try {
       await uploadVideoToR2({
         file,
         title: title || file.name,
         timeoutMs: 60 * 60 * 1000,
-        onProgress: (progress) => setUploadProgress(progress),
+        onProgress: (progress, uploadedBytes = 0) => {
+          setUploadProgress(progress);
+          const elapsed = (Date.now() - startTime) / 1000;
+          if (elapsed > 0.5 && uploadedBytes > 0) {
+            const speed = uploadedBytes / elapsed;
+            setUploadSpeed(speed);
+            setUploadEta((file.size - uploadedBytes) / Math.max(speed, 1));
+          }
+        },
       });
 
       toast.success("Video uploaded successfully");
@@ -55,6 +68,8 @@ const AdminVideosPage = () => {
     } finally {
       setUploading(false);
       setUploadProgress(0);
+      setUploadSpeed(0);
+      setUploadEta(0);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -108,7 +123,11 @@ const AdminVideosPage = () => {
           {uploading && (
             <div className="space-y-2">
               <Progress value={uploadProgress} className="h-2 bg-muted [&>div]:bg-white" />
-              <p className="text-xs text-muted-foreground text-center">{uploadProgress}%</p>
+              <p className="text-xs text-muted-foreground text-center">
+                {uploadProgress}%
+                {uploadSpeed > 0 && ` • ${(uploadSpeed / (1024 * 1024)).toFixed(2)} MB/s`}
+                {uploadEta > 0 && ` • ${uploadEta > 60 ? `${Math.ceil(uploadEta / 60)} min` : `${Math.ceil(uploadEta)}s`} left`}
+              </p>
             </div>
           )}
         </div>

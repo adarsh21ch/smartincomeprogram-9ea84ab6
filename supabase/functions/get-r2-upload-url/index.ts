@@ -19,8 +19,9 @@ const R2_ENDPOINT = Deno.env.get("R2_ENDPOINT") || "";
 const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID") || "";
 const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY") || "";
 const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME") || "";
-const MIN_PART_SIZE = 64 * 1024 * 1024;
+const MIN_PART_SIZE = 16 * 1024 * 1024;
 const MAX_SAFE_PARTS = 9000;
+const SIGNED_URL_TTL_SECONDS = 6 * 60 * 60;
 
 function normalizeR2Endpoint(endpoint: string, bucketName: string): string {
   const trimmed = endpoint.trim().replace(/\/+$/, "");
@@ -106,13 +107,17 @@ Deno.serve(async (req) => {
 
       if (action === "sign-part") {
         if (!uploadId || !Number.isInteger(partNumber) || partNumber < 1) return json({ error: "Missing part details" }, 400);
-        const uploadUrl = await getSignedUrl(s3, new UploadPartCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId, PartNumber: partNumber }), { expiresIn: 3600 });
+        const uploadUrl = await getSignedUrl(s3, new UploadPartCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId, PartNumber: partNumber }), { expiresIn: SIGNED_URL_TTL_SECONDS });
         return json({ uploadUrl });
       }
 
       if (action === "complete") {
         if (!uploadId || !Array.isArray(parts) || parts.length === 0) return json({ error: "Missing completed parts" }, 400);
-        const listed = await s3.send(new ListPartsCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId }));
+        let listed = await s3.send(new ListPartsCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId }));
+        for (let attempt = 1; (listed.Parts || []).length < parts.length && attempt <= 5; attempt += 1) {
+          await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+          listed = await s3.send(new ListPartsCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId }));
+        }
         const etagsByPart = new Map((listed.Parts || []).map((part) => [part.PartNumber, part.ETag]));
         const completedParts = parts
           .map((part: { partNumber?: number; etag?: string }) => ({ PartNumber: part.partNumber, ETag: part.etag || etagsByPart.get(part.partNumber) }))
@@ -149,6 +154,7 @@ Deno.serve(async (req) => {
       original_filename: filename,
       status: "uploading",
       upload_percent: 0,
+      file_size_bytes: Number(fileSizeBytes) || null,
       is_shared: true,
     }).select("id").single();
 
@@ -169,7 +175,7 @@ Deno.serve(async (req) => {
       ContentType: contentType,
     });
 
-    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: SIGNED_URL_TTL_SECONDS });
 
     return json({
       uploadUrl,
