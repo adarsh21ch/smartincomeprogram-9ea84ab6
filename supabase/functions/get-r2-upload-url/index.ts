@@ -1,5 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { S3Client, PutObjectCommand } from "https://esm.sh/@aws-sdk/client-s3@3.600.0";
+import {
+  AbortMultipartUploadCommand,
+  CompleteMultipartUploadCommand,
+  CreateMultipartUploadCommand,
+  ListPartsCommand,
+  PutObjectCommand,
+  S3Client,
+  UploadPartCommand,
+} from "https://esm.sh/@aws-sdk/client-s3@3.600.0";
 import { getSignedUrl } from "https://esm.sh/@aws-sdk/s3-request-presigner@3.600.0";
 
 const corsHeaders = {
@@ -11,6 +19,8 @@ const R2_ENDPOINT = Deno.env.get("R2_ENDPOINT") || "";
 const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID") || "";
 const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY") || "";
 const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME") || "";
+const MIN_PART_SIZE = 64 * 1024 * 1024;
+const MAX_SAFE_PARTS = 9000;
 
 function normalizeR2Endpoint(endpoint: string, bucketName: string): string {
   const trimmed = endpoint.trim().replace(/\/+$/, "");
@@ -38,6 +48,19 @@ function sanitizeFilename(filename: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return (safe || "video") + ext;
+}
+
+function getPartSize(fileSizeBytes: number): number {
+  if (!Number.isFinite(fileSizeBytes) || fileSizeBytes <= 0) return MIN_PART_SIZE;
+  const required = Math.ceil(fileSizeBytes / MAX_SAFE_PARTS);
+  return Math.max(MIN_PART_SIZE, Math.ceil(required / (1024 * 1024)) * 1024 * 1024);
+}
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
 Deno.serve(async (req) => {
