@@ -28,8 +28,8 @@ const getErrorMessage = (error: unknown) => {
 };
 
 // supabase.functions.invoke hides the response body on non-2xx; unwrap it so users see the real reason.
-const invokeUploadFn = async <T = any>(body: Record<string, unknown>): Promise<T> => {
-  const { data, error } = await supabase.functions.invoke("get-r2-upload-url", { body });
+const invokeFunction = async <T = any>(functionName: string, body: Record<string, unknown>): Promise<T> => {
+  const { data, error } = await supabase.functions.invoke(functionName, { body });
   if (error) {
     let detail = "";
     try {
@@ -49,6 +49,9 @@ const invokeUploadFn = async <T = any>(body: Record<string, unknown>): Promise<T
   return data as T;
 };
 
+const invokeUploadFn = async <T = any>(body: Record<string, unknown>): Promise<T> =>
+  invokeFunction<T>("get-r2-upload-url", body);
+
 const isRecoverableUploadError = (error: unknown) => {
   const message = getErrorMessage(error).toLowerCase();
   return ["network", "stalled", "timed out", "interrupted", "failed to fetch", "load failed", "nosuchupload", "expired", "upload service error", "could not be verified"].some((term) => message.includes(term));
@@ -56,6 +59,7 @@ const isRecoverableUploadError = (error: unknown) => {
 
 const MULTIPART_THRESHOLD_BYTES = 256 * 1024 * 1024;
 const DEFAULT_STALL_TIMEOUT_MS = 2 * 60 * 1000;
+const SIGNED_PART_BATCH_SIZE = 10;
 
 const getResumeStorageKey = (file: File) =>
   `r2-video-upload:${file.name}:${file.size}:${file.lastModified}`;
@@ -88,6 +92,8 @@ const clearResumeState = (file: File) => {
   }
 };
 
+const normalizeEtag = (etag: string | null) => etag?.trim() || "";
+
 const uploadBlobWithProgress = ({
   url,
   body,
@@ -103,7 +109,7 @@ const uploadBlobWithProgress = ({
   stallTimeoutMs: number;
   onProgress?: (loaded: number) => void;
 }) =>
-  new Promise<void>((resolve, reject) => {
+  new Promise<string>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     let settled = false;
     let stallTimer: number | undefined;
@@ -113,11 +119,11 @@ const uploadBlobWithProgress = ({
       stallTimer = undefined;
     };
 
-    const settleSuccess = () => {
+    const settleSuccess = (etag: string) => {
       if (settled) return;
       settled = true;
       clearStallTimer();
-      resolve();
+      resolve(etag);
     };
 
     const settleFailure = (error: Error) => {
@@ -149,7 +155,7 @@ const uploadBlobWithProgress = ({
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         onProgress?.(body.size);
-        settleSuccess();
+        settleSuccess(normalizeEtag(xhr.getResponseHeader("ETag")));
         return;
       }
 
@@ -163,13 +169,12 @@ const uploadBlobWithProgress = ({
     xhr.send(body);
   });
 
-const withRetry = async (task: () => Promise<void>, attempts = 5) => {
+const withRetry = async <T>(task: () => Promise<T>, attempts = 5): Promise<T> => {
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      await task();
-      return;
+      return await task();
     } catch (error) {
       lastError = error;
       if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, Math.min(12000, attempt * attempt * 1000)));
