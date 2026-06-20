@@ -203,6 +203,7 @@ export const uploadVideoToR2 = async ({
         partProgress[partNumber - 1] = Number(part.size) || partSize;
         completedParts.push({ partNumber });
       }
+      publishProgress();
 
       const publishProgress = () => {
         const loaded = partProgress.reduce((sum, value) => sum + value, 0);
