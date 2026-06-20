@@ -149,23 +149,28 @@ export const uploadVideoToR2 = async ({
   file,
   title,
   timeoutMs = 30 * 60 * 1000,
+  stallTimeoutMs = DEFAULT_STALL_TIMEOUT_MS,
   concurrency = 2,
   onProgress,
 }: UploadVideoToR2Options): Promise<UploadVideoToR2Result> => {
   let videoId: string | null = null;
   let multipartUploadId: string | null = null;
   let r2Key: string | null = null;
+  let keepMultipartForResume = false;
 
   try {
-    const { data, error } = await supabase.functions.invoke("get-r2-upload-url", {
-      body: {
-        filename: file.name,
-        contentType: file.type,
-        title: title || file.name,
-        fileSizeBytes: file.size,
-        multipart: file.size >= MULTIPART_THRESHOLD_BYTES,
-      },
-    });
+    const resumeState = file.size >= MULTIPART_THRESHOLD_BYTES ? readResumeState(file) : null;
+    const { data, error } = resumeState
+      ? { data: { ...resumeState, multipart: true }, error: null }
+      : await supabase.functions.invoke("get-r2-upload-url", {
+          body: {
+            filename: file.name,
+            contentType: file.type,
+            title: title || file.name,
+            fileSizeBytes: file.size,
+            multipart: file.size >= MULTIPART_THRESHOLD_BYTES,
+          },
+        });
 
     if (error || !data?.videoId || (!data?.uploadUrl && !data?.multipart)) {
       throw new Error(data?.error || error?.message || "Failed to start upload");
@@ -176,11 +181,28 @@ export const uploadVideoToR2 = async ({
 
     if (data.multipart) {
       multipartUploadId = data.uploadId;
-      const partSize = Number(data.partSize || 64 * 1024 * 1024);
+      const partSize = Number(data.partSize || 16 * 1024 * 1024);
       const totalParts = Math.ceil(file.size / partSize);
       const partProgress = new Array(totalParts).fill(0);
       const completedParts: Array<{ partNumber: number }> = [];
       let nextPartIndex = 0;
+      keepMultipartForResume = true;
+
+      if (videoId && r2Key && multipartUploadId) {
+        writeResumeState(file, { videoId, r2Key, uploadId: multipartUploadId, partSize });
+      }
+
+      const { data: listedParts } = await supabase.functions.invoke("get-r2-upload-url", {
+        body: { action: "list-parts", videoId, r2Key, uploadId: multipartUploadId },
+      });
+
+      const uploadedParts = Array.isArray(listedParts?.parts) ? listedParts.parts : [];
+      for (const part of uploadedParts) {
+        const partNumber = Number(part.partNumber);
+        if (!Number.isInteger(partNumber) || partNumber < 1 || partNumber > totalParts) continue;
+        partProgress[partNumber - 1] = Number(part.size) || partSize;
+        completedParts.push({ partNumber });
+      }
 
       const publishProgress = () => {
         const loaded = partProgress.reduce((sum, value) => sum + value, 0);
@@ -189,6 +211,7 @@ export const uploadVideoToR2 = async ({
 
       const uploadPart = async (partIndex: number) => {
         const partNumber = partIndex + 1;
+        if (completedParts.some((part) => part.partNumber === partNumber)) return;
         const start = partIndex * partSize;
         const end = Math.min(start + partSize, file.size);
         const blob = file.slice(start, end);
@@ -205,6 +228,7 @@ export const uploadVideoToR2 = async ({
             body: blob,
             contentType: file.type,
             timeoutMs,
+            stallTimeoutMs,
             onProgress: (loaded) => {
               partProgress[partIndex] = loaded;
               publishProgress();
@@ -232,6 +256,8 @@ export const uploadVideoToR2 = async ({
       });
 
       if (completeError || !completeData?.success) throw new Error(completeData?.error || completeError?.message || "Could not finish video upload");
+      keepMultipartForResume = false;
+      clearResumeState(file);
       onProgress?.(100, file.size);
     } else {
       await uploadBlobWithProgress({
@@ -239,6 +265,7 @@ export const uploadVideoToR2 = async ({
         body: file,
         contentType: file.type,
         timeoutMs,
+        stallTimeoutMs,
         onProgress: (loaded) => onProgress?.(Math.round((loaded / file.size) * 100), loaded),
       });
       onProgress?.(100, file.size);
@@ -260,7 +287,7 @@ export const uploadVideoToR2 = async ({
       publicUrl: confirmData.publicUrl,
     };
   } catch (error) {
-    if (videoId && r2Key && multipartUploadId) {
+    if (videoId && r2Key && multipartUploadId && !keepMultipartForResume) {
       try {
         await supabase.functions.invoke("get-r2-upload-url", {
           body: { action: "abort", videoId, r2Key, uploadId: multipartUploadId },
@@ -270,7 +297,7 @@ export const uploadVideoToR2 = async ({
       }
     }
 
-    if (videoId) {
+    if (videoId && !keepMultipartForResume) {
       try {
         await supabase.functions.invoke("confirm-r2-upload", {
           body: {
