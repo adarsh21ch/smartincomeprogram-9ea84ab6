@@ -4,6 +4,7 @@ interface UploadVideoToR2Options {
   file: File;
   title?: string;
   timeoutMs?: number;
+  stallTimeoutMs?: number;
   concurrency?: number;
   onProgress?: (progress: number, uploadedBytes?: number) => void;
 }
@@ -13,13 +14,52 @@ interface UploadVideoToR2Result {
   videoId: string;
 }
 
+interface MultipartResumeState {
+  videoId: string;
+  r2Key: string;
+  uploadId: string;
+  partSize: number;
+}
+
 const getErrorMessage = (error: unknown) => {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
   return "Upload failed";
 };
 
-const MULTIPART_THRESHOLD_BYTES = 512 * 1024 * 1024;
+const MULTIPART_THRESHOLD_BYTES = 256 * 1024 * 1024;
+const DEFAULT_STALL_TIMEOUT_MS = 2 * 60 * 1000;
+
+const getResumeStorageKey = (file: File) =>
+  `r2-video-upload:${file.name}:${file.size}:${file.lastModified}`;
+
+const readResumeState = (file: File): MultipartResumeState | null => {
+  try {
+    const raw = window.localStorage.getItem(getResumeStorageKey(file));
+    if (!raw) return null;
+    const state = JSON.parse(raw) as MultipartResumeState;
+    if (!state.videoId || !state.r2Key || !state.uploadId || !state.partSize) return null;
+    return state;
+  } catch {
+    return null;
+  }
+};
+
+const writeResumeState = (file: File, state: MultipartResumeState) => {
+  try {
+    window.localStorage.setItem(getResumeStorageKey(file), JSON.stringify(state));
+  } catch {
+    // Resume is best-effort only.
+  }
+};
+
+const clearResumeState = (file: File) => {
+  try {
+    window.localStorage.removeItem(getResumeStorageKey(file));
+  } catch {
+    // Resume is best-effort only.
+  }
+};
 
 const uploadBlobWithProgress = ({
   url,
