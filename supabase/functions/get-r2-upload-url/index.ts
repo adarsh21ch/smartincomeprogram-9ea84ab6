@@ -154,13 +154,13 @@ Deno.serve(async (req) => {
 
     if (dbErr) throw dbErr;
 
-    const r2Key = `videos/${video.id}/${safeFilename}`;
-    await serviceClient.from("video_assets").update({ r2_key: r2Key }).eq("id", video.id);
+    const newR2Key = `videos/${video.id}/${safeFilename}`;
+    await serviceClient.from("video_assets").update({ r2_key: newR2Key }).eq("id", video.id);
 
     if (multipart || (Number(fileSizeBytes) || 0) >= 512 * 1024 * 1024) {
-      const created = await s3.send(new CreateMultipartUploadCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, ContentType: contentType }));
+      const created = await s3.send(new CreateMultipartUploadCommand({ Bucket: R2_BUCKET_NAME, Key: newR2Key, ContentType: contentType }));
       const partSize = getPartSize(Number(fileSizeBytes));
-      return json({ videoId: video.id, r2Key, uploadId: created.UploadId, partSize, multipart: true });
+      return json({ videoId: video.id, r2Key: newR2Key, uploadId: created.UploadId, partSize, multipart: true });
     }
 
     const command = new PutObjectCommand({
