@@ -194,20 +194,18 @@ export const uploadVideoToR2 = async ({
 
   try {
     const resumeState = file.size >= MULTIPART_THRESHOLD_BYTES ? readResumeState(file) : null;
-    const { data, error } = resumeState
-      ? { data: { ...resumeState, multipart: true }, error: null }
-      : await supabase.functions.invoke("get-r2-upload-url", {
-          body: {
-            filename: file.name,
-            contentType: file.type,
-            title: title || file.name,
-            fileSizeBytes: file.size,
-            multipart: file.size >= MULTIPART_THRESHOLD_BYTES,
-          },
+    const data: any = resumeState
+      ? { ...resumeState, multipart: true }
+      : await invokeUploadFn({
+          filename: file.name,
+          contentType: file.type,
+          title: title || file.name,
+          fileSizeBytes: file.size,
+          multipart: file.size >= MULTIPART_THRESHOLD_BYTES,
         });
 
-    if (error || !data?.videoId || (!data?.uploadUrl && !data?.multipart)) {
-      throw new Error(data?.error || error?.message || "Failed to start upload");
+    if (!data?.videoId || (!data?.uploadUrl && !data?.multipart)) {
+      throw new Error(data?.error || "Failed to start upload");
     }
 
     videoId = data.videoId;
@@ -231,24 +229,25 @@ export const uploadVideoToR2 = async ({
         onProgress?.(Math.min(99, Math.floor((loaded / file.size) * 100)), loaded);
       };
 
-      const { data: listedParts, error: listPartsError } = await supabase.functions.invoke("get-r2-upload-url", {
-        body: { action: "list-parts", videoId, r2Key, uploadId: multipartUploadId },
-      });
-
-      if (listPartsError || listedParts?.error) {
+      try {
+        const listedParts: any = await invokeUploadFn({
+          action: "list-parts", videoId, r2Key, uploadId: multipartUploadId,
+        });
+        const uploadedParts = Array.isArray(listedParts?.parts) ? listedParts.parts : [];
+        for (const part of uploadedParts) {
+          const partNumber = Number(part.partNumber);
+          if (!Number.isInteger(partNumber) || partNumber < 1 || partNumber > totalParts) continue;
+          partProgress[partNumber - 1] = Number(part.size) || partSize;
+          completedParts.push({ partNumber });
+        }
+      } catch (listErr) {
+        // Stale resume state (e.g. NoSuchUpload). Restart from scratch.
         clearResumeState(file);
+        keepMultipartForResume = false;
         if (resumeState) {
           return uploadVideoToR2({ file, title, timeoutMs, stallTimeoutMs, concurrency, onProgress });
         }
-        throw new Error(listedParts?.error || listPartsError?.message || "Could not verify uploaded video parts");
-      }
-
-      const uploadedParts = Array.isArray(listedParts?.parts) ? listedParts.parts : [];
-      for (const part of uploadedParts) {
-        const partNumber = Number(part.partNumber);
-        if (!Number.isInteger(partNumber) || partNumber < 1 || partNumber > totalParts) continue;
-        partProgress[partNumber - 1] = Number(part.size) || partSize;
-        completedParts.push({ partNumber });
+        throw listErr;
       }
       publishProgress();
 
@@ -260,11 +259,10 @@ export const uploadVideoToR2 = async ({
         const blob = file.slice(start, end);
 
         await withRetry(async () => {
-          const { data: partData, error: partError } = await supabase.functions.invoke("get-r2-upload-url", {
-            body: { action: "sign-part", videoId, r2Key, uploadId: multipartUploadId, partNumber },
+          const partData: any = await invokeUploadFn({
+            action: "sign-part", videoId, r2Key, uploadId: multipartUploadId, partNumber,
           });
-
-          if (partError || !partData?.uploadUrl) throw new Error(partData?.error || partError?.message || `Failed to prepare part ${partNumber}`);
+          if (!partData?.uploadUrl) throw new Error(partData?.error || `Failed to prepare part ${partNumber}`);
 
           await uploadBlobWithProgress({
             url: partData.uploadUrl,
@@ -280,7 +278,9 @@ export const uploadVideoToR2 = async ({
         });
 
         partProgress[partIndex] = blob.size;
-        completedParts.push({ partNumber });
+        if (!completedParts.some((part) => part.partNumber === partNumber)) {
+          completedParts.push({ partNumber });
+        }
         publishProgress();
       };
 
@@ -294,11 +294,26 @@ export const uploadVideoToR2 = async ({
 
       await Promise.all(Array.from({ length: Math.min(concurrency, totalParts) }, worker));
 
-      const { data: completeData, error: completeError } = await supabase.functions.invoke("get-r2-upload-url", {
-        body: { action: "complete", videoId, r2Key, uploadId: multipartUploadId, parts: completedParts },
-      });
+      // De-dupe partNumbers in case of races between resume + worker
+      const uniqueCompletedParts = Array.from(
+        new Map(completedParts.map((p) => [p.partNumber, p])).values(),
+      ).sort((a, b) => a.partNumber - b.partNumber);
 
-      if (completeError || !completeData?.success) throw new Error(completeData?.error || completeError?.message || "Could not finish video upload");
+      let completeData: any;
+      try {
+        completeData = await invokeUploadFn({
+          action: "complete", videoId, r2Key, uploadId: multipartUploadId, parts: uniqueCompletedParts,
+        });
+      } catch (completeErr) {
+        // Stale or partially-aborted multipart upload — wipe resume state and restart cleanly.
+        clearResumeState(file);
+        keepMultipartForResume = false;
+        if (resumeState) {
+          return uploadVideoToR2({ file, title, timeoutMs, stallTimeoutMs, concurrency, onProgress });
+        }
+        throw completeErr;
+      }
+      if (!completeData?.success) throw new Error(completeData?.error || "Could not finish video upload");
       keepMultipartForResume = false;
       clearResumeState(file);
       onProgress?.(100, file.size);
@@ -335,9 +350,7 @@ export const uploadVideoToR2 = async ({
 
     if (videoId && r2Key && multipartUploadId && !canResumeAfterError) {
       try {
-        await supabase.functions.invoke("get-r2-upload-url", {
-          body: { action: "abort", videoId, r2Key, uploadId: multipartUploadId },
-        });
+        await invokeUploadFn({ action: "abort", videoId, r2Key, uploadId: multipartUploadId });
       } catch {
         // best effort cleanup
       }
