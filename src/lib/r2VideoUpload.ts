@@ -27,6 +27,11 @@ const getErrorMessage = (error: unknown) => {
   return "Upload failed";
 };
 
+const isRecoverableUploadError = (error: unknown) => {
+  const message = getErrorMessage(error).toLowerCase();
+  return ["network", "stalled", "timed out", "interrupted", "failed to fetch", "load failed"].some((term) => message.includes(term));
+};
+
 const MULTIPART_THRESHOLD_BYTES = 256 * 1024 * 1024;
 const DEFAULT_STALL_TIMEOUT_MS = 2 * 60 * 1000;
 
@@ -197,9 +202,17 @@ export const uploadVideoToR2 = async ({
         onProgress?.(Math.min(99, Math.floor((loaded / file.size) * 100)), loaded);
       };
 
-      const { data: listedParts } = await supabase.functions.invoke("get-r2-upload-url", {
+      const { data: listedParts, error: listPartsError } = await supabase.functions.invoke("get-r2-upload-url", {
         body: { action: "list-parts", videoId, r2Key, uploadId: multipartUploadId },
       });
+
+      if (listPartsError || listedParts?.error) {
+        clearResumeState(file);
+        if (resumeState) {
+          return uploadVideoToR2({ file, title, timeoutMs, stallTimeoutMs, concurrency, onProgress });
+        }
+        throw new Error(listedParts?.error || listPartsError?.message || "Could not verify uploaded video parts");
+      }
 
       const uploadedParts = Array.isArray(listedParts?.parts) ? listedParts.parts : [];
       for (const part of uploadedParts) {
@@ -288,7 +301,10 @@ export const uploadVideoToR2 = async ({
       publicUrl: confirmData.publicUrl,
     };
   } catch (error) {
-    if (videoId && r2Key && multipartUploadId && !keepMultipartForResume) {
+    const canResumeAfterError = keepMultipartForResume && isRecoverableUploadError(error);
+    if (!canResumeAfterError) clearResumeState(file);
+
+    if (videoId && r2Key && multipartUploadId && !canResumeAfterError) {
       try {
         await supabase.functions.invoke("get-r2-upload-url", {
           body: { action: "abort", videoId, r2Key, uploadId: multipartUploadId },
@@ -298,7 +314,7 @@ export const uploadVideoToR2 = async ({
       }
     }
 
-    if (videoId && !keepMultipartForResume) {
+    if (videoId && !canResumeAfterError) {
       try {
         await supabase.functions.invoke("confirm-r2-upload", {
           body: {
