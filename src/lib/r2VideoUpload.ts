@@ -223,7 +223,6 @@ export const uploadVideoToR2 = async ({
       const partProgress = new Array(totalParts).fill(0);
       const completedParts: Array<{ partNumber: number; etag: string }> = [];
       const signedPartUrls = new Map<number, string>();
-      let nextSignPartNumber = 1;
       let nextPartIndex = 0;
       keepMultipartForResume = true;
 
@@ -264,9 +263,8 @@ export const uploadVideoToR2 = async ({
         const existingUrl = signedPartUrls.get(partNumber);
         if (existingUrl) return existingUrl;
 
-        const fromPart = Math.max(partNumber, nextSignPartNumber);
+        const fromPart = partNumber;
         const toPart = Math.min(totalParts, fromPart + SIGNED_PART_BATCH_SIZE - 1);
-        nextSignPartNumber = toPart + 1;
 
         const partNumbers = Array.from({ length: toPart - fromPart + 1 }, (_, index) => fromPart + index)
           .filter((candidate) => !completedParts.some((part) => part.partNumber === candidate));
