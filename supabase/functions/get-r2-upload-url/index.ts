@@ -112,10 +112,14 @@ Deno.serve(async (req) => {
 
       if (action === "complete") {
         if (!uploadId || !Array.isArray(parts) || parts.length === 0) return json({ error: "Missing completed parts" }, 400);
+        const listed = await s3.send(new ListPartsCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId }));
+        const etagsByPart = new Map((listed.Parts || []).map((part) => [part.PartNumber, part.ETag]));
         const completedParts = parts
-          .map((part: { partNumber?: number; etag?: string }) => ({ PartNumber: part.partNumber, ETag: part.etag }))
+          .map((part: { partNumber?: number; etag?: string }) => ({ PartNumber: part.partNumber, ETag: part.etag || etagsByPart.get(part.partNumber) }))
           .filter((part: { PartNumber?: number; ETag?: string }) => Number.isInteger(part.PartNumber) && typeof part.ETag === "string")
           .sort((a, b) => a.PartNumber! - b.PartNumber!);
+
+        if (completedParts.length !== parts.length) return json({ error: "Some uploaded parts could not be verified" }, 400);
 
         await s3.send(new CompleteMultipartUploadCommand({ Bucket: R2_BUCKET_NAME, Key: r2Key, UploadId: uploadId, MultipartUpload: { Parts: completedParts } }));
         return json({ success: true });
