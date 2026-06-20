@@ -12,6 +12,7 @@ import { VideoRenameModal } from "@/components/VideoRenameModal";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { uploadVideoToR2 } from "@/lib/r2VideoUpload";
 
 const VideosPage = () => {
   const { user } = useAuth();
