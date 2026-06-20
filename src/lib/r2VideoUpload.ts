@@ -91,18 +91,25 @@ const uploadBlobWithProgress = ({
       stallTimer = undefined;
     };
 
-    const settle = (callback: (value?: unknown) => void, value?: unknown) => {
+    const settleSuccess = () => {
       if (settled) return;
       settled = true;
       clearStallTimer();
-      callback(value);
+      resolve();
+    };
+
+    const settleFailure = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      clearStallTimer();
+      reject(error);
     };
 
     const resetStallTimer = () => {
       clearStallTimer();
       if (stallTimeoutMs <= 0) return;
       stallTimer = window.setTimeout(() => {
-        settle(reject, new Error("Upload stalled because the network stopped sending data. Retrying this video chunk..."));
+        settleFailure(new Error("Upload stalled because the network stopped sending data. Retrying this video chunk..."));
         xhr.abort();
       }, stallTimeoutMs);
     };
@@ -120,16 +127,16 @@ const uploadBlobWithProgress = ({
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         onProgress?.(body.size);
-        settle(resolve);
+        settleSuccess();
         return;
       }
 
-      settle(reject, new Error(`Upload failed (HTTP ${xhr.status})`));
+      settleFailure(new Error(`Upload failed (HTTP ${xhr.status})`));
     };
 
-    xhr.onerror = () => settle(reject, new Error("Network error while uploading video"));
-    xhr.onabort = () => settle(reject, new Error("Upload was interrupted"));
-    xhr.ontimeout = () => settle(reject, new Error("Upload timed out. Keep this page open and use a stronger connection for large videos."));
+    xhr.onerror = () => settleFailure(new Error("Network error while uploading video"));
+    xhr.onabort = () => settleFailure(new Error("Upload was interrupted"));
+    xhr.ontimeout = () => settleFailure(new Error("Upload timed out. Keep this page open and use a stronger connection for large videos."));
     resetStallTimer();
     xhr.send(body);
   });
