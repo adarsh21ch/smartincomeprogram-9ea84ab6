@@ -294,25 +294,30 @@ export const uploadVideoToR2 = async ({
         const blob = file.slice(start, end);
 
         const etag = await withRetry(async () => {
-          const uploadUrl = await getSignedPartUrl(partNumber);
+          try {
+            const uploadUrl = await getSignedPartUrl(partNumber);
 
-          const uploadedEtag = await uploadBlobWithProgress({
-            url: uploadUrl,
-            body: blob,
-            contentType: file.type,
-            timeoutMs,
-            stallTimeoutMs,
-            onProgress: (loaded) => {
-              partProgress[partIndex] = Math.max(partProgress[partIndex], loaded);
-              publishProgress();
-            },
-          });
+            const uploadedEtag = await uploadBlobWithProgress({
+              url: uploadUrl,
+              body: blob,
+              contentType: file.type,
+              timeoutMs,
+              stallTimeoutMs,
+              onProgress: (loaded) => {
+                partProgress[partIndex] = Math.max(partProgress[partIndex], loaded);
+                publishProgress();
+              },
+            });
 
-          if (!uploadedEtag) {
-            throw new Error("R2 upload completed but the ETag header was not readable. Update the R2 bucket CORS policy to expose the ETag header, then retry.");
+            if (!uploadedEtag) {
+              throw new Error("R2 upload completed but the ETag header was not readable. Update the R2 bucket CORS policy to expose the ETag header, then retry.");
+            }
+
+            return uploadedEtag;
+          } catch (error) {
+            signedPartUrls.delete(partNumber);
+            throw error;
           }
-
-          return uploadedEtag;
         });
 
         partProgress[partIndex] = blob.size;
