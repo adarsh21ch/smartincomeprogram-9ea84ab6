@@ -192,6 +192,11 @@ export const uploadVideoToR2 = async ({
         writeResumeState(file, { videoId, r2Key, uploadId: multipartUploadId, partSize });
       }
 
+      const publishProgress = () => {
+        const loaded = partProgress.reduce((sum, value) => sum + value, 0);
+        onProgress?.(Math.min(99, Math.floor((loaded / file.size) * 100)), loaded);
+      };
+
       const { data: listedParts } = await supabase.functions.invoke("get-r2-upload-url", {
         body: { action: "list-parts", videoId, r2Key, uploadId: multipartUploadId },
       });
@@ -204,11 +209,6 @@ export const uploadVideoToR2 = async ({
         completedParts.push({ partNumber });
       }
       publishProgress();
-
-      const publishProgress = () => {
-        const loaded = partProgress.reduce((sum, value) => sum + value, 0);
-        onProgress?.(Math.min(99, Math.floor((loaded / file.size) * 100)), loaded);
-      };
 
       const uploadPart = async (partIndex: number) => {
         const partNumber = partIndex + 1;
