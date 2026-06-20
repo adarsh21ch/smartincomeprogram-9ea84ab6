@@ -67,9 +67,9 @@ const VideosPage = () => {
       toast.success("Video uploaded successfully");
       setTitle("");
       queryClient.invalidateQueries({ queryKey: ["videos"] });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Upload error:", err);
-      toast.error(err.message || "Upload failed");
+      toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -95,8 +95,6 @@ const VideosPage = () => {
     if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
   };
-
-  const useInFunnel = (videoId: string) => navigate(`/funnels/create?videoId=${videoId}`);
 
   return (
     <DashboardLayout>
