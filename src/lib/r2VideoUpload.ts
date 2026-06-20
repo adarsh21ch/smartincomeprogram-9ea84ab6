@@ -27,9 +27,31 @@ const getErrorMessage = (error: unknown) => {
   return "Upload failed";
 };
 
+// supabase.functions.invoke hides the response body on non-2xx; unwrap it so users see the real reason.
+const invokeUploadFn = async <T = any>(body: Record<string, unknown>): Promise<T> => {
+  const { data, error } = await supabase.functions.invoke("get-r2-upload-url", { body });
+  if (error) {
+    let detail = "";
+    try {
+      const ctx: any = (error as any).context;
+      if (ctx && typeof ctx.json === "function") {
+        const parsed = await ctx.json();
+        detail = parsed?.error || parsed?.message || "";
+      } else if (ctx && typeof ctx.text === "function") {
+        detail = await ctx.text();
+      }
+    } catch {
+      // ignore body parse errors
+    }
+    throw new Error(detail || (data as any)?.error || error.message || "Upload service error");
+  }
+  if ((data as any)?.error) throw new Error((data as any).error);
+  return data as T;
+};
+
 const isRecoverableUploadError = (error: unknown) => {
   const message = getErrorMessage(error).toLowerCase();
-  return ["network", "stalled", "timed out", "interrupted", "failed to fetch", "load failed"].some((term) => message.includes(term));
+  return ["network", "stalled", "timed out", "interrupted", "failed to fetch", "load failed", "nosuchupload", "expired", "upload service error", "could not be verified"].some((term) => message.includes(term));
 };
 
 const MULTIPART_THRESHOLD_BYTES = 256 * 1024 * 1024;
