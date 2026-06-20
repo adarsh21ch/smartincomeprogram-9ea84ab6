@@ -264,8 +264,8 @@ export const uploadVideoToR2 = async ({
         const existingUrl = signedPartUrls.get(partNumber);
         if (existingUrl) return existingUrl;
 
-        const fromPart = partNumber;
-        const toPart = Math.min(totalParts, Math.max(partNumber, nextSignPartNumber) + SIGNED_PART_BATCH_SIZE - 1);
+        const fromPart = Math.max(partNumber, nextSignPartNumber);
+        const toPart = Math.min(totalParts, fromPart + SIGNED_PART_BATCH_SIZE - 1);
         nextSignPartNumber = toPart + 1;
 
         const partNumbers = Array.from({ length: toPart - fromPart + 1 }, (_, index) => fromPart + index)
