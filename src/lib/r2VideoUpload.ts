@@ -218,10 +218,12 @@ export const uploadVideoToR2 = async ({
 
     if (data.multipart) {
       multipartUploadId = data.uploadId;
-      const partSize = Number(data.partSize || 16 * 1024 * 1024);
+      const partSize = Number(data.partSize || 64 * 1024 * 1024);
       const totalParts = Math.ceil(file.size / partSize);
       const partProgress = new Array(totalParts).fill(0);
-      const completedParts: Array<{ partNumber: number }> = [];
+      const completedParts: Array<{ partNumber: number; etag: string }> = [];
+      const signedPartUrls = new Map<number, string>();
+      let nextSignPartNumber = 1;
       let nextPartIndex = 0;
       keepMultipartForResume = true;
 
@@ -241,9 +243,11 @@ export const uploadVideoToR2 = async ({
         const uploadedParts = Array.isArray(listedParts?.parts) ? listedParts.parts : [];
         for (const part of uploadedParts) {
           const partNumber = Number(part.partNumber);
+          const etag = normalizeEtag(part.etag || null);
           if (!Number.isInteger(partNumber) || partNumber < 1 || partNumber > totalParts) continue;
+          if (!etag) continue;
           partProgress[partNumber - 1] = Number(part.size) || partSize;
-          completedParts.push({ partNumber });
+          completedParts.push({ partNumber, etag });
         }
       } catch (listErr) {
         // Stale resume state (e.g. NoSuchUpload). Restart from scratch.
@@ -256,6 +260,34 @@ export const uploadVideoToR2 = async ({
       }
       publishProgress();
 
+      const getSignedPartUrl = async (partNumber: number) => {
+        const existingUrl = signedPartUrls.get(partNumber);
+        if (existingUrl) return existingUrl;
+
+        const fromPart = partNumber;
+        const toPart = Math.min(totalParts, Math.max(partNumber, nextSignPartNumber) + SIGNED_PART_BATCH_SIZE - 1);
+        nextSignPartNumber = toPart + 1;
+
+        const partNumbers = Array.from({ length: toPart - fromPart + 1 }, (_, index) => fromPart + index)
+          .filter((candidate) => !completedParts.some((part) => part.partNumber === candidate));
+
+        if (partNumbers.length === 0) return signedPartUrls.get(partNumber) || "";
+
+        const signedParts: any = await invokeUploadFn({
+          action: "sign-parts", videoId, r2Key, uploadId: multipartUploadId, partNumbers,
+        });
+
+        const parts = Array.isArray(signedParts?.parts) ? signedParts.parts : [];
+        for (const part of parts) {
+          const signedPartNumber = Number(part.partNumber);
+          if (Number.isInteger(signedPartNumber) && part.uploadUrl) signedPartUrls.set(signedPartNumber, part.uploadUrl);
+        }
+
+        const uploadUrl = signedPartUrls.get(partNumber);
+        if (!uploadUrl) throw new Error(`Failed to prepare part ${partNumber}`);
+        return uploadUrl;
+      };
+
       const uploadPart = async (partIndex: number) => {
         const partNumber = partIndex + 1;
         if (completedParts.some((part) => part.partNumber === partNumber)) return;
@@ -263,14 +295,11 @@ export const uploadVideoToR2 = async ({
         const end = Math.min(start + partSize, file.size);
         const blob = file.slice(start, end);
 
-        await withRetry(async () => {
-          const partData: any = await invokeUploadFn({
-            action: "sign-part", videoId, r2Key, uploadId: multipartUploadId, partNumber,
-          });
-          if (!partData?.uploadUrl) throw new Error(partData?.error || `Failed to prepare part ${partNumber}`);
+        const etag = await withRetry(async () => {
+          const uploadUrl = await getSignedPartUrl(partNumber);
 
-          await uploadBlobWithProgress({
-            url: partData.uploadUrl,
+          const uploadedEtag = await uploadBlobWithProgress({
+            url: uploadUrl,
             body: blob,
             contentType: file.type,
             timeoutMs,
@@ -280,11 +309,17 @@ export const uploadVideoToR2 = async ({
               publishProgress();
             },
           });
+
+          if (!uploadedEtag) {
+            throw new Error("R2 upload completed but the ETag header was not readable. Update the R2 bucket CORS policy to expose the ETag header, then retry.");
+          }
+
+          return uploadedEtag;
         });
 
         partProgress[partIndex] = blob.size;
         if (!completedParts.some((part) => part.partNumber === partNumber)) {
-          completedParts.push({ partNumber });
+          completedParts.push({ partNumber, etag });
         }
         publishProgress();
       };
