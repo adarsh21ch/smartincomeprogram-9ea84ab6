@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
 
     const command = new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,
-      Key: r2Key,
+      Key: newR2Key,
       ContentType: contentType,
     });
 
@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
     return json({
       uploadUrl,
       videoId: video.id,
-      r2Key,
+      r2Key: newR2Key,
       multipart: false,
     });
   } catch (err: any) {
