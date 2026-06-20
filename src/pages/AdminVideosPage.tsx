@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { VideoShareModal } from "@/components/VideoShareModal";
 import { VideoRenameModal } from "@/components/VideoRenameModal";
 import { useNavigate } from "react-router-dom";
+import { uploadVideoToR2 } from "@/lib/r2VideoUpload";
 
 const AdminVideosPage = () => {
   const { user } = useAuth();
@@ -37,53 +38,20 @@ const AdminVideosPage = () => {
     setUploading(true);
     setUploadProgress(0);
 
-    let videoId: string | null = null;
-
     try {
-      const { data, error } = await supabase.functions.invoke("get-r2-upload-url", {
-        body: { filename: file.name, contentType: file.type, title: title || file.name },
+      await uploadVideoToR2({
+        file,
+        title: title || file.name,
+        timeoutMs: 60 * 60 * 1000,
+        onProgress: (progress) => setUploadProgress(progress),
       });
 
-      if (error || !data?.uploadUrl) throw new Error(data?.error || "Failed to get upload URL");
-      videoId = data.videoId;
-
-      const xhr = new XMLHttpRequest();
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
-      });
-
-      await new Promise<void>((resolve, reject) => {
-        xhr.open("PUT", data.uploadUrl);
-        xhr.setRequestHeader("Content-Type", file.type);
-        xhr.onload = () => {
-          if (xhr.status < 300) resolve();
-          else reject(new Error(`R2 rejected upload (HTTP ${xhr.status}): ${xhr.responseText?.slice(0, 200) || "unknown error"}`));
-        };
-        xhr.onerror = () => reject(new Error("Network error — check CORS config on R2 bucket"));
-        xhr.ontimeout = () => reject(new Error("Upload timed out"));
-        xhr.send(file);
-      });
-
-      const { error: confirmErr } = await supabase.functions.invoke("confirm-r2-upload", {
-        body: { videoId: data.videoId, fileSizeBytes: file.size },
-      });
-
-      if (confirmErr) throw new Error("Upload succeeded but confirmation failed");
-
-      toast.success("Video uploaded successfully!");
+      toast.success("Video uploaded successfully");
       setTitle("");
       queryClient.invalidateQueries({ queryKey: ["admin-all-videos"] });
     } catch (err: any) {
       console.error("Upload error:", err);
       toast.error(err.message || "Upload failed");
-
-      if (videoId) {
-        try {
-          await supabase.functions.invoke("confirm-r2-upload", {
-            body: { videoId, failed: true, errorMessage: err.message },
-          });
-        } catch (_) { /* best effort */ }
-      }
     } finally {
       setUploading(false);
       setUploadProgress(0);
